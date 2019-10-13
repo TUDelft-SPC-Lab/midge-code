@@ -13,6 +13,7 @@ class IMUParser(object):
         self.path_gyro = filename+'_gyr'
         self.path_mag = filename+'_mag'
         self.path_rotation = filename+'_rotation'
+        self.path_scan = filename+'_proximity'
 
     def parse_generic(self,sensorname):
         data = []
@@ -76,6 +77,39 @@ class IMUParser(object):
         df['d'] = rotation_xyz[:,2]
         self.rot_df = df
 
+    def parse_scanner(self):
+        ids = []
+        rssis =  []
+        timestamps = []
+        with open(self.path_scan, "rb") as f:
+            byte = f.read()
+            i=0
+            while True:
+                ts_bytes = byte[0+i:8+i]
+                id_bytes = byte[8+i:10+i] 
+                rssi_byte = byte[10+i:11+i]
+                group_byte = byte[11+i:12+i]
+                if (len(id_bytes)) == 2 and (len(ts_bytes) == 8) \
+                and len(rssi_byte)) == 2 and len(group_byte)) == 1:
+                    ts = struct.unpack('<Q',ts_bytes)
+                    scanned_id = struct.unpack('<H',id_bytes)
+                    scanned_rssi = struct.unpack('<B',id_bytes)
+                    scanned_group = struct.unpack('<B',id_bytes)
+                    ids.append(scanned_id)
+                    rssis.append(scanned_rssi)
+                    timestamps.append(ts)
+                    i = i + 16
+                else:
+                    break
+        ids = np.asarray(ids)
+        rssis = np.asarray(rssis)
+        timestamps = np.asarray(timestamps)
+        timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
+        df = pd.DataFrame(timestamps_dt, columns=['time'])
+        df['id'] = ids
+        df['rssi'] = rssis
+        self.scan_df = df       
+
     def plot_and_save(self,a,g,m):
         if a:
             fname = self.filename + '_accel.png'
@@ -93,19 +127,22 @@ class IMUParser(object):
             fig = ax.get_figure()
             fig.savefig(fname)
 
-    def save_dataframes(self,a,g,m,r):
+    def save_dataframes(self,a,g,m,r,s):
         if a:
             self.accel_df.to_pickle(self.path_accel + '.pkl')
             self.accel_df.to_csv(self.path_accel + '.csv')
         if g:
-            self.gyro_df.to_pickle(self.path_accel + '.pkl')
-            self.gyro_df.to_csv(self.path_accel + '.csv')
+            self.gyro_df.to_pickle(self.path_gyro + '.pkl')
+            self.gyro_df.to_csv(self.path_gyro + '.csv')
         if m:
-            self.mag_df.to_pickle(self.path_accel + '.pkl')
-            self.mag_df.to_csv(self.path_accel + '.csv')
+            self.mag_df.to_pickle(self.path_mag + '.pkl')
+            self.mag_df.to_csv(self.path_mag + '.csv')
         if r:
-            self.rot_df.to_pickle(self.path_accel + '.pkl')
-            self.rot_df.to_csv(self.path_accel + '.csv')
+            self.rot_df.to_pickle(self.path_rotation + '.pkl')
+            self.rot_df.to_csv(self.path_rotation + '.csv')
+        if s:
+            self.scan_df.to_pickle(self.path_scan + '.pkl')
+            self.scan_df.to_csv(self.path_scan + '.csv')            
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -117,7 +154,7 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-def main(fn,acc,mag,gyr,rot,plot):
+def main(fn,acc,mag,gyr,rot,plot,scn):
     parser = IMUParser(fn)
     if acc:
         parser.parse_accel()
@@ -127,7 +164,9 @@ def main(fn,acc,mag,gyr,rot,plot):
         parser.parse_gyro()
     if rot:
         parser.parse_rot()
-    parser.save_dataframes(acc,mag,gyr,rot)
+    if scan:
+        parser.parse_scanner()
+    parser.save_dataframes(acc,mag,gyr,rot,scn)
     if plot:
         parser.plot_and_save(acc,mag,gyr)
 
@@ -135,14 +174,15 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Parser for the IMU data obtained from Minge Midges\
     (Acceleration, Gyroscope, Magnetometer, Rotation)')
-    parser.add_argument('--fn', required=True,help='Please enter the path to the file')
-    parser.add_argument('--acc', default=True,type=str2bool ,help='Check to parse and save acceleration data')
-    parser.add_argument('--mag', default=True,type=str2bool ,help='Check to parse and save magnetometer data')
-    parser.add_argument('--gyr', default=True,type=str2bool,help='Check to parse and save gyroscope data')
-    parser.add_argument('--rot', default=True,type=str2bool ,help='Check to parse and save rotation data')
-    parser.add_argument('--plot', default=True,type=str2bool ,help='Check to plot the parsed data')
+    parser.add_argument('--fn', required=True, help='Please enter the path to the file')
+    parser.add_argument('--acc', default=True, type=str2bool, help='Check to parse and save acceleration data')
+    parser.add_argument('--mag', default=True, type=str2bool, help='Check to parse and save magnetometer data')
+    parser.add_argument('--gyr', default=True, type=str2bool, help='Check to parse and save gyroscope data')
+    parser.add_argument('--rot', default=True, type=str2bool, help='Check to parse and save rotation data')
+    parser.add_argument('--scn', default=True, type=str2bool, help='Check to parse and save scan data')
+    parser.add_argument('--plot', default=True, type=str2bool, help='Check to plot the parsed data')
     args = parser.parse_args()
-    main(fn=args.fn, acc=args.acc, mag=args.mag, gyr=args.gyr, rot=args.rot, plot=args.plot)
+    main(fn=args.fn, acc=args.acc, mag=args.mag, gyr=args.gyr, rot=args.rot, scn = args.scn, plot=args.plot)
 
 
 
