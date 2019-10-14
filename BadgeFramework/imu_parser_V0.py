@@ -86,7 +86,7 @@ class IMUParser(object):
             i=0
             while True:
                 ts_bytes = byte[0+i:8+i]
-                id_bytes = byte[8+i:10+i] 
+                id_bytes = byte[8+i:10+i]
                 rssi_byte = byte[10+i:11+i]
                 group_byte = byte[11+i:12+i]
                 if (len(id_bytes)) == 2 and (len(ts_bytes) == 8) \
@@ -108,7 +108,7 @@ class IMUParser(object):
         df = pd.DataFrame(timestamps_dt, columns=['time'])
         df['id'] = ids
         df['rssi'] = rssis
-        self.scan_df = df       
+        self.scan_df = df
 
     def plot_and_save(self,a,g,m):
         if a:
@@ -142,7 +142,7 @@ class IMUParser(object):
             self.rot_df.to_csv(self.path_rotation + '.csv')
         if s:
             self.scan_df.to_pickle(self.path_scan + '.pkl')
-            self.scan_df.to_csv(self.path_scan + '.csv')            
+            self.scan_df.to_csv(self.path_scan + '.csv')
 
 def str2bool(v):
     if isinstance(v, bool):
