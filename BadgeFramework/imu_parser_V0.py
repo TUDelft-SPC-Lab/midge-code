@@ -172,8 +172,8 @@ def main(fn,acc,mag,gyr,rot,plot,scn):
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description='Parser for the IMU data obtained from Minge Midges\
-    (Acceleration, Gyroscope, Magnetometer, Rotation)')
+    parser = argparse.ArgumentParser(description='Parser for the IMU and scanner data obtained from Minge Midges\
+    (Acceleration, Gyroscope, Magnetometer, Rotation, Scanner)')
     parser.add_argument('--fn', required=True, help='Please enter the path to the file')
     parser.add_argument('--acc', default=True, type=str2bool, help='Check to parse and save acceleration data')
     parser.add_argument('--mag', default=True, type=str2bool, help='Check to parse and save magnetometer data')
