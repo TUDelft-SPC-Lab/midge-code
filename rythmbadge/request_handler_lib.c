@@ -486,13 +486,9 @@ static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_
 
 /**< These are the request handlers that actually call the response-handlers via the scheduler */
 
-static void status_request_handler(void * p_event_data, uint16_t event_size) {
-
-	// Set the timestamp:
-	Timestamp timestamp = request_event.request.type.status_request.timestamp;
-	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
-	advertiser_set_status_flag_is_clock_synced(1);
-	
+static void status_request_handler(void * p_event_data, uint16_t event_size)
+{
+	// first set the badge assignment before opening the folder
 	if(request_event.request.type.status_request.has_badge_assignement) {		
 		
 		BadgeAssignment badge_assignement;
@@ -500,6 +496,10 @@ static void status_request_handler(void * p_event_data, uint16_t event_size) {
 		
 		advertiser_set_badge_assignement(badge_assignement);
 	}
+	// Set the timestamp - the first time the new timestamped folder will be opened:
+	Timestamp timestamp = request_event.request.type.status_request.timestamp;
+	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
+	advertiser_set_status_flag_is_clock_synced(1);
 	
 	app_sched_event_put(NULL, 0, status_response_handler);
 }

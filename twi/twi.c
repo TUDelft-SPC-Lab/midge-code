@@ -154,7 +154,7 @@ void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 	}
 	else
 	{
-		NRF_LOG_ERROR("dropped IMU sample");
+//		NRF_LOG_ERROR("dropped IMU sample");
 	}
 }
 

@@ -12,6 +12,7 @@
 #include "systick_lib.h"
 #include "scanner_lib.h"
 #include "audio_switch.h"
+#include "advertiser_lib.h"
 
 /**
  * @brief  SDC block device definition
@@ -224,9 +225,11 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds)
 {
 	NRF_LOG_INFO("open folder");
 	FRESULT ff_result;
+	BadgeAssignment badge_assignment;
+	advertiser_get_badge_assignement(&badge_assignment);
+	TCHAR folder[30] = {};
 
-	TCHAR folder[10] = {};
-	sprintf(folder, "/%ld", sync_time_seconds);
+	sprintf(folder, "/%ld_%d", sync_time_seconds, badge_assignment.ID);
 	ff_result = f_mkdir(folder);
 	if (ff_result)
 	{
