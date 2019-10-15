@@ -229,7 +229,7 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds)
 	advertiser_get_badge_assignement(&badge_assignment);
 	TCHAR folder[30] = {};
 
-	sprintf(folder, "/%ld_%d", sync_time_seconds, badge_assignment.ID);
+	sprintf(folder, "/%d_%ld", badge_assignment.ID, sync_time_seconds);
 	ff_result = f_mkdir(folder);
 	if (ff_result)
 	{
