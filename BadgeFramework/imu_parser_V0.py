@@ -1,9 +1,13 @@
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import struct
 from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import sys
+import matplotlib.dates as mdates
 
 class IMUParser(object):
 
@@ -27,12 +31,15 @@ class IMUParser(object):
                 if (len(data_bytes)) == 12 and (len(ts_bytes) == 8):
                     ts = struct.unpack('<Q',ts_bytes)
                     x,y,z = struct.unpack('<fff', data_bytes)
-                    data.append([x,y,z])
-                    timestamps.append(ts)
+                    if float(ts[0])<1603213294000:
+                        data.append([x,y,z])
+                        timestamps.append(ts[0])                        
+                        #print (ts[0])                                      
+                    sys.stdout.flush()
                     i = i + 32
                 else:
                     break
-        data_xyz = np.asarray(data)
+        data_xyz = np.asarray(data) 
         timestamps = np.asarray(timestamps)
         timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
         df = pd.DataFrame(timestamps_dt, columns=['time'])
@@ -62,8 +69,10 @@ class IMUParser(object):
                 if (len(rot_bytes)) == 16 and (len(ts_bytes) == 8):
                     ts = struct.unpack('<Q',ts_bytes)
                     q1,q2,q3,q4 = struct.unpack('<ffff', rot_bytes)
-                    rotation.append([q1,q2,q3,q4])
-                    timestamps.append(ts)
+                    if float(ts[0])<1603213294000:
+                        rotation.append([q1,q2,q3,q4])
+                        timestamps.append(ts[0])                        
+                        #print (ts[0])      
                     i = i + 32
                 else:
                     break
@@ -90,11 +99,12 @@ class IMUParser(object):
                 rssi_byte = byte[10+i:11+i]
                 group_byte = byte[11+i:12+i]
                 if (len(id_bytes)) == 2 and (len(ts_bytes) == 8) \
-                and len(rssi_byte)) == 2 and len(group_byte)) == 1:
+                and len(rssi_byte) == 1 and len(group_byte) == 1:
                     ts = struct.unpack('<Q',ts_bytes)
                     scanned_id = struct.unpack('<H',id_bytes)
-                    scanned_rssi = struct.unpack('<B',id_bytes)
-                    scanned_group = struct.unpack('<B',id_bytes)
+                    scanned_rssi = struct.unpack('<B',rssi_byte)
+                    scanned_group = struct.unpack('<b',group_byte)
+                    print (scanned_id, scanned_group)
                     ids.append(scanned_id)
                     rssis.append(scanned_rssi)
                     timestamps.append(ts)
@@ -113,7 +123,12 @@ class IMUParser(object):
     def plot_and_save(self,a,g,m):
         if a:
             fname = self.filename + '_accel.png'
+            #self.accel_df = self.accel_df.set_index('time')
+            #print (self.accel_df.index)
+            #print (self.accel_df.head(3))
+            #accel_df_p = self.accel_df.loc['2019-10-20 13:05:30':'2019-10-20 13:07:00']
             ax = self.accel_df.plot(x='time')
+            #ax.xaxis.set_major_locator(mdates.SecondLocator(interval=5))
             fig = ax.get_figure()
             fig.savefig(fname)
         if g:
@@ -164,7 +179,7 @@ def main(fn,acc,mag,gyr,rot,plot,scn):
         parser.parse_gyro()
     if rot:
         parser.parse_rot()
-    if scan:
+    if scn:
         parser.parse_scanner()
     parser.save_dataframes(acc,mag,gyr,rot,scn)
     if plot:

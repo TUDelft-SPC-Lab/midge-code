@@ -3,7 +3,7 @@ import sys
 from hub_utilities_V1 import *
 
 if __name__ == "__main__":
-    df = pd.read_csv('sample_mapping_file.csv')
+    df = pd.read_csv('mappings_all.csv')
     while True:
         print("Type start to start data collection or stop to finish data collection.")
         sys.stdout.write("> ")

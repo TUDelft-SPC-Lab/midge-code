@@ -1,14 +1,26 @@
 from badge import OpenBadge
 from ble_badge_connection import BLEBadgeConnection
 import sys
+import numpy as np
 constant_group_number = 1
 
 class Connection():
     def __init__(self,pid,address):
         try:
-            self.connection = BLEBadgeConnection.get_connection_to_badge(address)
-            self.connection.connect()
-            self.badge = OpenBadge(self.connection)
+            for x in range(0, 10):
+                try:
+                    self.connection = BLEBadgeConnection.get_connection_to_badge(address)
+                    self.connection.connect()
+                    self.badge = OpenBadge(self.connection)
+                    str_error = None
+                except Exception as str_error:
+                    pass
+                if str_error:
+                    if x == 9:
+                        raise Exception("Could not connect to participant" + str(pid))
+                    continue 
+                else:
+                    break
             self.badge_id = int(pid)
             self.mac_address = address
             self.group_number = int(constant_group_number)
