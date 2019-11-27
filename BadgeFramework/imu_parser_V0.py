@@ -33,13 +33,13 @@ class IMUParser(object):
                     x,y,z = struct.unpack('<fff', data_bytes)
                     if float(ts[0])<1603213294000:
                         data.append([x,y,z])
-                        timestamps.append(ts[0])                        
-                        #print (ts[0])                                      
+                        timestamps.append(ts[0])
+                        #print (ts[0])
                     sys.stdout.flush()
                     i = i + 32
                 else:
                     break
-        data_xyz = np.asarray(data) 
+        data_xyz = np.asarray(data)
         timestamps = np.asarray(timestamps)
         timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
         df = pd.DataFrame(timestamps_dt, columns=['time'])
@@ -71,8 +71,8 @@ class IMUParser(object):
                     q1,q2,q3,q4 = struct.unpack('<ffff', rot_bytes)
                     if float(ts[0])<1603213294000:
                         rotation.append([q1,q2,q3,q4])
-                        timestamps.append(ts[0])                        
-                        #print (ts[0])      
+                        timestamps.append(ts[0])
+                        #print (ts[0])
                     i = i + 32
                 else:
                     break
@@ -96,15 +96,14 @@ class IMUParser(object):
             while True:
                 ts_bytes = byte[0+i:8+i]
                 id_bytes = byte[8+i:10+i]
-                rssi_byte = byte[10+i:11+i]
-                group_byte = byte[11+i:12+i]
+                group_byte = byte[10+i:11+i]
+                rssi_byte = byte[11+i:12+i]
                 if (len(id_bytes)) == 2 and (len(ts_bytes) == 8) \
                 and len(rssi_byte) == 1 and len(group_byte) == 1:
                     ts = struct.unpack('<Q',ts_bytes)
                     scanned_id = struct.unpack('<H',id_bytes)
-                    scanned_rssi = struct.unpack('<B',rssi_byte)
-                    scanned_group = struct.unpack('<b',group_byte)
-                    print (scanned_id, scanned_group)
+                    scanned_group = struct.unpack('<B',group_byte)
+                    scanned_rssi  = struct.unpack('<b',rssi_byte)
                     ids.append(scanned_id)
                     rssis.append(scanned_rssi)
                     timestamps.append(ts)
