@@ -21,7 +21,7 @@ if __name__ == "__main__":
         sys.stdout.flush()
         command = sys.stdin.readline()[:-1]
         if command == "start":
-            logger.info("Starting to connect the devices for starting recordings.")
+            logger.info("Connecting to the midges for starting the recordings.")
             start_recording_all_devices(df)
             logger.info("Loop for starting the devices is finished.")
             while True:
@@ -36,7 +36,7 @@ if __name__ == "__main__":
                 if s == "int":
                     logger.info(
                         "Welcome to the interactive shell. Please type the id of the"
-                        + " Midge you want to connect."
+                        + " midge you want to connect."
                     )
                     logger.info(
                         "Type exit if you would like to stop recording for all devices."
@@ -52,18 +52,23 @@ if __name__ == "__main__":
                         sys.stdout.flush()
                         break
                     command_args = command.split(" ")
-                    current_mac_addr = (
-                        df.loc[df["Participant Id"] == int(command)]["Mac Address"]
-                    ).values[0]
+                    try:
+                        current_mac_addr = (
+                            df.loc[df["Participant Id"] == int(command)]["Mac Address"]
+                        ).values[0]
+                    except Exception:
+                        logger.info('Mac address for the midge ' + str(command)
+                                    + ' is not found.')
+                        continue
                     try:
                         cur_connection = Connection(int(command), current_mac_addr)
                     except Exception as error:
                         logger.info("While connecting to midge " + str(command)
-                                    + " following error occurred:" + str(error))
+                                    + ", following error occurred:" + str(error))
                         sys.stdout.flush()
                         continue
                     logger.info("Connected to the midge " + str(command) + "."
-                                + "For available commands, please type help")
+                                + " For available commands, please type help.")
                     sys.stdout.flush()
                     while True:
                         sys.stdout.write("> ")

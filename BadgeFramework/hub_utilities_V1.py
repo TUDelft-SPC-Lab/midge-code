@@ -8,7 +8,7 @@ import time
 
 def get_logger(name):
     log_format_file = '%(asctime)s  %(levelname)5s  %(message)s'
-    log_format_console = '%(asctime)s  %(message)s'
+    log_format_console = '%(message)s'
     logging.basicConfig(level=logging.DEBUG,
                         format=log_format_file,
                         filename='data_collection.log',
