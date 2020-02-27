@@ -57,9 +57,7 @@ def start_recording_all_devices(df):
         try:
             cur_connection = Connection(current_participant, current_mac)
         except Exception as error:
-            logger.info("Couldn't connect to the following midge: "
-                        + str(current_participant) + " with error: " + str(error)
-                        + ", sensors are not started.")
+            logger.info(str(error) + ", sensors are not started.")
             print(str(error) + ", sensors are not started.")
             continue
         try:
@@ -67,8 +65,8 @@ def start_recording_all_devices(df):
             cur_connection.start_recording_all_sensors()
             cur_connection.disconnect()
         except Exception as error:
-            logger.info("Connection established for midge: " + str(current_participant)
-                        + "but, following error occurred: " + str(error) + ".")
+            logger.info("Connection established for midge " + str(current_participant)
+                        + " but following error occurred: " + str(error) + ".")
             print(error)
             cur_connection.disconnect()
 
@@ -80,16 +78,14 @@ def stop_recording_all_devices(df):
         try:
             cur_connection = Connection(current_participant, current_mac)
         except Exception as error:
-            logger.info("Can't connect to the following midge: "
-                        + str(current_participant) + " with error: " + str(error)
-                        + " sensors are not stopped.")
+            logger.info(str(error) + " sensors are not stopped.")
             print(str(error) + ", sensors are not stopped.")
             continue
         try:
             cur_connection.stop_recording_all_sensors()
             cur_connection.disconnect()
         except Exception as error:
-            logger.info("Connection established for midge:" + str(current_participant)
+            logger.info("Connection established for midge " + str(current_participant)
                         + ", but following error occurred: " + str(error) + ".")
             print(str(error))
             cur_connection.disconnect()
@@ -102,9 +98,7 @@ def synchronise_and_check_all_devices(df):
         try:
             cur_connection = Connection(current_participant, current_mac)
         except Exception as error:
-            logger.info("Couldn't connect to the following midge: "
-                        + str(current_participant) + " with error: " + str(error)
-                        + " cannot synchronise.")
+            logger.info(str(error) + ", cannot synchronise.")
             print(str(error) + ", cannot synchronise.")
             sys.stdout.flush()
             continue
