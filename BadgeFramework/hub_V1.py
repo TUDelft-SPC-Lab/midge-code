@@ -15,7 +15,8 @@ if __name__ == "__main__":
     df = pd.read_csv("mappings_all.csv")
     logger = get_logger("hub_main")
     while True:
-        print("Type start to start data collection or stop to finish data collection.")
+        logger.info("Type start to start data collection or stop to finish data "
+                    + "collection.")
         sys.stdout.write("> ")
         sys.stdout.flush()
         command = sys.stdin.readline()[:-1]
@@ -33,11 +34,11 @@ if __name__ == "__main__":
                     require_enter_to_confirm=True,
                 )
                 if s == "int":
-                    print(
+                    logger.info(
                         "Welcome to the interactive shell. Please type the id of the"
                         + " Midge you want to connect."
                     )
-                    print(
+                    logger.info(
                         "Type exit if you would like to stop recording for all devices."
                     )
                     sys.stdout.write("> ")
@@ -45,10 +46,8 @@ if __name__ == "__main__":
                     command = sys.stdin.readline()[:-1]
                     if command == "exit":
                         logger.info("Stopping the recording of all devices.")
-                        print("Stopping the recording of all devices.")
                         sys.stdout.flush()
                         stop_recording_all_devices(df)
-                        print("Devices are stopped.")
                         logger.info("Devices are stopped.")
                         sys.stdout.flush()
                         break
@@ -61,14 +60,10 @@ if __name__ == "__main__":
                     except Exception as error:
                         logger.info("While connecting to midge " + str(command)
                                     + " following error occurred:" + str(error))
-                        print(str(error))
                         sys.stdout.flush()
                         continue
-                    print(
-                        "Connected to the badge. For available commands, please type "
-                        + "help."
-                    )
-                    logger.info("Connected to the midge " + str(command) + ".")
+                    logger.info("Connected to the midge " + str(command) + "."
+                                + "For available commands, please type help")
                     sys.stdout.flush()
                     while True:
                         sys.stdout.write("> ")
@@ -83,28 +78,23 @@ if __name__ == "__main__":
                             if out is not None:
                                 logger.info("Midge returned following"
                                             + " status: " + str(out))
-                                print(out)
                                 sys.stdout.flush()
                         except Exception as error:
-                            print(str(error))
-                            print(" Command not found!")
+                            logger.info(str(error))
                             sys.stdout.flush()
                             cur_connection.print_help()
                             continue
                 else:
-                    print("Synchronisation is starting. Please wait till it ends.")
-                    logger.info("Synchronisation loop is starting.")
+                    logger.info("Synchronisation is starting. Please wait till it ends")
                     synchronise_and_check_all_devices(df)
-                    print("Synchronisation is finished.")
-                    logger.info("Synchronisation loop ended.")
+                    logger.info("Synchronisation is finished.")
                     sys.stdout.flush()
         elif command == "stop":
-            print("Stopping data collection.")
             logger.info("Stopping data collection.")
             sys.stdout.flush()
             quit(0)
         else:
-            print(
+            logger.info(
                 "Command not found, please type start or stop to start or stop data "
                 + "collection."
             )

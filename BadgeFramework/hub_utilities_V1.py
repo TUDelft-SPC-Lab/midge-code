@@ -7,14 +7,15 @@ import time
 
 
 def get_logger(name):
-    log_format = '%(asctime)s  %(name)8s  %(levelname)5s  %(message)s'
+    log_format_file = '%(asctime)s  %(levelname)5s  %(message)s'
+    log_format_console = '%(asctime)s  %(message)s'
     logging.basicConfig(level=logging.DEBUG,
-                        format=log_format,
+                        format=log_format_file,
                         filename='data_collection.log',
                         filemode='w')
     console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    console.setFormatter(logging.Formatter(log_format))
+    console.setLevel(logging.INFO)
+    console.setFormatter(logging.Formatter(log_format_console))
     logging.getLogger(name).addHandler(console)
     return logging.getLogger(name)
 
@@ -45,7 +46,6 @@ def choose_function(connection, input):
         return out
     except Exception as error:
         logger.info("Error: " + str(error))
-        print(error)
         return
 
 
@@ -57,7 +57,6 @@ def start_recording_all_devices(df):
             cur_connection = Connection(current_participant, current_mac)
         except Exception as error:
             logger.info(str(error) + ", sensors are not started.")
-            print(str(error) + ", sensors are not started.")
             continue
         try:
             cur_connection.set_id_at_start()
@@ -66,7 +65,6 @@ def start_recording_all_devices(df):
         except Exception as error:
             logger.info("Connection established for midge " + str(current_participant)
                         + " but following error occurred: " + str(error) + ".")
-            print(error)
             cur_connection.disconnect()
 
 
@@ -78,7 +76,6 @@ def stop_recording_all_devices(df):
             cur_connection = Connection(current_participant, current_mac)
         except Exception as error:
             logger.info(str(error) + " sensors are not stopped.")
-            print(str(error) + ", sensors are not stopped.")
             continue
         try:
             cur_connection.stop_recording_all_sensors()
@@ -86,7 +83,6 @@ def stop_recording_all_devices(df):
         except Exception as error:
             logger.info("Connection established for midge " + str(current_participant)
                         + ", but following error occurred: " + str(error) + ".")
-            print(str(error))
             cur_connection.disconnect()
 
 
@@ -98,7 +94,6 @@ def synchronise_and_check_all_devices(df):
             cur_connection = Connection(current_participant, current_mac)
         except Exception as error:
             logger.info(str(error) + ", cannot synchronise.")
-            print(str(error) + ", cannot synchronise.")
             sys.stdout.flush()
             continue
         try:
@@ -106,33 +101,22 @@ def synchronise_and_check_all_devices(df):
             logger.info("Status received for the following midge:"
                         + str(current_participant) + ".")
             if out.imu_status == 0:
-                print(
-                    "IMU is not recording for participant " + str(current_participant)
-                )
                 logger.info("IMU is not recording for participant "
                             + str(current_participant) + ".")
             if out.microphone_status == 0:
-                print(
-                    "Mic is not recording for participant " + str(current_participant)
-                )
                 logger.info("Mic is not recording for participant "
                             + str(current_participant) + ".")
             if out.scan_status == 0:
-                print(
-                    "Scan is not recording for participant " + str(current_participant)
-                )
                 logger.info("Scan is not recording for participant "
                             + str(current_participant) + ".")
             if out.clock_status == 0:
-                print("Cant synch for participant " + str(current_participant))
                 logger.info("Cant synch for participant "
                             + str(current_participant) + ".")
             sys.stdout.flush()
             cur_connection.disconnect()
         except Exception as error:
             logger.info("Status check for participant " + str(current_participant)
-                        + "returned the following error: " + str(error) + ".")
-            print(error)
+                        + " returned the following error: " + str(error) + ".")
             sys.stdout.flush()
             cur_connection.disconnect()
 

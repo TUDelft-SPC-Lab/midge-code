@@ -21,14 +21,14 @@ class Connection:
                     break
                 except Exception as err:
                     if x == 9:
-                        print(err)
                         raise Exception(
-                            "Could not connect to participant " + str(pid)
+                            "Could not connect to participant " + str(pid) + ", error:"
+                            + str(err)
                         )
                     break
         except Exception as err:
-            print(err)
-            raise Exception("Could not connect to participant " + str(pid))
+            raise Exception("Could not connect to participant " + str(pid) + ", error:"
+                            + str(err))
 
     def set_id_at_start(self):
         try:
@@ -36,8 +36,7 @@ class Connection:
                 new_id=self.badge_id, new_group_number=self.group_number
             )
         except Exception as err:
-            print(err)
-            sys.stdout.flush()
+            raise Exception("Could not set id, error:" + str(err))
 
     def disconnect(self):
         self.connection.disconnect()
@@ -47,72 +46,80 @@ class Connection:
             out = self.badge.get_status()
             return out
         except Exception as err:
-            print(str(err))
-            sys.stdout.flush()
-            raise Exception("Could not get status for participant" + str(self.badge_id))
+            raise Exception("Could not get status for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_start_microphone_request(self):
         try:
             out = self.badge.start_microphone()
             return out
-        except Exception:
-            raise Exception("Could not start mic for participant" + str(self.badge_id))
+        except Exception as err:
+            raise Exception("Could not start mic for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_stop_microphone_request(self):
         try:
             self.badge.stop_microphone()
-        except Exception:
-            raise Exception("Could not stop mic for participant" + str(self.badge_id))
+        except Exception as err:
+            raise Exception("Could not stop mic for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_start_scan_request(self):
         try:
             out = self.badge.start_scan()
             return out
-        except Exception:
-            raise Exception("Could not start scan for participant" + str(self.badge_id))
+        except Exception as err:
+            raise Exception("Could not start scan for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_stop_scan_request(self):
         try:
             self.badge.stop_scan()
-        except Exception:
-            raise Exception("Could not stop scan for participant" + str(self.badge_id))
+        except Exception as err:
+            raise Exception("Could not stop scan for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_start_imu_request(self):
         try:
             out = self.badge.start_imu()
             return out
-        except Exception:
-            raise Exception("Could not start IMU for participant" + str(self.badge_id))
+        except Exception as err:
+            raise Exception("Could not start IMU for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_stop_imu_request(self):
         try:
             self.badge.stop_imu()
-        except Exception:
-            raise Exception("Could not stop IMU for participant " + str(self.badge_id))
+        except Exception as err:
+            raise Exception("Could not stop IMU for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_identify_request(self):
         try:
             out = self.badge.identify()
             return out
-        except Exception:
-            raise Exception("Could not identify for participant " + str(self.badge_id))
+        except Exception as err:
+            raise Exception("Could not identify for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_restart_request(self):
         try:
             out = self.badge.restart()
-            return out
-        except Exception as err:
-            print(str(err))
             print("Please wait at least 10 seconds to connect back to the device.")
             print("Don't forget to start the recording for the restarted badge.")
+            return out
+        except Exception as err:
+            raise Exception("Could not restart for participant " + str(self.badge_id)
+                            + " , error:" + str(err))
 
     def handle_get_free_space(self):
         try:
             out = self.badge.get_free_sdc_space()
             return out
-        except Exception:
+        except Exception as err:
             raise Exception(
                 "Could not get free space for participant " + str(self.badge_id)
+                + " , error:" + str(err)
             )
 
     def start_recording_all_sensors(self):
