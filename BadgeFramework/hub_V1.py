@@ -9,8 +9,6 @@ from hub_utilities_V1 import (
     get_logger
 )
 from hub_connection_V1 import Connection
-import logging
-import time #time.time()
 
 
 if __name__ == "__main__":
@@ -61,7 +59,8 @@ if __name__ == "__main__":
                     try:
                         cur_connection = Connection(int(command), current_mac_addr)
                     except Exception as error:
-                        logger.info(f"While connecting to midge {command}, following error occurred: {error}")
+                        logger.info("While connecting to midge " + str(command)
+                                    + " following error occurred:" + str(error))
                         print(str(error))
                         sys.stdout.flush()
                         continue
@@ -69,7 +68,7 @@ if __name__ == "__main__":
                         "Connected to the badge. For available commands, please type "
                         + "help."
                     )
-                    logger.info(f"Connected to the midge {command}.")
+                    logger.info("Connected to the midge " + str(command) + ".")
                     sys.stdout.flush()
                     while True:
                         sys.stdout.write("> ")
@@ -77,13 +76,13 @@ if __name__ == "__main__":
                         command_args = command.split(" ")
                         if command == "exit":
                             cur_connection.disconnect()
-                            logger.info(f"Disconnected from the midge.")
+                            logger.info("Disconnected from the midge.")
                             break
                         try:
                             out = choose_function(cur_connection, command_args[0])
                             if out is not None:
-                                logger.info(f"Midge returned following" 
-                                            + f" status: {out}")
+                                logger.info("Midge returned following"
+                                            + " status: " + (out))
                                 print(out)
                                 sys.stdout.flush()
                         except Exception as error:
@@ -94,10 +93,10 @@ if __name__ == "__main__":
                             continue
                 else:
                     print("Synchronisation is starting. Please wait till it ends.")
-                    logger.info(f"Synchronisation loop is starting.")
+                    logger.info("Synchronisation loop is starting.")
                     synchronise_and_check_all_devices(df)
                     print("Synchronisation is finished.")
-                    logger.info(f"Synchronisation loop ended.")
+                    logger.info("Synchronisation loop ended.")
                     sys.stdout.flush()
         elif command == "stop":
             print("Stopping data collection.")
