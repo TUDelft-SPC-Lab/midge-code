@@ -121,12 +121,7 @@ class IMUParser(object):
     def plot_and_save(self, a, g, m):
         if a:
             fname = self.filename + "_accel.png"
-            # self.accel_df = self.accel_df.set_index('time')
-            # print (self.accel_df.index)
-            # print (self.accel_df.head(3))
-            # accel_df_p = self.accel_df.loc['2019-10-20 13:05:30':'2019-10-20 13:07:00']
             ax = self.accel_df.plot(x="time")
-            # ax.xaxis.set_major_locator(mdates.SecondLocator(interval=5))
             fig = ax.get_figure()
             fig.savefig(fname)
         if g:

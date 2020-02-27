@@ -5,19 +5,26 @@ from hub_utilities_V1 import (
     stop_recording_all_devices,
     timeout_input,
     choose_function,
-    synchronise_and_check_all_devices
+    synchronise_and_check_all_devices,
+    get_logger
 )
 from hub_connection_V1 import Connection
+import logging
+import time #time.time()
+
 
 if __name__ == "__main__":
     df = pd.read_csv("mappings_all.csv")
+    logger = get_logger("hub_main")
     while True:
         print("Type start to start data collection or stop to finish data collection.")
         sys.stdout.write("> ")
         sys.stdout.flush()
         command = sys.stdin.readline()[:-1]
         if command == "start":
+            logger.info("Starting to connect the devices for starting recordings.")
             start_recording_all_devices(df)
+            logger.info("Loop for starting the devices is finished.")
             while True:
                 ti = timeout_input(poll_period=0.05)
                 s = ti.input(
@@ -39,10 +46,12 @@ if __name__ == "__main__":
                     sys.stdout.flush()
                     command = sys.stdin.readline()[:-1]
                     if command == "exit":
+                        logger.info("Stopping the recording of all devices.")
                         print("Stopping the recording of all devices.")
                         sys.stdout.flush()
                         stop_recording_all_devices(df)
                         print("Devices are stopped.")
+                        logger.info("Devices are stopped.")
                         sys.stdout.flush()
                         break
                     command_args = command.split(" ")
@@ -52,6 +61,7 @@ if __name__ == "__main__":
                     try:
                         cur_connection = Connection(int(command), current_mac_addr)
                     except Exception as error:
+                        logger.info(f"While connecting to midge {command}, following error occurred: {error}")
                         print(str(error))
                         sys.stdout.flush()
                         continue
@@ -59,6 +69,7 @@ if __name__ == "__main__":
                         "Connected to the badge. For available commands, please type "
                         + "help."
                     )
+                    logger.info(f"Connected to the midge {command}.")
                     sys.stdout.flush()
                     while True:
                         sys.stdout.write("> ")
@@ -66,10 +77,13 @@ if __name__ == "__main__":
                         command_args = command.split(" ")
                         if command == "exit":
                             cur_connection.disconnect()
+                            logger.info(f"Disconnected from the midge.")
                             break
                         try:
                             out = choose_function(cur_connection, command_args[0])
                             if out is not None:
+                                logger.info(f"Midge returned following" 
+                                            + f" status: {out}")
                                 print(out)
                                 sys.stdout.flush()
                         except Exception as error:
@@ -80,11 +94,14 @@ if __name__ == "__main__":
                             continue
                 else:
                     print("Synchronisation is starting. Please wait till it ends.")
+                    logger.info(f"Synchronisation loop is starting.")
                     synchronise_and_check_all_devices(df)
                     print("Synchronisation is finished.")
+                    logger.info(f"Synchronisation loop ended.")
                     sys.stdout.flush()
         elif command == "stop":
             print("Stopping data collection.")
+            logger.info("Stopping data collection.")
             sys.stdout.flush()
             quit(0)
         else:
