@@ -82,7 +82,7 @@ if __name__ == "__main__":
                             out = choose_function(cur_connection, command_args[0])
                             if out is not None:
                                 logger.info("Midge returned following"
-                                            + " status: " + (out))
+                                            + " status: " + str(out))
                                 print(out)
                                 sys.stdout.flush()
                         except Exception as error:
