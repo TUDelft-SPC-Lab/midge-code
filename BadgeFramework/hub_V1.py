@@ -10,7 +10,6 @@ from hub_utilities_V1 import (
 )
 from hub_connection_V1 import Connection
 
-
 if __name__ == "__main__":
     df = pd.read_csv("mappings_all.csv")
     logger = get_logger("hub_main")

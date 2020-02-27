@@ -11,7 +11,7 @@ def get_logger(name):
     log_format_console = '%(message)s'
     logging.basicConfig(level=logging.DEBUG,
                         format=log_format_file,
-                        filename='data_collection.log',
+                        filename="data_collection.log",
                         filemode='w')
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
@@ -92,6 +92,9 @@ def synchronise_and_check_all_devices(df):
             out = cur_connection.handle_status_request()
             logger.info("Status received for the following midge:"
                         + str(current_participant) + ".")
+            logger.info('Device timestamp before sync - seconds:'
+                        + str(out.timestamp.seconds) + ', ms:'
+                        + str(out.timestamp.ms))
             if out.imu_status == 0:
                 logger.info("IMU is not recording for participant "
                             + str(current_participant) + ".")
@@ -110,7 +113,7 @@ def synchronise_and_check_all_devices(df):
             logger.info("Status check for participant " + str(current_participant)
                         + " returned the following error: " + str(error) + ".")
             sys.stdout.flush()
-            cur_connection.disconnect()
+            # cur_connection.disconnect()
 
 
 class timeout_input(object):
