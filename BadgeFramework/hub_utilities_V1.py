@@ -55,17 +55,13 @@ def start_recording_all_devices(df):
         current_mac = row["Mac Address"]
         try:
             cur_connection = Connection(current_participant, current_mac)
-        except Exception as error:
-            logger.info(str(error) + ", sensors are not started.")
-            continue
-        try:
             cur_connection.set_id_at_start()
             cur_connection.start_recording_all_sensors()
             cur_connection.disconnect()
         except Exception as error:
-            logger.info("Connection established for midge " + str(current_participant)
-                        + " but following error occurred: " + str(error) + ".")
-            cur_connection.disconnect()
+            logger.info("Sensors for midge " + str(current_participant)
+                        + " are not started with the following error: " + str(error))
+            continue
 
 
 def stop_recording_all_devices(df):
@@ -74,16 +70,12 @@ def stop_recording_all_devices(df):
         current_mac = row["Mac Address"]
         try:
             cur_connection = Connection(current_participant, current_mac)
-        except Exception as error:
-            logger.info(str(error) + " sensors are not stopped.")
-            continue
-        try:
             cur_connection.stop_recording_all_sensors()
             cur_connection.disconnect()
         except Exception as error:
-            logger.info("Connection established for midge " + str(current_participant)
-                        + ", but following error occurred: " + str(error) + ".")
-            cur_connection.disconnect()
+            logger.info("Sensors for midge " + str(current_participant)
+                        + " are not stopped with the following error: " + str(error))
+            continue
 
 
 def synchronise_and_check_all_devices(df):
