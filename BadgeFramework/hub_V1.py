@@ -35,7 +35,7 @@ if __name__ == "__main__":
                 if s == "int":
                     print(
                         "Welcome to the interactive shell. Please type the id of the"
-                        + "Midge you want to connect."
+                        + " Midge you want to connect."
                     )
                     print(
                         "Type exit if you would like to stop recording for all devices."
@@ -82,7 +82,7 @@ if __name__ == "__main__":
                             out = choose_function(cur_connection, command_args[0])
                             if out is not None:
                                 logger.info("Midge returned following"
-                                            + " status: " + (out))
+                                            + " status: " + str(out))
                                 print(out)
                                 sys.stdout.flush()
                         except Exception as error:

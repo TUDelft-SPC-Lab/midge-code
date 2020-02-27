@@ -15,19 +15,17 @@ class Connection:
                     )
                     self.connection.connect()
                     self.badge = OpenBadge(self.connection)
-                    # str_error = None
-                except Exception as str_error:
-                    if str_error:
-                        if x == 9:
-                            raise Exception(
-                                "Could not connect to participant " + str(pid)
-                            )
-                        continue
-                    else:
-                        break
-            self.badge_id = int(pid)
-            self.mac_address = address
-            self.group_number = int(constant_group_number)
+                    self.badge_id = int(pid)
+                    self.mac_address = address
+                    self.group_number = int(constant_group_number)
+                    break
+                except Exception as err:
+                    if x == 9:
+                        print(err)
+                        raise Exception(
+                            "Could not connect to participant " + str(pid)
+                        )
+                    break
         except Exception as err:
             print(err)
             raise Exception("Could not connect to participant " + str(pid))

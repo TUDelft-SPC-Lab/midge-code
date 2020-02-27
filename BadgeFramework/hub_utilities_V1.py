@@ -39,13 +39,12 @@ def choose_function(connection, input):
         "get_free_space": connection.handle_get_free_space,
     }
     func = chooser.get(input, lambda: "Invalid command!")
-    logger.info("Following command is entered: " + str(input) + ".")
+    logger.info("Following command is entered: " + input + ".")
     try:
         out = func()
         return out
     except Exception as error:
-        logger.info("Following error is occurred as a result of the command "
-                    + str(input) + ": " + str(error))
+        logger.info("Error: " + str(error))
         print(error)
         return
 
