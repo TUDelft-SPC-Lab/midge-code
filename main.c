@@ -42,7 +42,7 @@ int main(void)
 	NRF_LOG_INFO("MAIN: Start...\n\r");
 	led_init();
 
-	APP_SCHED_INIT(sizeof(data_source_info_t), 90);
+	APP_SCHED_INIT(sizeof(data_source_info_t), 50);
 
 	ret = systick_init(0);
 	check_init_error(ret, 1);

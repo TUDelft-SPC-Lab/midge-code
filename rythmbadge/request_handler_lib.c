@@ -356,7 +356,7 @@ static void process_receive_notification(void * p_event_data, uint16_t event_siz
 	request_event.request_timepoint_ticks = timepoint_ticks;
 
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Which request type: %u, Ticks: %u\n", request_event.request.which_type, request_event.request_timepoint_ticks);
+//	NRF_LOG_INFO("REQUEST_HANDLER: Which request type: %u, Ticks: %u\n", request_event.request.which_type, request_event.request_timepoint_ticks);
 
 	request_handler_t request_handler = NULL;
 	for(uint8_t i = 0; i < sizeof(request_handlers)/sizeof(request_handler_for_type_t); i++)
@@ -402,7 +402,7 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 	notserialized_buf[0] = (uint8_t)(((uint16_t) len) & 0xFF);
 	ret = sender_transmit(notserialized_buf, len+2, TRANSMIT_DATA_TIMEOUT_MS);
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Transmit status %u!\n", ret);
+//	NRF_LOG_INFO("REQUEST_HANDLER: Transmit status %u!\n", ret);
 
 	if(ret == NRF_SUCCESS) {
 		
@@ -436,13 +436,10 @@ static void status_response_handler(void * p_event_data, uint16_t event_size)
 		return;
 
 	response_event.response.which_type = Response_status_response_tag;
-	response_event.response.type.status_response.clock_status = advertiser_get_status_flag_is_clock_synced();
-	response_event.response.type.status_response.microphone_status = advertiser_get_status_flag_microphone_enabled();
-	response_event.response.type.status_response.scan_status = advertiser_get_status_flag_scan_enabled();
-	response_event.response.type.status_response.imu_status = advertiser_get_status_flag_imu_enabled();
-	response_event.response.type.status_response.battery_level = get_battery_level();
-	response_event.response.type.status_response.pdm_data = pdm_buf[0].mic_buf[0];
-	response_event.response.type.status_response.scan_data = ble_get_scan_rssi();
+	response_event.response.type.status_response.clock_status = response_clock_status;
+	response_event.response.type.status_response.microphone_status = (sampling_get_sampling_configuration() & SAMPLING_MICROPHONE) ? 1 : 0;
+	response_event.response.type.status_response.scan_status = (sampling_get_sampling_configuration() & SAMPLING_SCAN) ? 1 : 0;
+	response_event.response.type.status_response.imu_status = (sampling_get_sampling_configuration() & SAMPLING_IMU) ? 1 : 0;
 	response_event.response.type.status_response.timestamp = response_timestamp;
 
 	response_event.response_retries = 0;
@@ -611,8 +608,12 @@ static void status_request_handler(void * p_event_data, uint16_t event_size) {
 		
 		advertiser_set_badge_assignement(badge_assignement);
 	}
+	// Set the timestamp - the first time the new timestamped folder will be opened:
+	Timestamp timestamp = request_event.request.type.status_request.timestamp;
+	int32_t error_millis = systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
+	advertiser_set_status_flag_is_clock_synced(1);
 	
-	app_sched_event_put(NULL, 0, status_response_handler);
+	app_sched_event_put(&error_millis, sizeof(error_millis), status_response_handler);
 }
 
 
@@ -685,7 +686,6 @@ static void start_imu_request_handler(void * p_event_data, uint16_t event_size)
 	NRF_LOG_INFO("REQUEST_HANDLER: Start imu with acc_fsr: %d, gyr_fsr: %d, datarate: %d", acc_fsr, gyr_fsr, datarate);
 	
 	ret_code_t ret = sampling_start_imu(acc_fsr, gyr_fsr, datarate);
-	NRF_LOG_INFO("REQUEST_HANDLER: Ret sampling_start_imu: %d", ret);
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_imu_response_handler);
