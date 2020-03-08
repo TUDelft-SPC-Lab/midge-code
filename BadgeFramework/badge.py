@@ -12,6 +12,8 @@ DEFAULT_IMU_ACC_FSR = 4		#Valid ranges: 2, 4, 8, 16
 DEFAULT_IMU_GYR_FSR = 1000	#Valid ranges: 250, 500, 1000, 2000
 DEFAULT_IMU_DATARATE = 50
 
+DEFAULT_MICROPHONE_MODE = 1	#Valid options: 0=Stereo, 1=Mono
+
 from badge_protocol import *
 
 logger = logging.getLogger(__name__)
@@ -144,7 +146,7 @@ class OpenBadge(object):
 
 	# Sends a request to the badge to start recording microphone data.
 	# Returns a StartRecordResponse() representing the badges response.
-	def start_microphone(self, t=None):
+	def start_microphone(self, t=None, mode=DEFAULT_MICROPHONE_MODE):
 		if t is None:
 			(timestamp_seconds, timestamp_ms) = get_timestamps()
 		else:
@@ -157,6 +159,7 @@ class OpenBadge(object):
 		request.type.start_microphone_request.timestamp = Timestamp()
 		request.type.start_microphone_request.timestamp.seconds = timestamp_seconds
 		request.type.start_microphone_request.timestamp.ms = timestamp_ms
+		request.type.start_microphone_request.mode = mode
 		
 		self.send_request(request)
 		
