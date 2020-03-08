@@ -7,8 +7,8 @@
 #include "nrf_pdm.h"
 
 #define PDM_BUF_NUM 	2
-#define PDM_BUF_SIZE 	2048
-#define DECIMATION		32
+#define PDM_BUF_SIZE 	4096
+#define DECIMATION		16
 
 typedef struct {
 	int16_t  mic_buf[PDM_BUF_SIZE];
