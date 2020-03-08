@@ -3,3 +3,15 @@ _build/*
 *.zip
 BadgeFramework/terminal.py
 BadgeFramework/terminal.py
+BadgeFramework/badge_connection.pyc
+BadgeFramework/data_collection.log
+BadgeFramework/badge_connection.pyc
+BadgeFramework/badge.pyc
+BadgeFramework/ble_badge_connection.pyc
+BadgeFramework/hub_connection_V1.pyc
+BadgeFramework/hub_utilities_V1.pyc
+BadgeFramework/mappings_all.csv
+BadgeFramework/mappings_nonworking.csv
+BadgeFramework/__pycache__/badge.cpython-37.pyc
+BadgeFramework/__pycache__/hub_connection_V1.cpython-37.pyc
+BadgeFramework/__pycache__/hub_utilities_V1.cpython-37.pyc
