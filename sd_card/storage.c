@@ -288,12 +288,13 @@ uint32_t storage_open_file(data_source_t source)
 {
 	FRESULT ff_result;
 
-	uint32_t seconds = systick_get_millis()/1000;
+	uint64_t millis = systick_get_millis();
+	uint32_t seconds = millis/1000;
 	TCHAR filename[50] = {};
 
 	if (source == AUDIO)
 	{
-		sprintf(filename, "%ld_audio_%d", seconds, audio_switch_get_position());
+		sprintf(filename, "%ld%ld_audio_%d", seconds, (uint32_t)millis%1000, audio_switch_get_position()); //printing 64bit requires full version of newlib, that doesn't fit the RAM now
 	    ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
 	    if (ff_result != FR_OK)
 	    {
