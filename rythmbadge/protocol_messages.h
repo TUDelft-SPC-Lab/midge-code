@@ -114,7 +114,8 @@ typedef struct {
 	Timestamp timestamp;
 } FreeSDCSpaceResponse;
 
-typedef struct __attribute__((__packed__)) {
+//typedef struct __attribute__((__packed__)) {
+typedef struct {
 	uint8_t which_type;
 	union {
 		StatusResponse status_response;
