@@ -2,7 +2,7 @@ PROJECT_NAME     := spcl
 TARGETS          := nrf52832_xxaa
 OUTPUT_DIRECTORY := _build
 
-SDK_ROOT := $(HOME)/nRF5_SDK
+SDK_ROOT := $(HOME)/nRF5_SDK/15.3.0
 PROJ_DIR := 
 
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa.out: \

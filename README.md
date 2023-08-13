@@ -5,13 +5,14 @@
 ## Environment Setup:
 
 - Download the `arm-none-eabi` toolchain (compiler and binutils) for your distro
-- Download nRF5 SDK 17.1.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
+- Download nRF5 SDK 15.3.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
 - Extract the SDK zip file on your home folder and rename it `nRF5_SDK` (path 
   should be `~/nRF5_SDK`)
 - Modify `~/nRF5_SDK/components/toolchain/gcc/Makefile.posix` so 
   `GNU_INSTALL_ROOT` points to your `arm-none-eabi` toolchain. In case that the
   distro you are using adds `arm-none-eabi` toolchain installdir to your path, 
   you can just set `GNU_INSTALL_ROOT := ` and leave an empty space.
+- modify `external/fatfs/src/ffconf.h` to make the `_FS_RPATH` define be set as `2`
 
 
 ## Hardware

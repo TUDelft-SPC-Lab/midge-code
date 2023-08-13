@@ -1,4 +1,4 @@
-#include "spcl.h"
+#include "boards.h"
 #include "nrf_error.h"
 #include "sampling_lib.h"
 #include "nrf_delay.h"

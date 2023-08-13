@@ -15,6 +15,9 @@
  * BATSEN  PO.05 pin 21
  * MICDOUT PO.13 pin 31
  * MICCLK  PO.14 pin 32
+ * SW2OFF  PO.25 pin 6
+ * SW2LOW  PO.26 pin 7
+ * SW2HIGH PO.27 pin 8
  */
 
 // I2C pins
@@ -32,5 +35,14 @@
 #define MIC_CLK 32
 #define MIC_DOUT 31
 
+// LED
+#define LED 03
+#define LED_ON 1
+#define LED_OFF 0
+
+// AUDIO
+#define AUDIO_SWITCH_OFF 25
+#define AUDIO_SWITCH_LOW 26
+#define AUDIO_SWITCH_HIGH 27
 
 #endif
