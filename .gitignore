@@ -1,5 +1,6 @@
 _build/*
 *.hex
 *.zip
-BadgeFramework/terminal.py
-BadgeFramework/terminal.py
+*.pyc
+__pycache/
+.vscode/c_cpp_properties.json
