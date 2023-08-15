@@ -309,3 +309,11 @@ SDK_CONFIG_FILE := config/sdk_config.h
 CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
 sdk_config:
 	java -jar $(CMSIS_CONFIG_TOOL) $(SDK_CONFIG_FILE)
+
+openocd:
+	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg
+load_gdb:
+	arm-none-eabi-gdb -se _build/nrf52832_xxaa.out -x debug.gdb
+logs:
+	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
+	picocom /tmp/ttyvnrf -b 115200

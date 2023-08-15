@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "_build/nrf52832_xxaa.out",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "servertype": "openocd",
+            "device": "nrf52",
+            "configFiles": [
+                "interface/cmsis-dap.cfg",
+                "target/nrf52.cfg"
+            ],   
+            "openOCDLaunchCommands": ["adapter speed 2000"],
+            "interface": "swd",
+            "armToolchainPath": "",
+            "svdFile": "${workspaceRoot}/nrf52832.svd",
+            "preLaunchCommands":["set remotetimeout 60"],
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "clearSearch": false,   // OpenOCD users may have to un-comment this
+                "decoders": [
+                    {
+                        "port": 0,
+                        "type": "console"
+                    }
+                ]
+            }
+        }
+    ]
+}
