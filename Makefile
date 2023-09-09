@@ -2,7 +2,7 @@ PROJECT_NAME     := spcl
 TARGETS          := nrf52832_xxaa
 OUTPUT_DIRECTORY := _build
 
-SDK_ROOT := $(HOME)/nRF5_SDK/15.3.0
+SDK_ROOT := $(HOME)/nRF5_SDK_15.3.0
 PROJ_DIR := 
 
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa.out: \
@@ -256,6 +256,8 @@ LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 LDFLAGS += -Wl,--gc-sections
 # use newlib in nano version
 LDFLAGS += --specs=nano.specs
+LDFLAGS += --specs=nosys.specs
+
 
 nrf52832_xxaa: CFLAGS += -D__HEAP_SIZE=1024
 nrf52832_xxaa: CFLAGS += -D__STACK_SIZE=4096
