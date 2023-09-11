@@ -77,7 +77,7 @@ ret_code_t systick_init(uint8_t prescaler) {
  * @param[in] 	p_context	Pointer to context provided via the timer (should/could be NULL).
  */
 static void systick_callback(void* p_context) {
-	//NRF_LOG_INFO("SYSTICK: Systick-callback\n");
+	NRF_LOG_INFO("SYSTICK: Systick-callback\n");
 	uint32_t diff_ticks;
 	CRITICAL_REGION_ENTER();
 	uint32_t cur_ticks = app_timer_cnt_get();
@@ -233,6 +233,6 @@ void systick_get_timestamp(uint32_t* seconds, uint16_t* milliseconds) {
 	uint64_t millis = systick_get_millis();
 	*seconds = (uint32_t) (millis/1000);
 	*milliseconds = (uint16_t) (millis % 1000);
-	//NRF_LOG_INFO("SYSTICK: Systick_get_timestamp: (%u, %u)\n", (uint32_t)(*seconds), (uint32_t) (*milliseconds));
+	NRF_LOG_INFO("SYSTICK: Systick_get_timestamp: (%u, %u)\n", (uint32_t)(*seconds), (uint32_t) (*milliseconds));
 	
 }

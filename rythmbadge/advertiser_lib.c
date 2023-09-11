@@ -53,7 +53,9 @@ void advertiser_set_battery_percentage(uint8_t battery_percentage)
 ret_code_t advertiser_set_badge_assignement(BadgeAssignment badge_assignement)
 {
 	custom_advdata.ID = badge_assignement.ID;
+	NRF_LOG_INFO("ID: %u", custom_advdata.ID);
 	custom_advdata.group = badge_assignement.group;	
+	NRF_LOG_INFO("Group: %u", custom_advdata.group);
 	
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 	

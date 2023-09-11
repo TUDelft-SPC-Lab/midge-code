@@ -11,7 +11,7 @@ from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scan
 from bluepy.btle import BTLEException
 
 # Enable debug output.
-#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 # Main Loop of Badge Terminal
 
 def main():
