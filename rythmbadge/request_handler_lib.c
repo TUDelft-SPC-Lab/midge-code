@@ -316,13 +316,13 @@ static void process_receive_notification(void * p_event_data, uint16_t event_siz
 		} else {			
 			// Adapt the notification-len of the consume_index-th notification
 			receive_notification.notification_len = receive_notification.notification_len - consume_len;
-			//NRF_LOG_INFO("REQUEST_HANDLER: Adapt %u. notification len to %u\n", consume_index, receive_notification.notification_len);
+			NRF_LOG_INFO("REQUEST_HANDLER: Adapt %u. notification len to %u\n", consume_index, receive_notification.notification_len);
 			receive_notification_fifo_set_receive_notification(&receive_notification, consume_index);
 			// Set consume len to 0
 			consume_len = 0;
 		}
 	}
-	//NRF_LOG_INFO("REQUEST_HANDLER: Consume %u notifications\n", consume_index);
+	NRF_LOG_INFO("REQUEST_HANDLER: Consume %u notifications\n", consume_index);
 	
 	// Now manually consume the notifications
 	for(uint32_t i = 0; i < consume_index; i++) {

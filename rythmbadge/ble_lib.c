@@ -149,11 +149,11 @@ ret_code_t ble_init(void)
 	
 
 	ret = ble_init_services();
-	//NRF_LOG_INFO("BLE: Ret init services %u\n", ret);
+	NRF_LOG_INFO("BLE: Ret init services %u\n", ret);
 	if(ret != NRF_SUCCESS) return ret;
 	
 	ret = ble_init_advertising();
-	//NRF_LOG_INFO("BLE: Ret init advertising %u\n", ret);
+	NRF_LOG_INFO("BLE: Ret init advertising %u\n", ret);
     if(ret != NRF_SUCCESS) return ret;
 	
 	uint8_t mac[6];
@@ -301,7 +301,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             ble_nus_on_transmit_complete_callback();
             break;
         case BLE_GAP_EVT_CONNECTED:  //on BLE connect event
-//            NRF_LOG_INFO("BLE: connection intervals: %u, %u, %u, %u\n", p_ble_evt->evt.gap_evt.params.connected.conn_params.min_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.max_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.slave_latency, p_ble_evt->evt.gap_evt.params.connected.conn_params.conn_sup_timeout);
+            NRF_LOG_INFO("BLE: connection intervals: %u, %u, %u, %u\n", p_ble_evt->evt.gap_evt.params.connected.conn_params.min_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.max_conn_interval, p_ble_evt->evt.gap_evt.params.connected.conn_params.slave_latency, p_ble_evt->evt.gap_evt.params.connected.conn_params.conn_sup_timeout);
             ble_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             nrf_ble_qwr_conn_handle_assign(&m_qwr, ble_conn_handle);
             ble_on_connect_callback();
@@ -364,7 +364,7 @@ static void ble_on_scan_report_callback(const ble_gap_evt_adv_report_t* scan_rep
 	if(external_ble_on_scan_report_callback != NULL)
 		external_ble_on_scan_report_callback(scan_report);
 
-	//NRF_LOG_INFO("BLE: BLE on scan report callback. RSSI: %d\n", scan_report->rssi);
+	NRF_LOG_INFO("BLE: BLE on scan report callback. RSSI: %d\n", scan_report->rssi);
 }
 
 
@@ -382,7 +382,7 @@ void ble_get_MAC_address(uint8_t* MAC_address) {
 ret_code_t ble_transmit(uint8_t* data, uint16_t len)
 {
 	ret_code_t ret = ble_nus_data_send(&m_nus, data, &len, ble_conn_handle);
-//	NRF_LOG_INFO("sent: %d bytes, ret: %x", len, ret);
+	NRF_LOG_INFO("sent: %d bytes, ret: %x", len, ret);
 	return ret;
 }
 

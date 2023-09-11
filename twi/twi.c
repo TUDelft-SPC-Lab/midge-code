@@ -216,7 +216,7 @@ ret_code_t twi_init (void)
 	if (twim_err_code) return twim_err_code;
 
 	nrfx_twim_enable(&m_twim);
-//	NRF_LOG_INFO("%x",NRF_TWIM1->ENABLE); // printing 6 verifies DMA usage
+	NRF_LOG_INFO("%x",NRF_TWIM1->ENABLE); // printing 6 verifies DMA usage
 
 
 	// GPIOTE int1 setup & get event

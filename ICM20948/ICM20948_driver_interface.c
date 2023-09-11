@@ -268,7 +268,7 @@ void icm20948_service_isr(void * p_event_data, uint16_t event_size)
 {
 	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
 //	nrfx_gpiote_in_event_enable(INT1_PIN, true);
-//	NRF_LOG_INFO("isr");
+	NRF_LOG_INFO("isr");
 
 //	uint8_t buf[3];
 //	twim_read_register(NULL, 0x70, buf, 2); // fifo count
@@ -417,8 +417,8 @@ int icm20948_run_selftest(void){
 		/* It's advised to re-init the icm20948 device after self-test for normal use */
 		icm20948_sensor_setup();
 		inv_icm20948_get_st_bias(&icm_device, gyro_bias_regular, accel_bias_regular, raw_bias, unscaled_bias);
-//		NRF_LOG_INFO("GYR bias (FS=250dps) (dps): x="NRF_LOG_FLOAT_MARKER", y="NRF_LOG_FLOAT_MARKER", z=", NRF_LOG_FLOAT((float)(raw_bias[0] / (float)(1 << 16))), NRF_LOG_FLOAT((float)(raw_bias[1] / (float)(1 << 16))));
-//		NRF_LOG_INFO("ACC bias (FS=2g) (g): x="NRF_LOG_FLOAT_MARKER", y="NRF_LOG_FLOAT_MARKER", z=", NRF_LOG_FLOAT((float)(raw_bias[0 + 3] / (float)(1 << 16))), NRF_LOG_FLOAT((float)(raw_bias[1 + 3] / (float)(1 << 16))));
+		NRF_LOG_INFO("GYR bias (FS=250dps) (dps): x="NRF_LOG_FLOAT_MARKER", y="NRF_LOG_FLOAT_MARKER", z=", NRF_LOG_FLOAT((float)(raw_bias[0] / (float)(1 << 16))), NRF_LOG_FLOAT((float)(raw_bias[1] / (float)(1 << 16))));
+		NRF_LOG_INFO("ACC bias (FS=2g) (g): x="NRF_LOG_FLOAT_MARKER", y="NRF_LOG_FLOAT_MARKER", z=", NRF_LOG_FLOAT((float)(raw_bias[0 + 3] / (float)(1 << 16))), NRF_LOG_FLOAT((float)(raw_bias[1 + 3] / (float)(1 << 16))));
 	}
 
 	return rc;
