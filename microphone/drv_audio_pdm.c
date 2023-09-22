@@ -138,6 +138,7 @@ ret_code_t drv_audio_init(void)
 	// divide by 2 for MONO
 	if (pdm_cfg.mode) skip_samples = skip_samples/2;
 
+	NRF_LOG_INFO("pdm_cfg: mode %d, clock_freq %d, gain_r %d, gain_l %d",pdm_cfg.mode, pdm_cfg.clock_freq, pdm_cfg.gain_r, pdm_cfg.gain_l);
 	audio_switch_position =	audio_switch_get_position();
 
     return 0;

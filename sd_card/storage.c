@@ -78,7 +78,7 @@ uint32_t storage_close_file(data_source_t source)
 		ff_result = f_close(&audio_file_handle);
 		if (ff_result)
 		{
-			NRF_LOG_INFO("close file error");
+			NRF_LOG_INFO("SD AUDIO: close file error");
 			return -1;
 		}
 	}
@@ -90,7 +90,7 @@ uint32_t storage_close_file(data_source_t source)
 			ff_result = f_close(&imu_file_handle[sensor]);
 			if (ff_result)
 			{
-				NRF_LOG_INFO("close file error");
+				NRF_LOG_INFO("SD IMU: close file error");
 				return -1;
 			}
 		}
@@ -101,7 +101,7 @@ uint32_t storage_close_file(data_source_t source)
 		ff_result = f_close(&scanner_file_handle);
 		if (ff_result)
 		{
-			NRF_LOG_INFO("close file error");
+			NRF_LOG_INFO("SD SCANNER: close file error");
 			return -1;
 		}
 	}
@@ -196,7 +196,7 @@ uint32_t storage_init(void)
 //    uint32_t capacity = m_block_dev_sdc.block_dev.p_ops->geometry(&m_block_dev_sdc.block_dev)->blk_count / blocks_per_mb;
 //    NRF_LOG_INFO("Capacity: %d MB", capacity);
 
-    NRF_LOG_INFO("Mounting volume...");
+    NRF_LOG_INFO("SD: Mounting volume...");
     ff_result = f_mount(&fs, "", 1);
     if (ff_result)
     {
@@ -204,12 +204,12 @@ uint32_t storage_init(void)
         return 2;
     }
 
-//    storage_get_free_space(NULL,NULL);
-    //    list_directory();
+    storage_get_free_space(NULL,NULL);
+        list_directory();
 
-//    WORD ssize;
-//    ff_result =  disk_ioctl( 0,MMC_GET_CID,&ssize);
-//    NRF_LOG_INFO("sector size: %x", ssize);
+    WORD ssize;
+    ff_result =  disk_ioctl( 0,MMC_GET_CID,&ssize);
+    NRF_LOG_INFO("sector size: %d", ssize);
 //    if (ff_result)
 //    {
 //        NRF_LOG_INFO("sector size get failed with %d", ff_result);
@@ -226,7 +226,7 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds)
 	FRESULT ff_result;
 
 	TCHAR folder[10] = {};
-	sprintf(folder, "/%ld", sync_time_seconds);
+	sprintf(folder, "/folder");
 	ff_result = f_mkdir(folder);
 	if (ff_result)
 	{
@@ -250,14 +250,17 @@ uint32_t storage_open_file(data_source_t source)
 
 	uint32_t seconds = systick_get_millis()/1000;
 	TCHAR filename[50] = {};
-
+	NRF_LOG_INFO("SD: seconds: %ld", seconds);
+	NRF_LOG_INFO("SD: source: %d", source);
 	if (source == AUDIO)
 	{
-		sprintf(filename, "%ld_audio_%d", seconds, audio_switch_get_position());
+		sprintf(filename, "audio");
+		//NRF_LOG_INFO("SD Audio: filename: %d", filename);
 	    ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
+		NRF_LOG_INFO("SD Audio: ff_result: %d", ff_result);
 	    if (ff_result != FR_OK)
 	    {
-	        NRF_LOG_INFO("Unable to open or create file: %s", filename);
+	        NRF_LOG_INFO("SD Audio: Unable to open or create file: %d", filename);
 	        return -1;
 	    }
 		audio_file_handle.err = 0;
@@ -266,11 +269,12 @@ uint32_t storage_open_file(data_source_t source)
 	{
 		for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
 		{
-			sprintf(filename, "%ld_%s", seconds, imu_sensor_name[sensor]);
+			sprintf(filename, "%s", imu_sensor_name[sensor]);
 			ff_result = f_open(&imu_file_handle[sensor], filename, FA_WRITE | FA_CREATE_ALWAYS);
+			NRF_LOG_INFO("SD IMU: ff_result: %d", ff_result);
 			if (ff_result != FR_OK)
 			{
-				NRF_LOG_INFO("Unable to open or create file: %s", filename);
+				NRF_LOG_INFO("SD IMU: Unable to open or create file: %d", filename);
 				return -1;
 			}
 			imu_file_handle[sensor].err = 0;
@@ -278,16 +282,17 @@ uint32_t storage_open_file(data_source_t source)
 	}
 	if (source == SCANNER)
 	{
-		sprintf(filename, "%ld_proximity", seconds);
+		sprintf(filename, "scanner");
 	    ff_result = f_open(&scanner_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
-	    if (ff_result != FR_OK)
+	    NRF_LOG_INFO("SD Scanner: ff_result: %d", ff_result);
+		if (ff_result != FR_OK)
 	    {
-	        NRF_LOG_INFO("Unable to open or create file: %s", filename);
+	        NRF_LOG_INFO("SD Scanner: Unable to open or create file: %d", filename);
 	        return -1;
 	    }
 	    scanner_file_handle.err = 0;
 	}
-
+	NRF_LOG_INFO("SD: Success creating: %d", filename);
 
     return 0;
 }
