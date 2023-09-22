@@ -9,10 +9,10 @@ class IMUParser(object):
 
     def __init__(self,filename):
         self.filename = filename
-        self.path_accel = filename+'_accel'
-        self.path_gyro = filename+'_gyr'
-        self.path_mag = filename+'_mag'
-        self.path_rotation = filename+'_rotation'
+        self.path_accel = filename+'ACCEL'
+        self.path_gyro = filename+'GYR'
+        self.path_mag = filename+'MAG'
+        self.path_rotation = filename+'ROTATION'
 
     def parse_generic(self,sensorname):
         data = []
@@ -98,14 +98,14 @@ class IMUParser(object):
             self.accel_df.to_pickle(self.path_accel + '.pkl')
             self.accel_df.to_csv(self.path_accel + '.csv')
         if g:
-            self.gyro_df.to_pickle(self.path_accel + '.pkl')
-            self.gyro_df.to_csv(self.path_accel + '.csv')
+            self.gyro_df.to_pickle(self.path_gyro + '.pkl')
+            self.gyro_df.to_csv(self.path_gyro + '.csv')
         if m:
-            self.mag_df.to_pickle(self.path_accel + '.pkl')
-            self.mag_df.to_csv(self.path_accel + '.csv')
+            self.mag_df.to_pickle(self.path_mag + '.pkl')
+            self.mag_df.to_csv(self.path_mag + '.csv')
         if r:
-            self.rot_df.to_pickle(self.path_accel + '.pkl')
-            self.rot_df.to_csv(self.path_accel + '.csv')
+            self.rot_df.to_pickle(self.path_rotation + '.pkl')
+            self.rot_df.to_csv(self.path_rotation + '.csv')
 
 def str2bool(v):
     if isinstance(v, bool):
