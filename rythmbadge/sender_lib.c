@@ -20,7 +20,7 @@
 #ifdef NRF_LOG_INFO_ENABLE
 #define DISCONNECT_TIMEOUT_ENABLED	0		/**<  Disconnect timeout enabled */
 #else
-#define DISCONNECT_TIMEOUT_ENABLED	1		/**<  Disconnect timeout enabled */
+#define DISCONNECT_TIMEOUT_ENABLED	0		/**<  Disconnect timeout enabled */
 #endif
 
 
