@@ -99,6 +99,7 @@ uint64_t systick_get_ticks_since_start(void) {
 	uint32_t cur_ticks = app_timer_cnt_get();
 	diff_ticks = app_timer_cnt_diff_compute(cur_ticks, former_ticks);
 	tmp = ticks_since_start + diff_ticks;
+	//NRF_LOG_INFO("SYSTICK: systick_get_ticks_since_start: %d",tmp);
 	CRITICAL_REGION_EXIT();
 	return tmp;
 }
@@ -106,7 +107,7 @@ uint64_t systick_get_ticks_since_start(void) {
 
 void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync) {
 	
-	//NRF_LOG_INFO("SYSTICK: Systick_set_millis: %u, (%u, %u), %f, %u, (%u, %u)\n", (uint32_t) ticks_since_start_at_sync, (uint32_t)(millis_sync/1000), (uint32_t) (millis_sync%1000), millis_per_ticks, (uint32_t) ticks_at_offset, (uint32_t)(millis_offset/1000), (uint32_t) (millis_offset%1000));
+	NRF_LOG_INFO("SYSTICK: Systick_set_millis: %d, %d, %d\n", (uint32_t) ticks_since_start_at_sync, (uint32_t)(millis_sync/1000), (uint32_t) (millis_sync%1000));
 	
 	uint64_t cur_ticks_since_start = systick_get_ticks_since_start();
 	if(ticks_since_start_at_sync > cur_ticks_since_start)	// Only a safety query (the ticks_since_start_at_sync has to be <= the current ticks since start)
@@ -115,16 +116,17 @@ void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync
 	if(ticks_since_start_at_sync < ticks_at_offset) {	// Only a safety query (the ticks_since_start_at_sync has to be >= ticks_at_offset)
 		ticks_since_start_at_sync = ticks_at_offset;
 	}
-	
+	millis_synced = 1;
 	if(!millis_synced) {		// If the function is called the first time, the millis_offset and ticks_at_offset is updated immediately.
 		millis_offset 	= millis_sync;
 		ticks_at_offset = ticks_since_start_at_sync;
 		millis_synced = 1;
+		NRF_LOG_INFO("SYSTICK: millis_synced: %d", millis_synced);
 		return;
 	}
 	
 	
-	NRF_LOG_INFO("SYSTICK: millis_sync: %u%03u; ticks_at_sync: %u\n", (uint32_t)(millis_sync/1000), (uint32_t) (millis_sync%1000), (uint32_t) ticks_since_start_at_sync);
+	NRF_LOG_INFO("SYSTICK: millis_sync: %d; ticks_at_sync: %d\n", (uint32_t)(millis_sync/1000), (uint32_t) (millis_sync%1000), (uint32_t) ticks_since_start_at_sync);
 	
 	
 	int32_t error_millis = 0;
@@ -172,7 +174,7 @@ void systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_sync
 	ticks_at_offset = ticks_since_start_at_sync;
 	CRITICAL_REGION_EXIT();
 	
-	NRF_LOG_INFO("SYSTICK: updated millis_per_ticks: %f\n", millis_per_ticks);
+	//NRF_LOG_INFO("SYSTICK: updated millis_per_ticks: %f\n", millis_per_ticks);
 	
 	
 	// TODO: Or an even more complex way: Linear regression of N samples!
@@ -202,8 +204,8 @@ uint64_t systick_get_millis(void) {
 	
 	CRITICAL_REGION_ENTER();
 	millis = ((uint64_t)(millis_per_ticks*(cur_ticks_since_start - ticks_at_offset))) + millis_offset;
+	//NRF_LOG_INFO("SYSTICK: systick_get_millis: %d",millis);
 	CRITICAL_REGION_EXIT();
-	
 	return millis;
 }
 
@@ -233,6 +235,6 @@ void systick_get_timestamp(uint32_t* seconds, uint16_t* milliseconds) {
 	uint64_t millis = systick_get_millis();
 	*seconds = (uint32_t) (millis/1000);
 	*milliseconds = (uint16_t) (millis % 1000);
-	NRF_LOG_INFO("SYSTICK: Systick_get_timestamp: (%u, %u)\n", (uint32_t)(*seconds), (uint32_t) (*milliseconds));
+	//NRF_LOG_INFO("SYSTICK: Systick_get_timestamp: (%u, %u)\n", (uint32_t)(*seconds), (uint32_t) (*milliseconds));
 	
 }

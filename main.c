@@ -43,8 +43,18 @@ int main(void)
 	ret = systick_init(0);
 	check_init_error(ret, 1);
 
-	ret = timeout_init();
+	//systick_get_ticks_since_start();
+	//systick_get_millis();
+
+	//systick_set_millis(systick_get_ticks_since_start(),systick_get_millis());
+
+	
+	
+
+
+ 	ret = timeout_init();
 	check_init_error(ret, 2);
+	//systick_set_millis(systick_get_ticks_since_start(),systick_get_millis());
 
 	ret = ble_init();
 	check_init_error(ret, 3);
@@ -62,6 +72,31 @@ int main(void)
 
 	ret = request_handler_init();
 	check_init_error(ret, 7);
+	
+	led_update_status();
+	
+	// SD Test: storage_open_file
+	//storage_open_file(SCANNER);
+	//storage_open_file(AUDIO);
+	//storage_open_file(IMU);
+	
+
+	// SD Test: storage_close_file
+	//storage_close_file(SCANNER);
+	//storage_close_file(AUDIO);
+	//storage_close_file(IMU);
+
+	// SD Test: storage_open_file
+	//storage_init_folder(systick_get_millis()/1000);
+
+	//ret = 	drv_audio_init();
+	// not works ret =   process_audio_buffer();
+	//check_init_error(ret, 8);
+	//NRF_LOG_INFO("check_init_error: ret %s, identifier %d", ret, 8);
+	//ret = 	sampling_start_microphone();
+	//check_init_error(ret, 9);	
+	//  test:
+
 
 	led_init_success();
 

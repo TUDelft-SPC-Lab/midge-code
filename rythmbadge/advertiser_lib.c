@@ -31,7 +31,9 @@ void advertiser_init(void)
 	}
 	
 	custom_advdata.group = ADVERTISING_RESET_GROUP;
+	NRF_LOG_INFO("Group: %u", custom_advdata.group);
 	custom_advdata.ID = ADVERTISING_RESET_ID;
+	NRF_LOG_INFO("ID: %u", custom_advdata.ID);
 	
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }
@@ -53,9 +55,9 @@ void advertiser_set_battery_percentage(uint8_t battery_percentage)
 ret_code_t advertiser_set_badge_assignement(BadgeAssignment badge_assignement)
 {
 	custom_advdata.ID = badge_assignement.ID;
-	NRF_LOG_INFO("ID: %u", custom_advdata.ID);
+	
 	custom_advdata.group = badge_assignement.group;	
-	NRF_LOG_INFO("Group: %u", custom_advdata.group);
+	
 	
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 	
@@ -72,6 +74,7 @@ void advertiser_set_status_flag_is_clock_synced(uint8_t is_clock_synced) {
 
 
 void advertiser_set_status_flag_microphone_enabled(uint8_t microphone_enabled) {
+	NRF_LOG_INFO("Group: %d", microphone_enabled);
 	if(microphone_enabled)
 		custom_advdata.status_flags |= (1 << 1);
 	else
