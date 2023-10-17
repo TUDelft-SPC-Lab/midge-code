@@ -1,8 +1,9 @@
 #include "request_handler_lib.h"
-
+#include "audio_switch.h"
 #include <protocol_messages.h>
 #include <string.h>
 #include "app_fifo.h"
+#include "drv_audio_pdm.h"
 #include "app_scheduler.h"
 #include "sender_lib.h"
 #include "systick_lib.h"
@@ -10,7 +11,7 @@
 #include "advertiser_lib.h"	// To retrieve the current badge-assignement and set the clock-sync status
 #include "storage.h" // getfreespace
 #include "nrf_gpio.h"
-
+#include "saadc.h"
 #include "nrf_log.h"
 #include "boards.h"
 
@@ -374,7 +375,7 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 	
 	
 	uint32_t len = sizeof(response_event.response.type); // no point in this, it is always the size of the largest entry = 16bytes for get free space
-	memcpy(&notserialized_buf[2], &(response_event.response), len);
+	memcpy(&notserialized_buf[2], &(response_event.response), len); //notserialized_buf[2]=response_event.response
 	
 	ret_code_t ret = NRF_SUCCESS;
 
@@ -416,10 +417,11 @@ static void status_response_handler(void * p_event_data, uint16_t event_size)
 		return;
 
 	response_event.response.which_type = Response_status_response_tag;
-	response_event.response.type.status_response.clock_status = response_clock_status;
-	response_event.response.type.status_response.microphone_status = (sampling_get_sampling_configuration() & SAMPLING_MICROPHONE) ? 1 : 0;
-	response_event.response.type.status_response.scan_status = (sampling_get_sampling_configuration() & SAMPLING_SCAN) ? 1 : 0;
-	response_event.response.type.status_response.imu_status = (sampling_get_sampling_configuration() & SAMPLING_IMU) ? 1 : 0;
+	response_event.response.type.status_response.clock_status = advertiser_get_status_flag_is_clock_synced();
+	response_event.response.type.status_response.microphone_status = advertiser_get_status_flag_microphone_enabled();
+	response_event.response.type.status_response.scan_status = advertiser_get_status_flag_scan_enabled();
+	response_event.response.type.status_response.imu_status = advertiser_get_status_flag_imu_enabled();
+	response_event.response.type.status_response.battery_level = get_battery_level();
 	response_event.response.type.status_response.timestamp = response_timestamp;
 
 	response_event.response_retries = 0;
@@ -437,7 +439,11 @@ static void start_microphone_response_handler(void * p_event_data, uint16_t even
 	response_event.response.which_type = Response_start_microphone_response_tag;
 	response_event.response_retries = 0;
 	response_event.response.type.start_microphone_response.timestamp = response_timestamp;
-	
+	response_event.response.type.start_microphone_response.mode = drv_audio_get_mode();
+	response_event.response.type.start_microphone_response.switch_pos = audio_switch_get_position();
+	response_event.response.type.start_microphone_response.gain_l = drv_audio_get_gain_l();
+	response_event.response.type.start_microphone_response.gain_r = drv_audio_get_gain_r();
+
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	
 }
@@ -509,12 +515,13 @@ static void start_microphone_request_handler(void * p_event_data, uint16_t event
 {
 	// Set the timestamp:
 	Timestamp timestamp = request_event.request.type.start_microphone_request.timestamp;
+	uint8_t mode = request_event.request.type.start_microphone_request.mode;
 	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
 	advertiser_set_status_flag_is_clock_synced(1);
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Start microphone");
+	NRF_LOG_INFO("REQUEST_HANDLER: Start microphone, mode: %d", mode);
 
-	ret_code_t ret = sampling_start_microphone();
+	ret_code_t ret = sampling_start_microphone(mode);
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_microphone_response_handler);
@@ -526,7 +533,7 @@ static void start_microphone_request_handler(void * p_event_data, uint16_t event
 static void stop_microphone_request_handler(void * p_event_data, uint16_t event_size)
 {
 	sampling_stop_microphone();
-	NRF_LOG_INFO("REQUEST_HANDLER: Stop microphone\n");
+	NRF_LOG_INFO("REQUEST_HANDLER: Stop microphone");
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
 }
 

@@ -38,6 +38,7 @@ typedef struct {
 
 typedef struct {
 	Timestamp timestamp;
+	uint8_t mode;
 } StartMicrophoneRequest;
 
 typedef struct {
@@ -93,11 +94,16 @@ typedef struct {
 	uint8_t microphone_status;
 	uint8_t scan_status;
 	uint8_t imu_status;
+	int8_t battery_level;
 	Timestamp timestamp;
 } StatusResponse;
 
 typedef struct {
 	Timestamp timestamp;
+	uint8_t mode;
+	int8_t gain_l;
+	int8_t gain_r;
+	int8_t switch_pos; //0: OFF, 1: LOW, 2: HIGH
 } StartMicrophoneResponse;
 
 typedef struct {
