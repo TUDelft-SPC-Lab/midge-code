@@ -12,7 +12,7 @@ from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scan
 from bluepy.btle import BTLEException
 
 # Enable debug output.
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 # Main Loop of Badge Terminal
 
 def main():
@@ -62,29 +62,29 @@ def main():
 		else:
 			print("Invalid Syntax: status [new badge id] [group number]")
 
-	def handle_start_microphone_request(args):
+	def handle_start_microphone_request():
 		print(badge.start_microphone())
 
-	def handle_stop_microphone_request(args):
+	def handle_stop_microphone_request():
 		badge.stop_microphone()
 
 
-	def handle_start_scan_request(args):
+	def handle_start_scan_request():
 		print(badge.start_scan())
 
-	def handle_stop_scan_request(args):
+	def handle_stop_scan_request():
 		badge.stop_scan()
 
 
-	def handle_start_imu_request(args):
+	def handle_start_imu_request():
 		print(badge.start_imu())
 
-	def handle_stop_imu_request(args):
+	def handle_stop_imu_request():
 		badge.stop_imu()
 
 
 	def handle_identify_request(args):
-		if len(args) == 1:
+		if (len(args) == 1 or len(args) == 0):
 			badge.identify()
 		elif len(args) == 2:
 			if args[1] == "off":
@@ -95,10 +95,10 @@ def main():
 			print("Invalid Syntax: identify [led duration seconds | 'off']")
 			return
 
-	def handle_restart_request(args):
+	def handle_restart_request():
 		print(badge.restart())
 
-	def handle_get_free_space(args):
+	def handle_get_free_space():
 		print(badge.get_free_sdc_space())
 
 
@@ -116,20 +116,53 @@ def main():
 		"get_free_space": handle_get_free_space,
 	}
 
-	while True:
-		sys.stdout.write("> ")
-		# [:-1] removes newline character
-		command = sys.stdin.readline()[:-1]
-		if command == "exit":
-			connection.disconnect()
-			break
+	for reps in 1, 2, 3:
+		time.sleep(0.5)
+        print("MIC Test")
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])
+        time.sleep(0.5)
+        handle_start_microphone_request()
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])
+        time.sleep(0.5)
+        handle_stop_microphone_request()
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])
+        time.sleep(0.5)
+        handle_start_imu_request()
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])        
+        time.sleep(0.5)
+        handle_stop_imu_request()
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])
+        time.sleep(0.5)
+        handle_start_scan_request()
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])
+        time.sleep(0.5)
+        handle_stop_scan_request()
+        handle_status_request([1, 65535, 255])
+        time.sleep(0.5)
+    # Mic Test
+    # time.sleep(5)
+    #
 
-		command_args = command.split(" ")
-		if command_args[0] in command_handlers:
-			command_handlers[command_args[0]](command_args)
-		else:
-			print("Command Not Found!")
-			print_help({})
+
+    # IMU Test
+    # time.sleep(5)
+    #
+
+
+    # SCAN Test
+    # time.sleep(5)
+    #
+
+
+    # Mic Test
+    # time.sleep(5)
+    #
 
 if __name__ == "__main__":
 	main()

@@ -31,6 +31,8 @@ class _Istream:
 			raise Exception("Not enough bytes in Istream to read")
 		ret = self.buf[0:l]
 		self.buf = self.buf[l:]
+		#for i in ret:
+		#	print("_Istream:",i)
 		return ret
 
 class Timestamp:
@@ -247,6 +249,7 @@ class StartMicrophoneRequest:
 
 	def reset(self):
 		self.timestamp = None
+		self.mode = 0
 		pass
 
 	def encode(self):
@@ -256,11 +259,14 @@ class StartMicrophoneRequest:
 
 	def encode_internal(self, ostream):
 		self.encode_timestamp(ostream)
+		self.encode_mode(ostream)
 		pass
 
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
 
+	def encode_mode(self, ostream):
+		ostream.write(struct.pack('<B', self.mode))
 
 	@classmethod
 	def decode(cls, buf):
@@ -271,12 +277,15 @@ class StartMicrophoneRequest:
 	def decode_internal(self, istream):
 		self.reset()
 		self.decode_timestamp(istream)
+		self.decode_mode(istream)
 		pass
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)
 
+	def decode_mode(self, istream):
+		self.mode= struct.unpack('<B', istream.read(1))[0]
 
 class StopMicrophoneRequest:
 
@@ -777,6 +786,7 @@ class StatusResponse:
 		self.microphone_status = 0
 		self.scan_status = 0
 		self.imu_status = 0
+		self.battery_level = 0
 		self.timestamp = None
 		pass
 
@@ -791,6 +801,7 @@ class StatusResponse:
 		self.encode_scan_status(ostream)
 		self.encode_imu_status(ostream)
 		self.encode_timestamp(ostream)
+		self.encode_battery_level(ostream)
 		pass
 
 	def encode_clock_status(self, ostream):
@@ -804,6 +815,9 @@ class StatusResponse:
 
 	def encode_imu_status(self, ostream):
 		ostream.write(struct.pack('<B', self.imu_status))
+
+	def encode_battery_level(self, ostream):
+		ostream.write(struct.pack('<B', self.battery_level))
 
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
@@ -821,20 +835,30 @@ class StatusResponse:
 		self.decode_microphone_status(istream)
 		self.decode_scan_status(istream)
 		self.decode_imu_status(istream)
+		self.decode_battery_level(istream)
 		self.decode_timestamp(istream)
 		pass
 
 	def decode_clock_status(self, istream):
-		self.clock_status= struct.unpack('<B', istream.read(1))[0]
+		#print("decode_clock_status:", istream.buf)
+		#print("decode_clock_status:", istream.read(1))
+		self.clock_status= struct.unpack('<B', istream.buf[3])[0]
 
 	def decode_microphone_status(self, istream):
-		self.microphone_status= struct.unpack('<B', istream.read(1))[0]
+		#print("decode_microphone_status: ", i)
+		self.microphone_status= struct.unpack('<B', istream.buf[4])[0]
 
 	def decode_scan_status(self, istream):
-		self.scan_status= struct.unpack('<B', istream.read(1))[0]
+		#print("decode_scan_status: ", i)
+		self.scan_status= struct.unpack('<B', istream.buf[5])[0]
 
 	def decode_imu_status(self, istream):
-		self.imu_status= struct.unpack('<B', istream.read(1))[0]
+		#print("decode_imu_status: ", i)
+		self.imu_status= struct.unpack('<B', istream.buf[6])[0]
+
+	def decode_battery_level(self, istream):
+		#print("decode_battery_level: ", i)
+		self.battery_level= struct.unpack('<B', istream.buf[7])[0]
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
@@ -851,6 +875,10 @@ class StartMicrophoneResponse:
 
 	def reset(self):
 		self.timestamp = None
+		self.mode = 0
+		self.switch_pos = 0
+		self.gain_l = 0
+		self.gain_r = 0
 		pass
 
 	def encode(self):
@@ -860,10 +888,26 @@ class StartMicrophoneResponse:
 
 	def encode_internal(self, ostream):
 		self.encode_timestamp(ostream)
+		self.encode_mode(ostream)
+		self.encode_switch_pos(ostream)
+		self.encode_gain_l(ostream)
+		self.encode_gain_r(ostream)
 		pass
 
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
+
+	def encode_mode(self, ostream):
+		ostream.write(struct.pack('<b', self.mode))
+
+	def encode_switch_pos(self, ostream):
+		ostream.write(struct.pack('<b', self.switch_pos))
+
+	def encode_gain_l(self, ostream):
+		ostream.write(struct.pack('<b', self.gain_l))
+
+	def encode_gain_r(self, ostream):
+		ostream.write(struct.pack('<b', self.gain_r))				
 
 
 	@classmethod
@@ -875,11 +919,28 @@ class StartMicrophoneResponse:
 	def decode_internal(self, istream):
 		self.reset()
 		self.decode_timestamp(istream)
+		self.decode_mode(istream)
+		self.decode_switch_pos(istream)
+		self.decode_gain_l(istream)
+		self.decode_gain_r(istream)
 		pass
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)
+
+	def decode_mode(self, istream):
+		self.mode= struct.unpack('<b', istream.buf[3])[0]
+
+	def decode_gain_l(self, istream):
+		self.gain_l= struct.unpack('<b', istream.buf[4])[0]
+
+	def decode_gain_r(self, istream):
+		self.gain_r= struct.unpack('<b', istream.buf[5])[0]
+
+	def decode_switch_pos(self, istream):
+		#print("decode_switch_pos:", istream.buf)
+		self.switch_pos= struct.unpack('<b', istream.buf[6])[0]
 
 
 class StartScanResponse:
@@ -957,11 +1018,27 @@ class StartImuResponse:
 	def decode_internal(self, istream):
 		self.reset()
 		self.decode_timestamp(istream)
+		self.decode_acc_fsr(istream)
+		self.decode_gyr_fsr(istream)
+		self.decode_datarate(istream)
 		pass
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)
+
+	def decode_acc_fsr(self, istream):
+		#print("decode_switch_pos:", istream.buf)
+		self.acc_fsr= 4 #struct.unpack('<b', istream.buf[6])[0]
+	
+	def decode_gyr_fsr(self, istream):
+		#print("decode_switch_pos:", istream.buf)
+		self.gyr_fsr= 1000 #struct.unpack('<b', istream.buf[6])[0]
+
+	def decode_datarate(self, istream):
+		#print("decode_switch_pos:", istream.buf)
+		self.datarate= 50 #struct.unpack('<b', istream.buf[6])[0]
+
 
 class FreeSDCSpaceResponse:
 
