@@ -185,6 +185,44 @@ void list_directory(void)
 	while (fno.fname[0]);
 }
 
+uint32_t storage_errase_all(uint32_t *total_MB, uint32_t *free_MB)
+{
+	FRESULT ff_result;
+	DIR dir;
+	FILINFO file_info;
+	ff_result = f_opendir(&dir, "");
+	if (ff_result != FR_OK)
+	{		
+		NRF_LOG_INFO("f_opendir error");
+		return -1;
+	}		
+	while (1)
+	{
+		ff_result = f_readdir(&dir, &file_info);
+		if (ff_result != FR_OK || file_info.fname[0] == 0)
+		{		
+			NRF_LOG_INFO("f_readdir %s, file_info.fname[0] %s", file_info.fname[0],ff_result);
+			return NRF_SUCCESS;
+		}		
+
+		if (file_info.fattrib & AM_ARC)
+		{
+			ff_result = f_unlink(file_info.fname);
+			if (ff_result == FR_OK)
+			{
+				NRF_LOG_INFO("File errased: %d", file_info.fname);
+			}
+
+			else {
+				NRF_LOG_INFO("Error deleting file: %d, name: %s", ff_result, file_info.fname);
+				return -1;
+			}
+			
+		}
+		
+	}
+}
+
 uint32_t storage_get_free_space(uint32_t *total_MB, uint32_t *free_MB)
 {
 	FRESULT ff_result;
@@ -209,6 +247,7 @@ uint32_t storage_get_free_space(uint32_t *total_MB, uint32_t *free_MB)
 
     return NRF_SUCCESS;
 }
+
 
 uint32_t storage_init(void)
 {

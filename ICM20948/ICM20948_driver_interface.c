@@ -464,5 +464,9 @@ void inv_icm20948_sleep_us(int us)
 	nrfx_coredep_delay_us(us);
 }
 
+uint8_t inv_icm20948_get_self_test_done(void)
+{
+	return icm_device.selftest_done;
+}
 
 

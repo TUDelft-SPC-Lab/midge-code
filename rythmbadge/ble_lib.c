@@ -47,7 +47,7 @@ static ble_on_scan_report_callback_t	external_ble_on_scan_report_callback = NULL
 
 static ret_code_t ble_init_services(void);
 static ret_code_t ble_init_advertising(void);
-
+static ble_gap_scan_params_t scan_parameters;
 
 static void ble_nus_on_receive_callback(ble_nus_evt_t * p_evt);
 static void ble_nus_on_transmit_complete_callback(void);
@@ -75,8 +75,7 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
 ret_code_t ble_start_scanning(uint16_t scan_interval_ms, uint16_t scan_window_ms)
 {
 	ret_code_t ret;
-
-	ble_gap_scan_params_t scan_parameters;
+    
 	memset(&scan_parameters, 0, sizeof(scan_parameters));
 
 	scan_parameters.interval	= (uint16_t)((((uint32_t)(scan_interval_ms)) * 1000) / 625);;
@@ -415,3 +414,12 @@ void ble_set_on_scan_report_callback(ble_on_scan_report_callback_t ble_on_scan_r
 	external_ble_on_scan_report_callback = ble_on_scan_report_callback;
 }
 
+int16_t ble_get_scan_window(void)
+{
+    return scan_parameters.window;
+}
+
+int16_t ble_get_scan_interval(void)
+{
+    return scan_parameters.interval;
+}

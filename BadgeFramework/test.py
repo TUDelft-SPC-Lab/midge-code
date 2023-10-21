@@ -62,15 +62,15 @@ def main():
 		else:
 			print("Invalid Syntax: status [new badge id] [group number]")
 
-	def handle_start_microphone_request():
-		print(badge.start_microphone())
+	def handle_start_microphone_request(args):
+		print(badge.start_microphone(mode=args))
 
 	def handle_stop_microphone_request():
 		badge.stop_microphone()
 
 
-	def handle_start_scan_request():
-		print(badge.start_scan())
+	def handle_start_scan_request(args):
+		print(badge.start_scan(window_ms=args[0], interval_ms=args[1]))
 
 	def handle_stop_scan_request():
 		badge.stop_scan()
@@ -116,35 +116,49 @@ def main():
 		"get_free_space": handle_get_free_space,
 	}
 
-	for reps in 1, 2, 3:
+	for reps in 1, 2:
 		time.sleep(0.5)
-        print("MIC Test")
+        print("microphone test")
         time.sleep(0.5)
         handle_status_request([1, 65535, 255])
         time.sleep(0.5)
-        handle_start_microphone_request()
+        print("mode: stereo")
+        handle_start_microphone_request(0)
         time.sleep(0.5)
         handle_status_request([1, 65535, 255])
-        time.sleep(0.5)
+        time.sleep(200)
         handle_stop_microphone_request()
         time.sleep(0.5)
         handle_status_request([1, 65535, 255])
         time.sleep(0.5)
-        handle_start_imu_request()
+        print("mode: mono")
+        handle_start_microphone_request(1)
         time.sleep(0.5)
-        handle_status_request([1, 65535, 255])        
-        time.sleep(0.5)
-        handle_stop_imu_request()
+        handle_status_request([1, 65535, 255])
+        time.sleep(200)
+        handle_stop_microphone_request()
         time.sleep(0.5)
         handle_status_request([1, 65535, 255])
         time.sleep(0.5)
-        handle_start_scan_request()
+        print("scan test")
+        handle_start_scan_request([250, 1000])
         time.sleep(0.5)
         handle_status_request([1, 65535, 255])
-        time.sleep(0.5)
+        time.sleep(50)
         handle_stop_scan_request()
         handle_status_request([1, 65535, 255])
         time.sleep(0.5)
+        print("imu test")
+        handle_start_imu_request()
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])        
+        time.sleep(50)
+        handle_stop_imu_request()
+        time.sleep(0.5)
+        handle_status_request([1, 65535, 255])
+        #time.sleep(0.5)
+        
+
     # Mic Test
     # time.sleep(5)
     #

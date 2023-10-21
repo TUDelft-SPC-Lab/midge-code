@@ -46,6 +46,9 @@ typedef void (*ble_on_scan_report_callback_t)	(const ble_gap_evt_adv_report_t* s
  */
 ret_code_t 	ble_init(void);
 
+int16_t ble_get_scan_interval(void);
+
+int16_t ble_get_scan_window(void);
 
 /**@brief 	Function to force the BLE-Stack to disconnect from the current BLE-Connection. 
  */

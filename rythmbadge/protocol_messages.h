@@ -104,14 +104,18 @@ typedef struct {
 	int8_t gain_l;
 	int8_t gain_r;
 	int8_t switch_pos; //0: OFF, 1: LOW, 2: HIGH
+	int16_t pdm_freq;
 } StartMicrophoneResponse;
 
 typedef struct {
 	Timestamp timestamp;
+	uint16_t window;
+	uint16_t interval;
 } StartScanResponse;
 
 typedef struct {
 	Timestamp timestamp;
+	uint8_t self_test_done;
 } StartImuResponse;
 
 typedef struct {
