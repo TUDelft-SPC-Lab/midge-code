@@ -21,6 +21,7 @@ extern pdm_buf_t pdm_buf[PDM_BUF_NUM];
 int8_t drv_audio_get_mode(void);
 int8_t drv_audio_get_gain_l(void);
 int8_t drv_audio_get_gain_r(void);
+int16_t drv_audio_get_pdm_freq(void);
 
 ret_code_t drv_audio_init(nrf_pdm_mode_t mode);
 

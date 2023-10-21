@@ -183,3 +183,25 @@ int8_t drv_audio_get_gain_r(void)
 {
 	return pdm_cfg.gain_r;
 }
+
+int16_t drv_audio_get_pdm_freq(void)
+{
+	int16_t freq;
+	switch (pdm_cfg.clock_freq) // Valid freqs
+	{
+	case 0x08000000: //1 MHz
+		freq = 100;
+		break;
+
+	case 0x08400000: //1.032 MHz
+		freq = 132;
+		break;	
+	case 0x08800000: //1.067 MHz
+		freq = 167;
+		break;			
+	default:
+		freq = 132;
+		break;
+	}
+	return freq;
+}

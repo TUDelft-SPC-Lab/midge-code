@@ -12,8 +12,10 @@
 #include "storage.h" // getfreespace
 #include "nrf_gpio.h"
 #include "saadc.h"
+#include "ICM20948_driver_interface.h"
 #include "nrf_log.h"
 #include "boards.h"
+#include "ble_lib.h"
 
 #define RECEIVE_NOTIFICATION_FIFO_SIZE					256		/**< Buffer size for the receive-notification FIFO. Has to be a power of two */
 #define AWAIT_DATA_TIMEOUT_MS							1000
@@ -443,6 +445,7 @@ static void start_microphone_response_handler(void * p_event_data, uint16_t even
 	response_event.response.type.start_microphone_response.switch_pos = audio_switch_get_position();
 	response_event.response.type.start_microphone_response.gain_l = drv_audio_get_gain_l();
 	response_event.response.type.start_microphone_response.gain_r = drv_audio_get_gain_r();
+	response_event.response.type.start_microphone_response.pdm_freq = drv_audio_get_pdm_freq();
 
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	
@@ -457,6 +460,8 @@ static void start_scan_response_handler(void * p_event_data, uint16_t event_size
 	response_event.response.which_type = Response_start_scan_response_tag;
 	response_event.response_retries = 0;
 	response_event.response.type.start_scan_response.timestamp = response_timestamp;
+	response_event.response.type.start_scan_response.window = ble_get_scan_window();
+	response_event.response.type.start_scan_response.interval = ble_get_scan_interval();
 	
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	
@@ -469,6 +474,7 @@ static void start_imu_response_handler(void * p_event_data, uint16_t event_size)
 	response_event.response.which_type = Response_start_imu_response_tag;
 	response_event.response_retries = 0;
 	response_event.response.type.start_imu_response.timestamp = response_timestamp;
+	response_event.response.type.start_imu_response.self_test_done = inv_icm20948_get_self_test_done(); 
 	
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	

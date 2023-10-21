@@ -38,5 +38,6 @@ ret_code_t icm20948_set_datarate(uint8_t datarate);
 ret_code_t icm20948_enable_sensors(void);
 ret_code_t icm20948_disable_sensors(void);
 void icm20948_service_isr(void * p_event_data, uint16_t event_size);
+uint8_t inv_icm20948_get_self_test_done(void);
 
 #endif /* ICM20948_DRIVER_INTERFACE_H_ */
