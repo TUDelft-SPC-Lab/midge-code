@@ -53,5 +53,6 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds);
 uint32_t storage_open_file(data_source_t source);
 uint32_t storage_close_file(data_source_t source);
 uint32_t storage_get_free_space(uint32_t *total_MB, uint32_t *free_MB);
+uint8_t sdc_errase_all();
 
 #endif /* SD_CARD_STORAGE_H_ */

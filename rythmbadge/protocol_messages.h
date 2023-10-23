@@ -13,12 +13,14 @@
 #define Request_identify_request_tag 27
 #define Request_restart_request_tag 29
 #define Request_free_sdc_space_request_tag 30
+#define Request_sdc_errase_all_request_tag 31
 
 #define Response_status_response_tag 1
 #define Response_start_microphone_response_tag 2
 #define Response_start_scan_response_tag 3
 #define Response_start_imu_response_tag 4
 #define Response_free_sdc_space_response_tag 5
+#define Response_sdc_errase_all_response_tag 32
 
 typedef struct __attribute__((__packed__)) {
 	uint32_t seconds;
@@ -73,6 +75,9 @@ typedef struct {
 typedef struct {
 } FreeSDCSpaceRequest;
 
+typedef struct {
+} ErraseAllRequest;
+
 typedef struct __attribute__((__packed__)) {
 	uint8_t which_type;
 	union {
@@ -85,7 +90,7 @@ typedef struct __attribute__((__packed__)) {
 		StopImuRequest stop_imu_request;
 		IdentifyRequest identify_request;
 		RestartRequest restart_request;
-		FreeSDCSpaceRequest free_sdc_space_request;
+		ErraseAllRequest sdc_errase_all_request;
 	} type;
 } Request;
 
@@ -95,6 +100,7 @@ typedef struct {
 	uint8_t scan_status;
 	uint8_t imu_status;
 	int8_t battery_level;
+	uint32_t pdm_data;
 	Timestamp timestamp;
 } StatusResponse;
 
@@ -124,6 +130,11 @@ typedef struct {
 	Timestamp timestamp;
 } FreeSDCSpaceResponse;
 
+typedef struct {
+	uint8_t done_errase;
+	Timestamp timestamp;
+} ErraseAllResponse;
+
 //typedef struct __attribute__((__packed__)) {
 typedef struct {
 	uint8_t which_type;
@@ -133,6 +144,7 @@ typedef struct {
 		StartScanResponse start_scan_response;
 		StartImuResponse start_imu_response;
 		FreeSDCSpaceResponse free_sdc_space_response;
+		ErraseAllResponse sdc_errase_all_response;
 	} type;
 } Response;
 

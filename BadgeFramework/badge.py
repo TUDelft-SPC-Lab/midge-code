@@ -51,6 +51,7 @@ class OpenBadge(object):
         self.start_scan_response_queue = Queue.Queue()
         self.start_imu_response_queue = Queue.Queue()
         self.free_sdc_space_response_queue = Queue.Queue()
+        self.sdc_errase_all_response_queue = Queue.Queue()
 
     # Helper function to send a BadgeMessage `command_message` to a device, expecting a response
     # of class `response_type` that is a subclass of BadgeMessage, or None if no response is expected.
@@ -103,6 +104,7 @@ class OpenBadge(object):
             Response_start_scan_response_tag: self.start_scan_response_queue,
             Response_start_imu_response_tag: self.start_imu_response_queue,
             Response_free_sdc_space_response_tag: self.free_sdc_space_response_queue,
+            Response_sdc_errase_all_response_tag: self.sdc_errase_all_response_queue,
         }
         response_options = {
             Response_status_response_tag: response_message.type.status_response,
@@ -110,6 +112,7 @@ class OpenBadge(object):
             Response_start_scan_response_tag: response_message.type.start_scan_response,
             Response_start_imu_response_tag: response_message.type.start_imu_response,
             Response_free_sdc_space_response_tag: response_message.type.free_sdc_space_response,
+            Response_sdc_errase_all_response_tag: response_message.type.sdc_errase_all_response,
         }
         queue_options[response_message.type.which].put(
             response_options[response_message.type.which]
@@ -308,3 +311,20 @@ class OpenBadge(object):
 
         return self.free_sdc_space_response_queue.get()
 
+
+    def sdc_errase_all(self):
+
+        request = Request()
+        request.type.which = Request_sdc_errase_all_request_tag
+        request.type.sdc_errase_all_request = FreeSDCSpaceRequest()
+
+        self.send_request(request)
+
+        # Clear the queue before receiving
+        with self.sdc_errase_all_response_queue.mutex:
+            self.sdc_errase_all_response_queue.queue.clear()
+
+        while self.sdc_errase_all_response_queue.empty():
+            self.receive_response()
+
+        return self.sdc_errase_all_response_queue.get()

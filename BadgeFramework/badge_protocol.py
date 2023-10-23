@@ -10,12 +10,14 @@ Request_stop_imu_request_tag = 7
 Request_identify_request_tag = 27
 Request_restart_request_tag = 29
 Request_free_sdc_space_request_tag = 30
+Request_sdc_errase_all_request_tag = 31
 
 Response_status_response_tag = 1
 Response_start_microphone_response_tag = 2
 Response_start_scan_response_tag = 3
 Response_start_imu_response_tag = 4
 Response_free_sdc_space_response_tag = 5
+Response_sdc_errase_all_response_tag = 32
 
 class _Ostream:
 	def __init__(self):
@@ -610,6 +612,35 @@ class FreeSDCSpaceRequest:
 		self.reset()
 		pass
 
+class ErraseAllRequest:
+
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		pass
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		pass
+
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		pass
 
 class Request:
 
@@ -664,6 +695,7 @@ class Request:
 			self.identify_request = None
 			self.restart_request = None
 			self.free_sdc_space_request = None
+			self.sdc_errase_all_request = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -679,6 +711,7 @@ class Request:
 				27: self.encode_identify_request,
 				29: self.encode_restart_request,
 				30: self.encode_free_sdc_space_request,
+				31: self.encode_sdc_errase_all_request,
 			}
 			options[self.which](ostream)
 			pass
@@ -713,6 +746,9 @@ class Request:
 		def encode_free_sdc_space_request(self, ostream):
 			self.free_sdc_space_request.encode_internal(ostream)
 
+		def encode_sdc_errase_all_request(self, ostream):
+			self.sdc_errase_all_request.encode_internal(ostream)			
+
 
 		def decode_internal(self, istream):
 			self.reset()
@@ -728,6 +764,7 @@ class Request:
 				27: self.decode_identify_request,
 				29: self.decode_restart_request,
 				30: self.decode_free_sdc_space_request,
+				31: self.decode_sdc_errase_all_request,
 			}
 			options[self.which](istream)
 			pass
@@ -772,6 +809,9 @@ class Request:
 			self.free_sdc_space_request = FreeSDCSpaceRequest()
 			self.free_sdc_space_request.decode_internal(istream)
 
+		def decode_sdc_errase_all_request(self, istream):
+			self.sdc_errase_all_request = ErraseAllRequest()
+			self.sdc_errase_all_request.decode_internal(istream)			
 
 class StatusResponse:
 
@@ -787,6 +827,7 @@ class StatusResponse:
 		self.scan_status = 0
 		self.imu_status = 0
 		self.battery_level = 0
+		self.pdm_data = 0
 		self.timestamp = None
 		pass
 
@@ -802,6 +843,7 @@ class StatusResponse:
 		self.encode_imu_status(ostream)
 		self.encode_timestamp(ostream)
 		self.encode_battery_level(ostream)
+		self.encode_pdm_data(ostream)
 		pass
 
 	def encode_clock_status(self, ostream):
@@ -818,6 +860,9 @@ class StatusResponse:
 
 	def encode_battery_level(self, ostream):
 		ostream.write(struct.pack('<B', self.battery_level))
+
+	def encode_pdm_data(self, ostream):
+		ostream.write(struct.pack('<h', self.pdm_data))
 
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
@@ -836,6 +881,7 @@ class StatusResponse:
 		self.decode_scan_status(istream)
 		self.decode_imu_status(istream)
 		self.decode_battery_level(istream)
+		self.decode_pdm_data(istream)
 		self.decode_timestamp(istream)
 		pass
 
@@ -859,6 +905,11 @@ class StatusResponse:
 	def decode_battery_level(self, istream):
 		#print("decode_battery_level: ", i)
 		self.battery_level= struct.unpack('<B', istream.buf[7])[0]
+
+	def decode_pdm_data(self, istream):
+		print("pdm_data:", istream.buf)
+		#print("decode_clock_status:", istream.read(1))
+		self.pdm_data= (struct.unpack('<b', istream.buf[13])[0] << 16) + (struct.unpack('<B', (istream.buf[12]))[0]<< 8)+ struct.unpack('<B', (istream.buf[11]))[0]
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
@@ -1010,7 +1061,6 @@ class StartScanResponse:
 		self.window= (struct.unpack('<B', istream.buf[4])[0] << 8) + struct.unpack('<B', (istream.buf[3]))[0]
 		
 	def decode_interval(self, istream):
-		#print("decode_battery_level: ", i)
 		self.interval= (struct.unpack('<B', istream.buf[6])[0] << 8) + struct.unpack('<B', (istream.buf[5]))[0]
 
 
@@ -1120,6 +1170,56 @@ class FreeSDCSpaceResponse:
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)
 
+class ErraseAllResponse:
+
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.done_errase = 0
+		self.timestamp = None
+		pass
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		self.encode_done_errase(ostream)
+		self.encode_timestamp(ostream)
+		pass
+
+	def encode_done_errase(self, ostream):
+		ostream.write(struct.pack('<B', self.done_errase))
+
+	def encode_timestamp(self, ostream):
+		self.timestamp.encode_internal(ostream)
+
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_done_errase(istream)
+		self.decode_timestamp(istream)
+		pass
+
+	def decode_done_errase(self, istream):
+		print("decode_done_errase: ", istream.buf)
+		self.done_errase= struct.unpack('<B', istream.buf[3])[0]
+
+	def decode_timestamp(self, istream):
+		self.timestamp = Timestamp()
+		self.timestamp.decode_internal(istream)		
+
 
 
 class Response:
@@ -1170,6 +1270,7 @@ class Response:
 			self.start_scan_response = None
 			self.start_imu_response = None
 			self.free_sdc_space_response = None
+			self.sdc_errase_all_response = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -1180,6 +1281,7 @@ class Response:
 				3: self.encode_start_scan_response,
 				4: self.encode_start_imu_response,
 				5: self.encode_free_sdc_space_response,
+				32: self.encode_sdc_errase_all_response,
 			}
 			options[self.which](ostream)
 			pass
@@ -1199,6 +1301,9 @@ class Response:
 		def encode_free_sdc_space_response(self, ostream):
 			self.free_sdc_space_response.encode_internal(ostream)
 
+		def encode_sdc_errase_all_response(self, ostream):
+			self.sdc_errase_all_response.encode_internal(ostream)			
+
 
 		def decode_internal(self, istream):
 			self.reset()
@@ -1209,6 +1314,7 @@ class Response:
 				3: self.decode_start_scan_response,
 				4: self.decode_start_imu_response,
 				5: self.decode_free_sdc_space_response,
+				32: self.decode_sdc_errase_all_response,
 			}
 			options[self.which](istream)
 			pass
@@ -1232,3 +1338,7 @@ class Response:
 		def decode_free_sdc_space_response(self, istream):
 			self.free_sdc_space_response = FreeSDCSpaceResponse()
 			self.free_sdc_space_response.decode_internal(istream)
+
+		def decode_sdc_errase_all_response(self, istream):
+			self.sdc_errase_all_response = ErraseAllResponse()
+			self.sdc_errase_all_response.decode_internal(istream)			
