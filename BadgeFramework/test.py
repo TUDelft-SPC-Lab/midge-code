@@ -139,7 +139,7 @@ def main():
         handle_stop_microphone_request()
         time.sleep(0.5)
         handle_status_request([1, 65535, 255])
-        time.sleep(0.5)
+        """ time.sleep(0.5)
         print("scan test")
         handle_start_scan_request([250, 1000])
         time.sleep(0.5)
@@ -156,7 +156,7 @@ def main():
         handle_stop_imu_request()
         time.sleep(0.5)
         handle_status_request([1, 65535, 255])
-        #time.sleep(0.5)
+        #time.sleep(0.5) """
         
 
     # Mic Test

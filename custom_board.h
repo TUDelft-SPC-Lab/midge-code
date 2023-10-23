@@ -32,8 +32,8 @@
 #define SDC_MISO_PIN 18
 
 // microphone pins
-#define MIC_CLK 32
-#define MIC_DOUT 31
+#define MIC_CLK 14
+#define MIC_DOUT 13
 
 // LED
 #define LED 03

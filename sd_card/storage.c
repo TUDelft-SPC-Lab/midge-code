@@ -185,7 +185,7 @@ void list_directory(void)
 	while (fno.fname[0]);
 }
 
-uint32_t storage_errase_all(uint32_t *total_MB, uint32_t *free_MB)
+uint8_t sdc_errase_all(void)
 {
 	FRESULT ff_result;
 	DIR dir;
@@ -194,15 +194,14 @@ uint32_t storage_errase_all(uint32_t *total_MB, uint32_t *free_MB)
 	if (ff_result != FR_OK)
 	{		
 		NRF_LOG_INFO("f_opendir error");
-		return -1;
+		return 0;
 	}		
 	while (1)
 	{
 		ff_result = f_readdir(&dir, &file_info);
 		if (ff_result != FR_OK || file_info.fname[0] == 0)
 		{		
-			NRF_LOG_INFO("f_readdir %s, file_info.fname[0] %s", file_info.fname[0],ff_result);
-			return NRF_SUCCESS;
+			return 1;
 		}		
 
 		if (file_info.fattrib & AM_ARC)
@@ -215,7 +214,7 @@ uint32_t storage_errase_all(uint32_t *total_MB, uint32_t *free_MB)
 
 			else {
 				NRF_LOG_INFO("Error deleting file: %d, name: %s", ff_result, file_info.fname);
-				return -1;
+				return 0;
 			}
 			
 		}

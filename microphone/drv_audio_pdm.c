@@ -60,16 +60,7 @@ static void process_audio_buffer(void)
 			const int16_t * p_sample = data_source_info.audio_source_info.audio_buffer;
 			for (uint16_t index=0; index< PDM_BUF_SIZE; index+=(DECIMATION*(pdm_cfg.mode?1:2)))
 			{
-				float filtered_sample = 0.0, filtered_sample_r = 0.0;
-				for (uint8_t inner_index=0; inner_index<(DECIMATION*(pdm_cfg.mode?1:2)); inner_index+=(pdm_cfg.mode?1:2))
-				{
-					filtered_sample = filtered_sample + filter_weight[inner_index/(pdm_cfg.mode?1:2)]*p_sample[index+inner_index];
-					if (!pdm_cfg.mode)
-						filtered_sample_r = filtered_sample_r + filter_weight[inner_index/(pdm_cfg.mode?1:2)]*p_sample[index+inner_index+1];
-				}
-				subsampled[index/DECIMATION] = (int16_t)filtered_sample;
-				if (!pdm_cfg.mode)
-					subsampled[index/DECIMATION+1] = (int16_t)filtered_sample_r;
+				memcpy(&subsampled[index/DECIMATION], &p_sample[index], (pdm_cfg.mode?1:2)*2);
 			}
 
 			data_source_info.data_source = AUDIO;
@@ -105,6 +96,7 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 			{
 				pdm_buf[l].released = true;
 				data_source_info.audio_source_info.audio_buffer = &pdm_buf[l].mic_buf;
+				NRF_LOG_INFO("pdm buf %d", pdm_buf[l].mic_buf[0]);
 				process_audio_buffer();
 				break;
 			}
@@ -146,27 +138,32 @@ ret_code_t drv_audio_init(nrf_pdm_mode_t mode)
 	{
 		pdm_buf[l].released = true;
 	}
+	data_source_info.data_source = AUDIO;
 
+	nrfx_pdm_config_t pdm_cfg = NRFX_PDM_DEFAULT_CONFIG(MIC_CLK, MIC_DOUT);
+
+	
 	for (uint8_t f=0; f<DECIMATION; f++)
 	{
 		filter_weight[f] = 1.0/DECIMATION;
 	}
 
-	pdm_cfg.gain_l      = 0x40;
-	pdm_cfg.gain_r      = 0x40; // (64/80)= 0x40/0x50
+	pdm_cfg.gain_l      = 0x45;
+	pdm_cfg.gain_r      = 0x45; 
 
 	pdm_cfg.mode        = local_mode;
 
 	// 20kHz
-	pdm_cfg.clock_freq	= 0x0A000000;
+	pdm_cfg.clock_freq	= NRF_PDM_FREQ_1067K;
 
 	nrfx_pdm_init(&pdm_cfg, drv_audio_pdm_event_handler);
 
+	//nrf_pdm_psel_connect(0x20, 0x1F);
 
 	NRF_LOG_INFO("pdm_cfg: mode %d, clock_freq %d, gain_r %d, gain_l %d",pdm_cfg.mode, pdm_cfg.clock_freq, pdm_cfg.gain_r, pdm_cfg.gain_l);
 	audio_switch_position =	audio_switch_get_position();
 
-    return 0;
+    return NRF_SUCCESS;
 }
 
 int8_t drv_audio_get_mode(void)

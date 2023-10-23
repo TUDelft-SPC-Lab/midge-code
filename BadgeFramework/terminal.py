@@ -46,6 +46,7 @@ def main():
 		print("  identify [led duration seconds | 'off']")
 		print("  restart")
 		print("  get_free_space")
+		print("  sdc_errase_all")
 		print("  help")
 		print("All commands use current system time as transmitted time.")
 		print("Default arguments used where not specified.")
@@ -101,6 +102,9 @@ def main():
 	def handle_get_free_space(args):
 		print(badge.get_free_sdc_space())
 
+	def handle_sdc_errase_all(args):
+		print(badge.sdc_errase_all())		
+
 
 	command_handlers = {
 		"help": print_help,
@@ -114,6 +118,7 @@ def main():
 		"identify": handle_identify_request,
 		"restart": handle_restart_request,
 		"get_free_space": handle_get_free_space,
+		"sdc_errase_all": handle_sdc_errase_all,
 	}
 
 	while True:
