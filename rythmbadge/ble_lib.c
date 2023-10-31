@@ -48,6 +48,7 @@ static ble_on_scan_report_callback_t	external_ble_on_scan_report_callback = NULL
 static ret_code_t ble_init_services(void);
 static ret_code_t ble_init_advertising(void);
 static ble_gap_scan_params_t scan_parameters;
+static ble_gap_evt_adv_report_t scan_data;
 
 static void ble_nus_on_receive_callback(ble_nus_evt_t * p_evt);
 static void ble_nus_on_transmit_complete_callback(void);
@@ -363,7 +364,8 @@ static void ble_on_scan_report_callback(const ble_gap_evt_adv_report_t* scan_rep
 	if(external_ble_on_scan_report_callback != NULL)
 		external_ble_on_scan_report_callback(scan_report);
 
-	NRF_LOG_INFO("BLE: BLE on scan report callback. RSSI: %d\n", scan_report->rssi);
+    scan_data.rssi = scan_report->rssi;
+	NRF_LOG_INFO("BLE: BLE on scan report callback. RSSI: %d\n", scan_data.rssi);
 }
 
 
@@ -422,4 +424,9 @@ int16_t ble_get_scan_window(void)
 int16_t ble_get_scan_interval(void)
 {
     return scan_parameters.interval;
+}
+
+uint16_t ble_get_scan_rssi(void)
+{
+    return scan_data.rssi;
 }

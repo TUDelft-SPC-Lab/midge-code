@@ -20,6 +20,13 @@ inv_icm20948_t icm_device;
 
 imu_sample_t imu_buffer[MAX_IMU_SOURCES][2][IMU_BUFFER_SIZE];
 
+
+imu_sample_t sample_to_gui_gyr;
+imu_sample_t sample_to_gui_mag;
+imu_sample_t sample_to_gui_acc;
+imu_sample_t sample_to_gui_rot;
+
+
 //const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "accel_raw", "gyr", "gyr_raw", "mag", "mag_raw", "rotation", "game_rotation", "geom_rotation"};
 const char *imu_sensor_name[MAX_IMU_SOURCES] = {"acc", "gyr", "mag", "rot"};
 
@@ -114,28 +121,12 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		// change buffers, send to sd for writting
 		data_source_info.imu_source_info.imu_source = ACCEL;
 		data_source_info.imu_source_info.imu_buffer = &imu_buffer[ACCEL][active_buffer[ACCEL]];
+		sample_to_gui_acc = sample;
 		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
 		APP_ERROR_CHECK(err_code);
 		active_buffer[ACCEL] = !active_buffer[ACCEL];
 		count[ACCEL] = 0;
 		break;
-
-//	case INV_ICM20948_SENSOR_RAW_ACCELEROMETER:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.axis, data, 12);
-//		memcpy( &imu_buffer[ACCEL_RAW][active_buffer[ACCEL_RAW]][count[ACCEL_RAW]++], &sample, sizeof(sample));
-//
-//		if (count[ACCEL_RAW] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = ACCEL_RAW;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[ACCEL_RAW][active_buffer[ACCEL_RAW]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[ACCEL_RAW] = !active_buffer[ACCEL_RAW];
-//		count[ACCEL_RAW] = 0;
-//		break;
 
 	case INV_ICM20948_SENSOR_GYROSCOPE:
 		sample.timestamp = timestamp;
@@ -148,28 +139,13 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		// change buffers, send to sd for writting
 		data_source_info.imu_source_info.imu_source = GYRO;
 		data_source_info.imu_source_info.imu_buffer = &imu_buffer[GYRO][active_buffer[GYRO]];
+		sample_to_gui_gyr = sample;
 		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
 		APP_ERROR_CHECK(err_code);
 		active_buffer[GYRO] = !active_buffer[GYRO];
 		count[GYRO] = 0;
 		break;
 
-//	case INV_ICM20948_SENSOR_RAW_GYROSCOPE:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.axis, data, 12);
-//		memcpy( &imu_buffer[GYRO_RAW][active_buffer[GYRO_RAW]][count[GYRO_RAW]++], &sample, sizeof(sample));
-//
-//		if (count[GYRO_RAW] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = GYRO_RAW;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[GYRO_RAW][active_buffer[GYRO_RAW]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[GYRO_RAW] = !active_buffer[GYRO_RAW];
-//		count[GYRO_RAW] = 0;
-//		break;
 
 	case INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD:
 		sample.timestamp = timestamp;
@@ -182,30 +158,12 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		// change buffers, send to sd for writting
 		data_source_info.imu_source_info.imu_source = MAG;
 		data_source_info.imu_source_info.imu_buffer = &imu_buffer[MAG][active_buffer[MAG]];
+		sample_to_gui_mag = sample;
 		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
 		APP_ERROR_CHECK(err_code);
 		active_buffer[MAG] = !active_buffer[MAG];
 		count[MAG] = 0;
 		break;
-
-
-//	case INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.axis, data, 12);
-//		memcpy( &imu_buffer[MAG_RAW][active_buffer[MAG_RAW]][count[MAG_RAW]++], &sample, sizeof(sample));
-//
-//		if (count[MAG_RAW] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = MAG_RAW;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[MAG_RAW][active_buffer[MAG_RAW]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[MAG_RAW] = !active_buffer[MAG_RAW];
-//		count[MAG_RAW] = 0;
-//		break;
-
 
 	case INV_ICM20948_SENSOR_ROTATION_VECTOR:
 		sample.timestamp = timestamp;
@@ -218,51 +176,103 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		// change buffers, send to sd for writting
 		data_source_info.imu_source_info.imu_source = ROTATION_VECTOR;
 		data_source_info.imu_source_info.imu_buffer = &imu_buffer[ROTATION_VECTOR][active_buffer[ROTATION_VECTOR]];
+		sample_to_gui_rot = sample;
 		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
 		APP_ERROR_CHECK(err_code);
 		active_buffer[ROTATION_VECTOR] = !active_buffer[ROTATION_VECTOR];
 		count[ROTATION_VECTOR] = 0;
 		break;
 
-//	case INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.quat, data, 16);
-//		memcpy( &imu_buffer[GAME_ROTATION_VECTOR][active_buffer[GAME_ROTATION_VECTOR]][count[GAME_ROTATION_VECTOR]++], &sample, sizeof(sample));
-//
-//		if (count[GAME_ROTATION_VECTOR] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = GAME_ROTATION_VECTOR;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[GAME_ROTATION_VECTOR][active_buffer[GAME_ROTATION_VECTOR]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[GAME_ROTATION_VECTOR] = !active_buffer[GAME_ROTATION_VECTOR];
-//		count[GAME_ROTATION_VECTOR] = 0;
-//		break;
-//
-//	case INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR:
-//		sample.timestamp = timestamp;
-//		memcpy(sample.quat, data, 16);
-//		memcpy( &imu_buffer[GEOMAGNETIC_ROTATION_VECTOR][active_buffer[GEOMAGNETIC_ROTATION_VECTOR]][count[GEOMAGNETIC_ROTATION_VECTOR]++], &sample, sizeof(sample));
-//
-//		if (count[GEOMAGNETIC_ROTATION_VECTOR] < IMU_BUFFER_SIZE)
-//			break;
-//
-//		// change buffers, send to sd for writting
-//		data_source_info.imu_source_info.imu_source = GEOMAGNETIC_ROTATION_VECTOR;
-//		data_source_info.imu_source_info.imu_buffer = &imu_buffer[GEOMAGNETIC_ROTATION_VECTOR][active_buffer[GEOMAGNETIC_ROTATION_VECTOR]];
-//		err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
-//		APP_ERROR_CHECK(err_code);
-//		active_buffer[GEOMAGNETIC_ROTATION_VECTOR] = !active_buffer[GEOMAGNETIC_ROTATION_VECTOR];
-//		count[GEOMAGNETIC_ROTATION_VECTOR] = 0;
-//		break;
-
-
 	default:
 		return;
 	}
 }
+
+uint16_t get_gyr_x(void)
+{
+
+	return ((uint16_t) (sample_to_gui_gyr.axis[0] * 1000));
+	
+}
+
+uint16_t get_gyr_y(void)
+{
+
+	return ((uint16_t) (sample_to_gui_gyr.axis[1] * 1000));
+	
+}
+
+uint16_t get_gyr_z(void)
+{
+
+	return ((uint16_t) (sample_to_gui_gyr.axis[2] * 1000));
+	
+}
+
+uint16_t get_mag_x(void)
+{
+
+	return ((uint16_t) (sample_to_gui_mag.axis[0] * 1000));
+	
+}
+
+uint16_t get_mag_y(void)
+{
+
+	return ((uint16_t) (sample_to_gui_mag.axis[1] * 1000));
+	
+}
+
+uint16_t get_mag_z(void)
+{
+
+	return ((uint16_t) (sample_to_gui_mag.axis[2] * 1000));
+	
+}
+
+uint16_t get_acc_x(void)
+{
+
+	return ((uint16_t) (sample_to_gui_acc.axis[0] * 1000));
+	
+}
+
+uint16_t get_acc_y(void)
+{
+
+	return ((uint16_t) (sample_to_gui_acc.axis[1] * 1000));
+	
+}
+
+uint16_t get_acc_z(void)
+{
+
+	return ((uint16_t) (sample_to_gui_acc.axis[2] * 1000));
+	
+}
+
+
+uint16_t get_rot_x(void)
+{
+
+	return ((uint16_t) (sample_to_gui_rot.axis[0] * 1000));
+	
+}
+
+uint16_t get_rot_y(void)
+{
+
+	return ((uint16_t) (sample_to_gui_rot.axis[1] * 1000));
+	
+}
+
+uint16_t get_rot_z(void)
+{
+
+	return ((uint16_t) (sample_to_gui_rot.axis[2] * 1000));
+	
+}
+
 
 void icm20948_service_isr(void * p_event_data, uint16_t event_size)
 {

@@ -78,6 +78,3 @@ int main(void)
 		}
 	}
 }
-
-
-

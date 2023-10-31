@@ -11,6 +11,7 @@ Request_identify_request_tag = 27
 Request_restart_request_tag = 29
 Request_free_sdc_space_request_tag = 30
 Request_sdc_errase_all_request_tag = 31
+Request_get_imu_data_request_tag = 33
 
 Response_status_response_tag = 1
 Response_start_microphone_response_tag = 2
@@ -18,6 +19,7 @@ Response_start_scan_response_tag = 3
 Response_start_imu_response_tag = 4
 Response_free_sdc_space_response_tag = 5
 Response_sdc_errase_all_response_tag = 32
+Response_get_imu_data_response_tag = 34
 
 class _Ostream:
 	def __init__(self):
@@ -642,6 +644,36 @@ class ErraseAllRequest:
 		self.reset()
 		pass
 
+class GetIMUDataRequest:
+
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		pass
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		pass
+
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		pass		
+
 class Request:
 
 	def __init__(self):
@@ -696,6 +728,7 @@ class Request:
 			self.restart_request = None
 			self.free_sdc_space_request = None
 			self.sdc_errase_all_request = None
+			self.get_imu_data_request = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -712,6 +745,7 @@ class Request:
 				29: self.encode_restart_request,
 				30: self.encode_free_sdc_space_request,
 				31: self.encode_sdc_errase_all_request,
+				33: self.encode_get_imu_data_request,
 			}
 			options[self.which](ostream)
 			pass
@@ -749,6 +783,8 @@ class Request:
 		def encode_sdc_errase_all_request(self, ostream):
 			self.sdc_errase_all_request.encode_internal(ostream)			
 
+		def encode_get_imu_data_request(self, ostream):
+			self.get_imu_data_request.encode_internal(ostream)
 
 		def decode_internal(self, istream):
 			self.reset()
@@ -765,6 +801,7 @@ class Request:
 				29: self.decode_restart_request,
 				30: self.decode_free_sdc_space_request,
 				31: self.decode_sdc_errase_all_request,
+				33: self.decode_get_imu_data_request,
 			}
 			options[self.which](istream)
 			pass
@@ -813,6 +850,11 @@ class Request:
 			self.sdc_errase_all_request = ErraseAllRequest()
 			self.sdc_errase_all_request.decode_internal(istream)			
 
+		def decode_get_imu_data_request(self, istream):
+			self.get_imu_data_request = ErraseAllRequest()
+			self.get_imu_data_request.decode_internal(istream)	
+
+
 class StatusResponse:
 
 	def __init__(self):
@@ -828,6 +870,7 @@ class StatusResponse:
 		self.imu_status = 0
 		self.battery_level = 0
 		self.pdm_data = 0
+		self.scan_data = 0
 		self.timestamp = None
 		pass
 
@@ -844,6 +887,7 @@ class StatusResponse:
 		self.encode_timestamp(ostream)
 		self.encode_battery_level(ostream)
 		self.encode_pdm_data(ostream)
+		self.encode_scan_data(ostream)
 		pass
 
 	def encode_clock_status(self, ostream):
@@ -864,6 +908,9 @@ class StatusResponse:
 	def encode_pdm_data(self, ostream):
 		ostream.write(struct.pack('<h', self.pdm_data))
 
+	def encode_scan_data(self, ostream):
+		ostream.write(struct.pack('<b', self.scan_data))		
+
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
 
@@ -883,6 +930,7 @@ class StatusResponse:
 		self.decode_battery_level(istream)
 		self.decode_pdm_data(istream)
 		self.decode_timestamp(istream)
+		self.decode_scan_data(istream)
 		pass
 
 	def decode_clock_status(self, istream):
@@ -907,9 +955,10 @@ class StatusResponse:
 		self.battery_level= struct.unpack('<B', istream.buf[7])[0]
 
 	def decode_pdm_data(self, istream):
-		print("pdm_data:", istream.buf)
-		#print("decode_clock_status:", istream.read(1))
 		self.pdm_data= (struct.unpack('<b', istream.buf[13])[0] << 16) + (struct.unpack('<B', (istream.buf[12]))[0]<< 8)+ struct.unpack('<B', (istream.buf[11]))[0]
+
+	def decode_scan_data(self, istream):
+		self.scan_data= (struct.unpack('<b', istream.buf[10])[0] << 8) + struct.unpack('<B', (istream.buf[9]))[0]
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
@@ -1056,8 +1105,6 @@ class StartScanResponse:
 		self.timestamp.decode_internal(istream)
 
 	def decode_window(self, istream):
-		print("decode_battery_level: ", istream.buf)
-
 		self.window= (struct.unpack('<B', istream.buf[4])[0] << 8) + struct.unpack('<B', (istream.buf[3]))[0]
 		
 	def decode_interval(self, istream):
@@ -1108,7 +1155,7 @@ class StartImuResponse:
 		self.timestamp.decode_internal(istream)
 
 	def decode_self_test_done(self, istream):
-		print("decode_self_test_done:", istream.buf)
+		#print("decode_self_test_done:", istream.buf)
 		self.self_test_done= struct.unpack('<B', istream.buf[3])[0]
 
 
@@ -1213,12 +1260,163 @@ class ErraseAllResponse:
 		pass
 
 	def decode_done_errase(self, istream):
-		print("decode_done_errase: ", istream.buf)
 		self.done_errase= struct.unpack('<B', istream.buf[3])[0]
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)		
+
+#
+class GetIMUDataResponse:
+
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.gyr_x = 0
+		self.gyr_y = 0
+		self.gyr_z = 0
+
+		self.mag_x = 0
+		self.mag_y = 0
+		self.mag_z = 0
+
+		self.acc_x = 0
+		self.acc_y = 0
+		self.acc_z = 0		
+
+		self.rot_x = 0
+		self.rot_y = 0
+		self.rot_z = 0		
+		self.timestamp = None
+		pass
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		self.encode_gyr_x(ostream)
+		self.encode_gyr_y(ostream)
+		self.encode_gyr_z(ostream)
+		self.encode_mag_x(ostream)
+		self.encode_mag_y(ostream)
+		self.encode_mag_z(ostream)
+		self.encode_acc_x(ostream)
+		self.encode_acc_y(ostream)
+		self.encode_acc_z(ostream)
+		self.encode_rot_x(ostream)
+		self.encode_rot_y(ostream)
+		self.encode_rot_z(ostream)
+		self.encode_timestamp(ostream)
+		pass
+
+	def encode_gyr_x(self, ostream):
+		ostream.write(struct.pack('<B', self.gyr_x))
+
+	def encode_gyr_y(self, ostream):
+		ostream.write(struct.pack('<B', self.gyr_y))
+
+	def encode_gyr_z(self, ostream):
+		ostream.write(struct.pack('<B', self.gyr_z))
+
+	def encode_mag_x(self, ostream):
+		ostream.write(struct.pack('<B', self.mag_x))
+
+	def encode_mag_y(self, ostream):
+		ostream.write(struct.pack('<B', self.mag_y))
+
+	def encode_mag_z(self, ostream):
+		ostream.write(struct.pack('<B', self.mag_z))
+
+	def encode_acc_x(self, ostream):
+		ostream.write(struct.pack('<B', self.acc_x))
+
+	def encode_acc_y(self, ostream):
+		ostream.write(struct.pack('<B', self.acc_y))
+
+	def encode_acc_z(self, ostream):
+		ostream.write(struct.pack('<B', self.acc_z))
+
+	def encode_rot_x(self, ostream):
+		ostream.write(struct.pack('<B', self.rot_x))
+
+	def encode_rot_y(self, ostream):
+		ostream.write(struct.pack('<B', self.rot_y))
+
+	def encode_rot_z(self, ostream):
+		ostream.write(struct.pack('<B', self.rot_z))
+
+	def encode_timestamp(self, ostream):
+		self.timestamp.encode_internal(ostream)
+
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_gyr_x(istream)
+		self.decode_gyr_y(istream)
+		self.decode_gyr_z(istream)
+		self.decode_mag_x(istream)
+		self.decode_mag_y(istream)
+		self.decode_mag_z(istream)
+		self.decode_acc_x(istream)
+		self.decode_acc_y(istream)
+		self.decode_acc_z(istream)
+		self.decode_rot_x(istream)
+		self.decode_rot_y(istream)
+		self.decode_rot_z(istream)
+		self.decode_timestamp(istream)
+		pass
+
+	def decode_gyr_x(self, istream):		
+		self.gyr_x= float((struct.unpack('<b', istream.buf[4])[0] << 8) + struct.unpack('<B', (istream.buf[3]))[0])/float(10000)
+
+	def decode_gyr_y(self, istream):
+		self.gyr_y= float((struct.unpack('<b', istream.buf[6])[0] << 8) + struct.unpack('<B', (istream.buf[5]))[0])/float(10000)
+
+	def decode_gyr_z(self, istream):
+		self.gyr_z= float((struct.unpack('<b', istream.buf[8])[0] << 8) + struct.unpack('<B', (istream.buf[7]))[0])/float(10000)
+
+	def decode_mag_x(self, istream):
+		self.mag_x= float((struct.unpack('<b', istream.buf[10])[0] << 8) + struct.unpack('<B', (istream.buf[9]))[0])/float(10000)
+
+	def decode_mag_y(self, istream):
+		self.mag_y= float((struct.unpack('<b', istream.buf[12])[0] << 8) + struct.unpack('<B', (istream.buf[11]))[0])/float(10000)
+
+	def decode_mag_z(self, istream):
+		self.mag_z= float((struct.unpack('<b', istream.buf[14])[0] << 8) + struct.unpack('<B', (istream.buf[13]))[0])/float(10000)
+
+	def decode_acc_x(self, istream):
+		self.acc_x= float((struct.unpack('<b', istream.buf[16])[0] << 8) + struct.unpack('<B', (istream.buf[15]))[0])/float(10000)
+
+	def decode_acc_y(self, istream):
+		self.acc_y= float((struct.unpack('<b', istream.buf[18])[0] << 8) + struct.unpack('<B', (istream.buf[17]))[0])/float(10000)
+
+	def decode_acc_z(self, istream):
+		self.acc_z= float((struct.unpack('<b', istream.buf[20])[0] << 8) + struct.unpack('<B', (istream.buf[19]))[0])/float(10000)
+
+	def decode_rot_x(self, istream):
+		self.rot_x= float((struct.unpack('<b', istream.buf[22])[0] << 8) + struct.unpack('<B', (istream.buf[21]))[0])/float(10000)
+
+	def decode_rot_y(self, istream):
+		self.rot_y= float((struct.unpack('<b', istream.buf[24])[0] << 8) + struct.unpack('<B', (istream.buf[23]))[0])/float(10000)
+
+	def decode_rot_z(self, istream):
+		self.rot_z= float((struct.unpack('<b', istream.buf[26])[0] << 8) + struct.unpack('<B', (istream.buf[25]))[0])/float(10000)
+
+	def decode_timestamp(self, istream):
+		self.timestamp = Timestamp()
+		self.timestamp.decode_internal(istream)	
 
 
 
@@ -1271,6 +1469,7 @@ class Response:
 			self.start_imu_response = None
 			self.free_sdc_space_response = None
 			self.sdc_errase_all_response = None
+			self.get_imu_data_response = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -1282,6 +1481,7 @@ class Response:
 				4: self.encode_start_imu_response,
 				5: self.encode_free_sdc_space_response,
 				32: self.encode_sdc_errase_all_response,
+				34: self.encode_get_imu_data_response,
 			}
 			options[self.which](ostream)
 			pass
@@ -1304,6 +1504,8 @@ class Response:
 		def encode_sdc_errase_all_response(self, ostream):
 			self.sdc_errase_all_response.encode_internal(ostream)			
 
+		def encode_get_imu_data(self, ostream):
+			self.get_imu_data.encode_internal(ostream)	
 
 		def decode_internal(self, istream):
 			self.reset()
@@ -1315,6 +1517,7 @@ class Response:
 				4: self.decode_start_imu_response,
 				5: self.decode_free_sdc_space_response,
 				32: self.decode_sdc_errase_all_response,
+				34: self.decode_get_imu_data_response,
 			}
 			options[self.which](istream)
 			pass
@@ -1342,3 +1545,7 @@ class Response:
 		def decode_sdc_errase_all_response(self, istream):
 			self.sdc_errase_all_response = ErraseAllResponse()
 			self.sdc_errase_all_response.decode_internal(istream)			
+
+		def decode_get_imu_data_response(self, istream):
+			self.get_imu_data_response = GetIMUDataResponse()
+			self.get_imu_data_response.decode_internal(istream)			
