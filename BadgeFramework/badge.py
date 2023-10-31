@@ -52,6 +52,8 @@ class OpenBadge(object):
         self.start_imu_response_queue = Queue.Queue()
         self.free_sdc_space_response_queue = Queue.Queue()
         self.sdc_errase_all_response_queue = Queue.Queue()
+        self.get_imu_data_response_queue = Queue.Queue()
+        
 
     # Helper function to send a BadgeMessage `command_message` to a device, expecting a response
     # of class `response_type` that is a subclass of BadgeMessage, or None if no response is expected.
@@ -105,6 +107,7 @@ class OpenBadge(object):
             Response_start_imu_response_tag: self.start_imu_response_queue,
             Response_free_sdc_space_response_tag: self.free_sdc_space_response_queue,
             Response_sdc_errase_all_response_tag: self.sdc_errase_all_response_queue,
+            Response_get_imu_data_response_tag: self.get_imu_data_response_queue,
         }
         response_options = {
             Response_status_response_tag: response_message.type.status_response,
@@ -113,6 +116,7 @@ class OpenBadge(object):
             Response_start_imu_response_tag: response_message.type.start_imu_response,
             Response_free_sdc_space_response_tag: response_message.type.free_sdc_space_response,
             Response_sdc_errase_all_response_tag: response_message.type.sdc_errase_all_response,
+            Response_get_imu_data_response_tag: response_message.type.get_imu_data_response
         }
         queue_options[response_message.type.which].put(
             response_options[response_message.type.which]
@@ -316,7 +320,7 @@ class OpenBadge(object):
 
         request = Request()
         request.type.which = Request_sdc_errase_all_request_tag
-        request.type.sdc_errase_all_request = FreeSDCSpaceRequest()
+        request.type.sdc_errase_all_request = ErraseAllRequest()
 
         self.send_request(request)
 
@@ -328,3 +332,21 @@ class OpenBadge(object):
             self.receive_response()
 
         return self.sdc_errase_all_response_queue.get()
+
+    def get_imu_data(self):
+
+        request = Request()
+        request.type.which = Request_get_imu_data_request_tag
+        request.type.get_imu_data_request = GetIMUDataRequest()
+        request.type.get_imu_data_request.timestamp = Timestamp()
+
+        self.send_request(request)
+
+        # Clear the queue before receiving
+        with self.get_imu_data_response_queue.mutex:
+            self.get_imu_data_response_queue.queue.clear()
+
+        while self.get_imu_data_response_queue.empty():
+            self.receive_response()
+
+        return self.get_imu_data_response_queue.get()

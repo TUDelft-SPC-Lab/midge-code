@@ -72,13 +72,15 @@ static void restart_request_handler(void * p_event_data, uint16_t event_size);
 static void free_sdc_space_request_handler(void * p_event_data, uint16_t event_size);
 static void sdc_errase_all_request_handler(void * p_event_data, uint16_t event_size);
 
+static void get_imu_data_request_handler(void * p_event_data, uint16_t event_size);
+
 static void status_response_handler(void * p_event_data, uint16_t event_size);
 static void start_microphone_response_handler(void * p_event_data, uint16_t event_size);
 static void start_scan_response_handler(void * p_event_data, uint16_t event_size);
 static void start_imu_response_handler(void * p_event_data, uint16_t event_size);
 static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_size);
 static void sdc_errase_all_response_handler(void * p_event_data, uint16_t event_size);
-
+static void get_imu_data_response_handler(void * p_event_data, uint16_t event_size);
 
 static request_handler_for_type_t request_handlers[] = {
         {
@@ -124,7 +126,11 @@ static request_handler_for_type_t request_handlers[] = {
 		{
                 .type = Request_sdc_errase_all_request_tag,
                 .handler = sdc_errase_all_request_handler,
-        }		
+        },
+		{
+                .type = Request_get_imu_data_request_tag,
+                .handler = get_imu_data_request_handler,
+        }	
 };
 
 
@@ -431,6 +437,7 @@ static void status_response_handler(void * p_event_data, uint16_t event_size)
 	response_event.response.type.status_response.imu_status = advertiser_get_status_flag_imu_enabled();
 	response_event.response.type.status_response.battery_level = get_battery_level();
 	response_event.response.type.status_response.pdm_data = pdm_buf[0].mic_buf[0];
+	response_event.response.type.status_response.scan_data = ble_get_scan_rssi();
 	response_event.response.type.status_response.timestamp = response_timestamp;
 
 	response_event.response_retries = 0;
@@ -512,6 +519,52 @@ static void sdc_errase_all_response_handler(void * p_event_data, uint16_t event_
 	send_response(NULL, 0);
 }
 
+static void get_imu_data_response_handler(void * p_event_data, uint16_t event_size)
+{
+	response_event.response.which_type = Response_get_imu_data_response_tag;
+	response_event.response_retries = 0;
+	response_event.response.type.sdc_errase_all_response.done_errase = 0;
+	if (advertiser_get_status_flag_imu_enabled() == 1)
+	{ //if sd card is writing, we will drop samples
+		response_event.response.type.get_imu_data_response.gyr_x = get_gyr_x();
+		response_event.response.type.get_imu_data_response.gyr_y = get_gyr_y();
+		response_event.response.type.get_imu_data_response.gyr_z = get_gyr_z();
+
+		response_event.response.type.get_imu_data_response.mag_x = get_mag_x();
+		response_event.response.type.get_imu_data_response.mag_y = get_mag_y();
+		response_event.response.type.get_imu_data_response.mag_z = get_mag_z();
+
+		response_event.response.type.get_imu_data_response.acc_x = get_acc_x();
+		response_event.response.type.get_imu_data_response.acc_y = get_acc_y();
+		response_event.response.type.get_imu_data_response.acc_z = get_acc_z();
+
+		response_event.response.type.get_imu_data_response.rot_x = get_rot_x();
+		response_event.response.type.get_imu_data_response.rot_y = get_rot_y();
+		response_event.response.type.get_imu_data_response.rot_z = get_rot_z();
+	}
+	else { //if sd card is writing, we will drop samples
+		response_event.response.type.get_imu_data_response.gyr_x = 0;
+		response_event.response.type.get_imu_data_response.gyr_y = 0;
+		response_event.response.type.get_imu_data_response.gyr_z = 0;
+
+		response_event.response.type.get_imu_data_response.mag_x = 0;
+		response_event.response.type.get_imu_data_response.mag_y = 0;
+		response_event.response.type.get_imu_data_response.mag_z = 0;
+
+		response_event.response.type.get_imu_data_response.acc_x = 0;
+		response_event.response.type.get_imu_data_response.acc_y = 0;
+		response_event.response.type.get_imu_data_response.acc_z = 0;
+
+		response_event.response.type.get_imu_data_response.rot_x = 0;
+		response_event.response.type.get_imu_data_response.rot_y = 0;
+		response_event.response.type.get_imu_data_response.rot_z = 0;
+	
+	}
+	response_event.response.type.get_imu_data_response.timestamp = response_timestamp;
+
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
 
 
 
@@ -656,4 +709,11 @@ static void sdc_errase_all_request_handler(void * p_event_data, uint16_t event_s
 	NRF_LOG_INFO("REQUEST_HANDLER: Free sdc space request handler\n");
 
 	app_sched_event_put(NULL, 0, sdc_errase_all_response_handler);
+}
+
+static void get_imu_data_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: get_imu_data\n");
+
+	app_sched_event_put(NULL, 0, get_imu_data_response_handler);
 }
