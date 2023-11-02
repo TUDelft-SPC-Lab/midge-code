@@ -35,7 +35,10 @@ def main():
         print("# Midge test                        #")
         print("# sensor: mic, stereo mode          #")
         print("#-----------------------------------#")
-        if (~badge.start_microphone(0).mode):
+
+        start_stereo = badge.start_microphone(t=None,mode=0)
+
+        if (start_stereo.mode==0):
             mic_mode_stereo = True
             print("# mic mode:         PASS            #")
         else:
@@ -65,12 +68,14 @@ def main():
         print("# sensor: mic, mono mode            #")
         print("#-----------------------------------#")
 
-        if (~badge.start_microphone(1).mode):
-			mic_mode_mono = True
-			print("# mic mode:         PASS            #")
+        start_mono = badge.start_microphone(t=None,mode=1)
+
+        if (start_mono.mode==1):
+            mic_mode_mono = True
+            print("# mic mode:         PASS            #")
         else:
 			mic_mode_mono = False
-			print("# mic mode:         FAIL             #")
+			print("# mic mode:         FAIL            #")
 
         time.sleep(5)
 
