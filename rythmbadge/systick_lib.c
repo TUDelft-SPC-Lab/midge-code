@@ -192,8 +192,8 @@ void systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_
 	if (!time_sync_done)
 	{
 		time_sync_done = true;
-		if (storage_init_folder(seconds_sync))
-			NRF_LOG_ERROR("wat werror");
+		//if (storage_init_folder(seconds_sync))
+		//	NRF_LOG_ERROR("wat werror");
 	}
 }
 
