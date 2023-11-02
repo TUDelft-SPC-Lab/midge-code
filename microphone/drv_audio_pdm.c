@@ -25,6 +25,7 @@ nrf_drv_pdm_config_t pdm_cfg = NRF_DRV_PDM_DEFAULT_CONFIG(MIC_CLK, MIC_DOUT);
 pdm_buf_t pdm_buf[PDM_BUF_NUM];
 data_source_info_t data_source_info;
 audio_switch_position_t audio_switch_position;
+nrf_pdm_mode_t local_mode;
 
 int16_t subsampled[PDM_BUF_SIZE/DECIMATION];
 float filter_weight[DECIMATION];
@@ -118,20 +119,20 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 	}
 }
 
-ret_code_t drv_audio_init(nrf_pdm_mode_t mode)
+ret_code_t drv_audio_init(uint8_t mode)
 {
-	static nrf_pdm_mode_t local_mode;
+
 	switch (mode)
 	{
 	case 0: //stereo
-		local_mode = 0;
+		local_mode = NRF_PDM_MODE_STEREO;
 		break;
 
 	case 1: //mono
-		local_mode = 1;
+		local_mode = NRF_PDM_MODE_MONO;
 		break;			
 	default:
-		local_mode = 0;
+		local_mode = NRF_PDM_MODE_STEREO;
 		break;
 	}
 	for (uint8_t l=0; l<PDM_BUF_NUM; l++)
@@ -168,7 +169,7 @@ ret_code_t drv_audio_init(nrf_pdm_mode_t mode)
 
 int8_t drv_audio_get_mode(void)
 {
-	return pdm_cfg.mode;
+	return local_mode; //pdm_cfg.mode;
 }
 
 int8_t drv_audio_get_gain_l(void)

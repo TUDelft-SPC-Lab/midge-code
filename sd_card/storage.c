@@ -324,6 +324,8 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds)
 	return 0;
 }
 
+int fileCount = 0;
+
 uint32_t storage_open_file(data_source_t source)
 {
 	FRESULT ff_result;
@@ -335,7 +337,27 @@ uint32_t storage_open_file(data_source_t source)
 	NRF_LOG_INFO("SD: source: %d", source);
 	if (source == AUDIO)
 	{
-		sprintf(filename, "%d_audio", rand() % 100 + 0);
+
+        fileCount = 0;
+        while (true)
+        {    
+            if (audio_switch_get_position()==HIGH) sprintf(filename, "%dMicHi%d", drv_audio_get_mode(), fileCount);
+            if (audio_switch_get_position()==LOW) sprintf(filename, "%dMicLo%d", drv_audio_get_mode(), fileCount);
+            ff_result = f_stat(filename, &fno);  // Check if the file already exists
+            if (ff_result == FR_NO_FILE)
+            {
+                break;  // File does not exist, break the loop
+            }
+            if (fileCount >= 99)
+            {
+                return -1;  // Maximum file count reached
+            }
+            fileCount++;
+        }
+
+
+
+		
 	    ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
 		NRF_LOG_INFO("SD Audio: ff_result: %d", ff_result);
 	    if (ff_result != FR_OK)
@@ -349,7 +371,23 @@ uint32_t storage_open_file(data_source_t source)
 	{
 		for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
 		{
-			sprintf(filename, "%d_%s", rand() % 99 + 0, imu_sensor_name[sensor]);
+			fileCount = 0;
+			while (true)
+			{
+				sprintf(filename, "%s_%d", imu_sensor_name[sensor], fileCount);
+				ff_result = f_stat(filename, &fno);  // Check if the file already exists
+				if (ff_result == FR_NO_FILE)
+				{
+					break;  // File does not exist, break the loop
+				}
+				if (fileCount >= 99)
+				{
+					return -1;  // Maximum file count reached
+				}
+				fileCount++;
+			}
+
+		
 			ff_result = f_open(&imu_file_handle[sensor], filename, FA_WRITE | FA_CREATE_ALWAYS);
 			NRF_LOG_INFO("SD IMU: ff_result: %d", ff_result);
 			if (ff_result != FR_OK)
@@ -362,7 +400,22 @@ uint32_t storage_open_file(data_source_t source)
 	}
 	if (source == SCANNER)
 	{
-		sprintf(filename, "%d_scan", rand() % 99 + 0);
+	
+		fileCount = 0;
+		while (true)
+		{
+			sprintf(filename, "scan_%d", fileCount);
+			ff_result = f_stat(filename, &fno);  // Check if the file already exists
+			if (ff_result == FR_NO_FILE)
+			{
+				break;  // File does not exist, break the loop
+			}
+			if (fileCount >= 99)
+			{
+				return -1;  // Maximum file count reached
+			}
+			fileCount++;
+		}
 	    ff_result = f_open(&scanner_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
 	    NRF_LOG_INFO("SD Scanner: ff_result: %d", ff_result);
 		if (ff_result != FR_OK)
