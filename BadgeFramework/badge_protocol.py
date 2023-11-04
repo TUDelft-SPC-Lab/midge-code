@@ -1208,10 +1208,11 @@ class FreeSDCSpaceResponse:
 		pass
 
 	def decode_total_space(self, istream):
-		self.total_space= struct.unpack('<I', istream.read(4))[0]
+		print(" total space",istream.buf)
+		self.total_space= (struct.unpack('<b', istream.buf[6])[0] << 32) + (struct.unpack('<b', istream.buf[5])[0] << 16) + (struct.unpack('<b', istream.buf[4])[0] << 8) + (struct.unpack('<b', (istream.buf[3]))[0])
 
 	def decode_free_space(self, istream):
-		self.free_space= struct.unpack('<I', istream.read(4))[0]
+		self.free_space= (struct.unpack('<b', istream.buf[10])[0] << 32) + (struct.unpack('<b', istream.buf[9])[0] << 16) + (struct.unpack('<b', istream.buf[8])[0] << 8) + (struct.unpack('<b', (istream.buf[7]))[0])
 
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
