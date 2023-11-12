@@ -26,7 +26,9 @@ pdm_buf_t pdm_buf[PDM_BUF_NUM];
 data_source_info_t data_source_info;
 audio_switch_position_t audio_switch_position;
 nrf_pdm_mode_t local_mode;
-
+uint32_t local_freq;
+uint8_t local_gain_l;
+uint8_t local_gain_r;
 
 
 int16_t subsampled[PDM_BUF_SIZE/DECIMATION];
@@ -152,12 +154,16 @@ ret_code_t drv_audio_init(uint8_t mode)
 	}
 
 	pdm_cfg.gain_l      = 0x45;
-	pdm_cfg.gain_r      = 0x45; 
+	pdm_cfg.gain_r      = 0x45;
+
+	local_gain_l      = pdm_cfg.gain_l;
+	local_gain_r      = pdm_cfg.gain_r ;
 
 	pdm_cfg.mode        = local_mode;
 
 	// 20kHz
 	pdm_cfg.clock_freq	= 0x08800000;
+	local_freq      = pdm_cfg.clock_freq;
 
 	nrfx_pdm_init(&pdm_cfg, drv_audio_pdm_event_handler);
 
@@ -176,18 +182,18 @@ int8_t drv_audio_get_mode(void)
 
 int8_t drv_audio_get_gain_l(void)
 {
-	return pdm_cfg.gain_l;
+	return local_gain_l;
 }
 
 int8_t drv_audio_get_gain_r(void)
 {
-	return pdm_cfg.gain_r;
+	return local_gain_r;
 }
 
 int16_t drv_audio_get_pdm_freq(void)
 {
 	int16_t freq;
-	switch (pdm_cfg.clock_freq) // Valid freqs
+	switch (local_freq) // Valid freqs
 	{
 	case 0x08000000: //1 MHz
 		freq = 100;

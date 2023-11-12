@@ -10,7 +10,10 @@
 typedef struct
 {
     int8_t battery;
-	uint8_t status_flags;
+	uint8_t clk_status_flag;
+    uint8_t mic_status_flag;
+	uint8_t imu_status_flag;
+	uint8_t scan_status_flag;
     uint16_t ID;
     uint8_t group;
     uint8_t MAC[6];
@@ -66,9 +69,9 @@ ret_code_t advertiser_set_badge_assignement(BadgeAssignment badge_assignement)
 
 void advertiser_set_status_flag_is_clock_synced(uint8_t is_clock_synced) {
 	if(is_clock_synced)
-		custom_advdata.status_flags |= (1 << 0);
+		custom_advdata.clk_status_flag = 1;
 	else
-		custom_advdata.status_flags &= ~(1 << 0);
+		custom_advdata.clk_status_flag = 0;
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }
 
@@ -76,27 +79,27 @@ void advertiser_set_status_flag_is_clock_synced(uint8_t is_clock_synced) {
 void advertiser_set_status_flag_microphone_enabled(uint8_t microphone_enabled) {
 	NRF_LOG_INFO("Group: %d", microphone_enabled);
 	if(microphone_enabled)
-		custom_advdata.status_flags |= (1 << 1);
+		custom_advdata.mic_status_flag = 1;
 	else
-		custom_advdata.status_flags &= ~(1 << 1);
+		custom_advdata.mic_status_flag = 0;
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }
 
 
 void advertiser_set_status_flag_scan_enabled(uint8_t scan_enabled) {
 	if(scan_enabled)
-		custom_advdata.status_flags |= (1 << 2);
+		custom_advdata.scan_status_flag = 1;
 	else
-		custom_advdata.status_flags &= ~(1 << 2);
+		custom_advdata.scan_status_flag = 0;
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }
 
 
 void advertiser_set_status_flag_imu_enabled(uint8_t imu_enabled) {
 	if(imu_enabled)
-		custom_advdata.status_flags |= (1 << 2);
+		custom_advdata.imu_status_flag = 1;
 	else
-		custom_advdata.status_flags &= ~(1 << 2);
+		custom_advdata.imu_status_flag = 0;
 	ble_set_advertising_custom_advdata(CUSTOM_COMPANY_IDENTIFIER, (uint8_t*) &custom_advdata, CUSTOM_ADVDATA_LEN);
 }
 
@@ -127,20 +130,20 @@ uint8_t advertiser_get_manuf_data_len(void) {
 
 
 uint8_t advertiser_get_status_flag_is_clock_synced(void) {
-	return (custom_advdata.status_flags & (1 << 0)) ? 1 : 0;
+	return (custom_advdata.clk_status_flag);
 }
 
 
 uint8_t advertiser_get_status_flag_microphone_enabled(void) {
-	return (custom_advdata.status_flags & (1 << 1)) ? 1 : 0;
+	return (custom_advdata.mic_status_flag);
 }
 
 
 uint8_t advertiser_get_status_flag_scan_enabled(void) {
-	return (custom_advdata.status_flags & (1 << 2)) ? 1 : 0;
+	return (custom_advdata.scan_status_flag);
 }
 
 
 uint8_t advertiser_get_status_flag_imu_enabled(void) {
-	return (custom_advdata.status_flags & (1 << 3)) ? 1 : 0;
+	return (custom_advdata.imu_status_flag);
 }
