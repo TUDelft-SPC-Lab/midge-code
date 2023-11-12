@@ -27,6 +27,8 @@ data_source_info_t data_source_info;
 audio_switch_position_t audio_switch_position;
 nrf_pdm_mode_t local_mode;
 
+
+
 int16_t subsampled[PDM_BUF_SIZE/DECIMATION];
 float filter_weight[DECIMATION];
 
@@ -155,7 +157,7 @@ ret_code_t drv_audio_init(uint8_t mode)
 	pdm_cfg.mode        = local_mode;
 
 	// 20kHz
-	pdm_cfg.clock_freq	= NRF_PDM_FREQ_1067K;
+	pdm_cfg.clock_freq	= 0x08800000;
 
 	nrfx_pdm_init(&pdm_cfg, drv_audio_pdm_event_handler);
 
