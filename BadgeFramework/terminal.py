@@ -65,7 +65,7 @@ def main():
 			print("Invalid Syntax: status [new badge id] [group number]")
 
 	def handle_start_microphone_request(args):
-		print(badge.start_microphone())
+		print(badge.start_microphone(t=None,mode=0))
 
 	def handle_stop_microphone_request(args):
 		badge.stop_microphone()
