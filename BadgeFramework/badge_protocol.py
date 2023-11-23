@@ -1049,7 +1049,7 @@ class StartMicrophoneResponse:
 
 	def decode_pdm_freq(self, istream):
 		#print("decode_pdm_freq: ", istream.buf)
-		self.pdm_freq= struct.unpack('<B', istream.buf[7])[0]
+		self.pdm_freq= struct.unpack('<B', istream.buf[7])[0]+900
 
 
 class StartScanResponse:
@@ -1122,6 +1122,9 @@ class StartImuResponse:
 	def reset(self):
 		self.timestamp = None
 		self.self_test_done = 0
+		self.gyr_fsr = 0
+		self.acc_fsr = 0
+		self.datarate = 0
 		pass
 
 	def encode(self):
@@ -1131,11 +1134,23 @@ class StartImuResponse:
 
 	def encode_internal(self, ostream):
 		self.encode_timestamp(ostream)
+		self.encode_gyr_fsr(ostream)
+		self.encode_acc_fsr(ostream)
 		self.encode_self_test_done(ostream)
+		self.encode_datarate(ostream)
 		pass
 
 	def encode_self_test_done(self, ostream):
 		self.self_test_done.encode_internal(ostream)
+
+	def encode_acc_fsr(self, ostream):
+		self.acc_fsr.encode_internal(ostream)
+
+	def encode_gyr_fsr(self, ostream):
+		self.gyr_fsr.encode_internal(ostream)
+
+	def encode_datarate(self, ostream):
+		self.datarate.encode_internal(ostream)				
 
 
 	@classmethod
@@ -1148,6 +1163,9 @@ class StartImuResponse:
 		self.reset()
 		self.decode_timestamp(istream)
 		self.decode_self_test_done(istream)
+		self.decode_acc_fsr(istream)
+		self.decode_gyr_fsr(istream)
+		self.decode_datarate(istream)
 		pass
 
 	def decode_timestamp(self, istream):
@@ -1155,8 +1173,17 @@ class StartImuResponse:
 		self.timestamp.decode_internal(istream)
 
 	def decode_self_test_done(self, istream):
-		#print("decode_self_test_done:", istream.buf)
 		self.self_test_done= struct.unpack('<B', istream.buf[3])[0]
+
+	def decode_acc_fsr(self, istream):
+		self.gyr_fsr = (struct.unpack('<B', istream.buf[8])[0] << 32) + (struct.unpack('<B', istream.buf[7])[0] << 16) + (struct.unpack('<B', istream.buf[6])[0] << 8) + (struct.unpack('<B', (istream.buf[5]))[0])
+
+	def decode_gyr_fsr(self, istream):
+		self.acc_fsr = (struct.unpack('<B', istream.buf[12])[0] << 32) + (struct.unpack('<B', istream.buf[11])[0] << 16) + (struct.unpack('<B', istream.buf[10])[0] << 8) + (struct.unpack('<B', (istream.buf[9]))[0])
+
+	def decode_datarate(self, istream):
+		#print("datarate:", istream.buf)
+		self.datarate = struct.unpack('<B', istream.buf[13])[0]
 
 
 class FreeSDCSpaceResponse:

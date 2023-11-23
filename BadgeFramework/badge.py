@@ -162,7 +162,7 @@ class OpenBadge(object):
             (timestamp_seconds, timestamp_ms) = get_timestamps()
         else:
             (timestamp_seconds, timestamp_ms) = get_timestamps_from_time(t)
-
+        #print("MODE ",mode)
         request = Request()
         request.type.which = Request_start_microphone_request_tag
         request.type.start_microphone_request = StartMicrophoneRequest()

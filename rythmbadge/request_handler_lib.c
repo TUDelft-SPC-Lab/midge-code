@@ -489,6 +489,9 @@ static void start_imu_response_handler(void * p_event_data, uint16_t event_size)
 	response_event.response_retries = 0;
 	response_event.response.type.start_imu_response.timestamp = response_timestamp;
 	response_event.response.type.start_imu_response.self_test_done = inv_icm20948_get_self_test_done(); 
+	response_event.response.type.start_imu_response.gyr_fsr = get_gyr_fsr();
+	response_event.response.type.start_imu_response.acc_fsr = get_acc_fsr();
+	response_event.response.type.start_imu_response.datarate = get_datarate();
 	
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	
@@ -523,7 +526,7 @@ static void get_imu_data_response_handler(void * p_event_data, uint16_t event_si
 {
 	response_event.response.which_type = Response_get_imu_data_response_tag;
 	response_event.response_retries = 0;
-	response_event.response.type.sdc_errase_all_response.done_errase = 0;
+
 	if (advertiser_get_status_flag_imu_enabled() == 1)
 	{ //if sd card is writing, we will drop samples
 		response_event.response.type.get_imu_data_response.gyr_x = get_gyr_x();

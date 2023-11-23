@@ -177,7 +177,9 @@ ret_code_t drv_audio_init(uint8_t mode)
 
 int8_t drv_audio_get_mode(void)
 {
-	return local_mode; //pdm_cfg.mode;
+	int8_t get_mode = 1;
+	if (local_mode==NRF_PDM_MODE_STEREO) get_mode = 0;
+	return get_mode; //pdm_cfg.mode;
 }
 
 int8_t drv_audio_get_gain_l(void)

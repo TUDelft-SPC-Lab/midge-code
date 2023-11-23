@@ -51,6 +51,9 @@ uint16_t get_gyr_z(void);
 uint16_t get_rot_x(void);
 uint16_t get_rot_y(void);
 uint16_t get_rot_z(void);
+uint32_t get_acc_fsr(void);
+uint32_t get_gyr_fsr(void);
+uint8_t get_datarate(void);
 
 
 #endif /* ICM20948_DRIVER_INTERFACE_H_ */
