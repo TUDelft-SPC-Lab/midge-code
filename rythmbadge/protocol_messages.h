@@ -129,6 +129,9 @@ typedef struct {
 typedef struct {
 	Timestamp timestamp;
 	uint8_t self_test_done;
+	uint32_t gyr_fsr;
+	uint32_t acc_fsr;
+	uint8_t datarate;
 } StartImuResponse;
 
 typedef struct {

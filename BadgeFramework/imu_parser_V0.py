@@ -9,11 +9,11 @@ class IMUParser(object):
 
     def __init__(self,filename):
         self.filename = filename
-        self.path_accel = filename+'ACC'
-        self.path_gyro = filename+'GYR'
-        self.path_mag = filename+'MAG'
-        self.path_rotation = filename+'ROT'
-        self.path_scan = filename+'SCAN'
+        self.path_accel = filename+'ACC_0'
+        self.path_gyro = filename+'GYR_0'
+        self.path_mag = filename+'MAG_0'
+        self.path_rotation = filename+'ROT_0'
+        self.path_scan = filename+'SCAN_0'
 
     def parse_generic(self,sensorname):
         data = []
