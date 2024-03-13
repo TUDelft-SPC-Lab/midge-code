@@ -1,8 +1,29 @@
 from hub_connection_V1 import Connection
 import signal,sys,tty,termios
 import time
+import logging
 
-def choose_function(connection,input):
+# from hub_connection_V1 import Connection
+
+
+def get_logger(name):
+    log_format_file = '%(asctime)s  %(levelname)5s  %(message)s'
+    log_format_console = '%(message)s'
+    logging.basicConfig(level=logging.DEBUG,
+                        format=log_format_file,
+                        filename="data_collection.log",
+                        filemode='w')
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    console.setFormatter(logging.Formatter(log_format_console))
+    logging.getLogger(name).addHandler(console)
+    return logging.getLogger(name)
+
+
+logger = get_logger("hub_utilities")
+
+
+def choose_function(connection:Connection, input):
     chooser = {
         "help": connection.print_help,
         "status": connection.handle_status_request,

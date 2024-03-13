@@ -5,3 +5,7 @@ _build/*
 __pycache/
 .vscode/c_cpp_properties.json
 .vscode/settings.json
+**/.DS_Store
+BadgeFramework/rotation/rpi_sync.sh
+.idea
+*.log

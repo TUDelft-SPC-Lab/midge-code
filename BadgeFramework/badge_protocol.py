@@ -21,15 +21,19 @@ Response_free_sdc_space_response_tag = 5
 Response_sdc_errase_all_response_tag = 32
 Response_get_imu_data_response_tag = 34
 
+
 class _Ostream:
 	def __init__(self):
 		self.buf = b''
+
 	def write(self, data):
 		self.buf += data
+
 
 class _Istream:
 	def __init__(self, buf):
 		self.buf = buf
+
 	def read(self, l):
 		if(l > len(self.buf)):
 			raise Exception("Not enough bytes in Istream to read")
@@ -39,8 +43,8 @@ class _Istream:
 		#	print("_Istream:",i)
 		return ret
 
-class Timestamp:
 
+class Timestamp:
 	def __init__(self):
 		self.reset()
 
