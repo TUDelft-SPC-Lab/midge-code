@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 import logging
 import sys
 import threading
+import time
 
 from badge import *
 from ble_badge_connection import *
@@ -11,7 +12,7 @@ from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scan
 from bluepy.btle import BTLEException
 
 # Enable debug output.
-#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 # Main Loop of Badge Terminal
 
 def main():
@@ -45,6 +46,8 @@ def main():
 		print("  identify [led duration seconds | 'off']")
 		print("  restart")
 		print("  get_free_space")
+		print("  sdc_errase_all")
+		print("  get_imu_data")
 		print("  help")
 		print("All commands use current system time as transmitted time.")
 		print("Default arguments used where not specified.")
@@ -62,7 +65,7 @@ def main():
 			print("Invalid Syntax: status [new badge id] [group number]")
 
 	def handle_start_microphone_request(args):
-		print(badge.start_microphone())
+		print(badge.start_microphone(t=None,mode=0))
 
 	def handle_stop_microphone_request(args):
 		badge.stop_microphone()
@@ -100,6 +103,12 @@ def main():
 	def handle_get_free_space(args):
 		print(badge.get_free_sdc_space())
 
+	def handle_sdc_errase_all(args):
+		print(badge.sdc_errase_all())	
+
+	def handle_get_imu_data(args):
+		print(badge.get_imu_data())		
+
 
 	command_handlers = {
 		"help": print_help,
@@ -113,6 +122,8 @@ def main():
 		"identify": handle_identify_request,
 		"restart": handle_restart_request,
 		"get_free_space": handle_get_free_space,
+		"sdc_errase_all": handle_sdc_errase_all,
+		"get_imu_data": handle_get_imu_data,
 	}
 
 	while True:

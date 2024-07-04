@@ -127,6 +127,6 @@ uint8_t advertiser_get_status_flag_scan_enabled(void);
  */
 uint8_t advertiser_get_status_flag_imu_enabled(void);
 
-
+int8_t advertiser_get_battery_percentage(void);
 
 #endif

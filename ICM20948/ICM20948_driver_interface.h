@@ -38,5 +38,22 @@ ret_code_t icm20948_set_datarate(uint8_t datarate);
 ret_code_t icm20948_enable_sensors(void);
 ret_code_t icm20948_disable_sensors(void);
 void icm20948_service_isr(void * p_event_data, uint16_t event_size);
+uint8_t inv_icm20948_get_self_test_done(void);
+uint16_t get_acc_x(void);
+uint16_t get_acc_y(void);
+uint16_t get_acc_z(void);
+uint16_t get_mag_x(void);
+uint16_t get_mag_y(void);
+uint16_t get_mag_z(void);
+uint16_t get_gyr_x(void);
+uint16_t get_gyr_y(void);
+uint16_t get_gyr_z(void);
+uint16_t get_rot_x(void);
+uint16_t get_rot_y(void);
+uint16_t get_rot_z(void);
+uint32_t get_acc_fsr(void);
+uint32_t get_gyr_fsr(void);
+uint8_t get_datarate(void);
+
 
 #endif /* ICM20948_DRIVER_INTERFACE_H_ */

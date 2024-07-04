@@ -542,7 +542,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 	int data_left_in_fifo=0;
 	short short_data[3] = {0};
 	signed long  long_data[3] = {0};
-	signed long  long_quat[3] = {0};
+	signed long  long_quat[4] = {0};
 	float gyro_raw_float[3];
 	float gyro_bias_float[3];
 	int gyro_accuracy = 0;
@@ -571,7 +571,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 			/* Mirror FIFO contents and stop processing FIFO if an error was detected*/
 			if(inv_icm20948_updateTs(s, &data_left_in_fifo, &total_sample_cnt, &lastIrqTimeUs))
 				break;
-//			NRF_LOG_INFO("%d", total_sample_cnt);
+			NRF_LOG_INFO("%d", total_sample_cnt);
 //			NRF_LOG_HEXDUMP_INFO(&total_sample_cnt, 2);
 			while(total_sample_cnt--) {
 				/* Read FIFO contents and parse it, and stop processing FIFO if an error was detected*/

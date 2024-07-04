@@ -32,7 +32,7 @@ static const uint8_t BATT_MEAS_VOLTAGE_TO_SOC[] =
 };
 
 static nrf_saadc_value_t 	adc_buf[2];
-uint8_t						batt_lvl_in_percentage;
+int16_t						batt_lvl_in_percentage;
 
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(60000)     		            /**< Battery level measurement interval (ticks). */
 APP_TIMER_DEF(m_battery_timer_id);                                  				/**< Battery timer. */
@@ -70,7 +70,7 @@ void saadc_event_handler(nrf_drv_saadc_evt_t const * p_event)
 	    batt_lvl_in_percentage = BATT_MEAS_VOLTAGE_TO_SOC[voltage_vector_element];
 	    advertiser_set_battery_percentage(batt_lvl_in_percentage);
 
-//		NRF_LOG_INFO("Battery voltage: %d, percentage: %d%%", batt_lvl_in_milli_volts, batt_lvl_in_percentage);
+		NRF_LOG_INFO("Battery voltage: %d, percentage: %d%%", batt_lvl_in_milli_volts, batt_lvl_in_percentage);
 
 	}
 }
@@ -103,4 +103,9 @@ void saadc_init(void)
 
     err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
+}
+
+int8_t get_battery_level(void){
+	int8_t battery_level = batt_lvl_in_percentage;
+	return battery_level;
 }

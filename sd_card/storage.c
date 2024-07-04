@@ -1,5 +1,5 @@
 #include "storage.h"
-
+#include <stdlib.h>
 #include "drv_audio_pdm.h"
 #include "boards.h"
 #include "ff.h"
@@ -12,6 +12,15 @@
 #include "systick_lib.h"
 #include "scanner_lib.h"
 #include "audio_switch.h"
+#include "advertiser_lib.h"
+#include "app_timer.h"
+#include "sampling_lib.h"
+
+#define F_WRITE_TIMEOUT_MS (75) // 8kB takes max 20ms, stereo at 20kHz at HIGH is 102.4ms
+#define F_SYNC_PERIOD_MS (1000*60*5) // 5 min periodic flushing to the sd_card
+
+APP_TIMER_DEF(f_write_timeout_timer);
+APP_TIMER_DEF(f_sync_timer);
 
 /**
  * @brief  SDC block device definition
@@ -35,37 +44,70 @@ FIL scanner_file_handle;
 
 void sd_write(void * p_event_data, uint16_t event_size)
 {
-	data_source_info_t data_source_info = *(data_source_info_t *)p_event_data;
-	uint32_t bytes_written = 0;
+	static data_source_info_t data_source_info;
+	data_source_info = *(data_source_info_t *)p_event_data;
 
 	if (data_source_info.data_source == AUDIO && !audio_file_handle.err)
 	{
+		app_timer_start(f_write_timeout_timer, APP_TIMER_TICKS(F_WRITE_TIMEOUT_MS), &data_source_info.data_source);
 		// size is times two, since this function receives number of bytes, not size of pointer
-		FRESULT ff_result = f_write(&audio_file_handle, data_source_info.audio_source_info.audio_buffer, data_source_info.audio_source_info.audio_buffer_length, (UINT *) &bytes_written);
+		FRESULT ff_result = f_write(&audio_file_handle, data_source_info.audio_source_info.audio_buffer, data_source_info.audio_source_info.audio_buffer_length, NULL);
 		if (ff_result != FR_OK)
 		{
 			NRF_LOG_INFO("Audio write to sd failed: %d", ff_result);
 		}
-		f_sync(&audio_file_handle);
+		app_timer_stop(f_write_timeout_timer);
 	}
 	else if (data_source_info.data_source == IMU && !imu_file_handle[data_source_info.imu_source_info.imu_source].err)
 	{
-		FRESULT ff_result = f_write(&imu_file_handle[data_source_info.imu_source_info.imu_source], data_source_info.imu_source_info.imu_buffer, sizeof(imu_sample_t)*IMU_BUFFER_SIZE, (UINT *) &bytes_written);
+		app_timer_start(f_write_timeout_timer, APP_TIMER_TICKS(F_WRITE_TIMEOUT_MS), &data_source_info.data_source);
+		FRESULT ff_result = f_write(&imu_file_handle[data_source_info.imu_source_info.imu_source], data_source_info.imu_source_info.imu_buffer, sizeof(imu_sample_t)*IMU_BUFFER_SIZE, NULL);
 		if (ff_result != FR_OK)
-		{
 			NRF_LOG_INFO("IMU data write to sd failed: %d", ff_result);
-		}
-		f_sync(&imu_file_handle[data_source_info.imu_source_info.imu_source]);
+		app_timer_stop(f_write_timeout_timer);
 	}
 	else if (data_source_info.data_source == SCANNER && !scanner_file_handle.err)
 	{
-		FRESULT ff_result = f_write(&scanner_file_handle, scanner_scan_buffer[data_source_info.scanner_buffer_num], sizeof(scanner_scan_report_t)*SCANNER_BUFFER_LENGTH, (UINT *) &bytes_written);
+		app_timer_start(f_write_timeout_timer, APP_TIMER_TICKS(F_WRITE_TIMEOUT_MS), &data_source_info.data_source);
+		FRESULT ff_result = f_write(&scanner_file_handle, scanner_scan_buffer[data_source_info.scanner_buffer_num], sizeof(scanner_scan_report_t)*SCANNER_BUFFER_LENGTH, NULL);
 		if (ff_result != FR_OK)
-		{
-			NRF_LOG_INFO("Scanner data write to sd failed: %d", ff_result);
-		}
-		f_sync(&scanner_file_handle);
+			NRF_LOG_ERROR("Scanner data write to sd failed: %d", ff_result);
+		app_timer_stop(f_write_timeout_timer);
 	}
+}
+
+// In case the low-quality sdcards block for writting, restart the audio file in order to time-stamp it again.
+static void f_write_timeout_handler(void* p_context)
+{
+	data_source_t data_source = *(data_source_t *)p_context;
+	NRF_LOG_ERROR("source: %d caused a timeout at: %lu", data_source, systick_get_millis()/1000);
+	if (data_source == AUDIO)
+	{
+		sampling_stop_microphone();
+		nrf_delay_ms(200); // delay to fill the buffer and close the files before opening the new ones
+		sampling_start_microphone(-1); //mode = -1 to restart with last requested mode
+	}
+
+}
+
+static void f_sync_timeout_handler(void* p_context)
+{
+//	NRF_LOG_INFO("f_sync timer");
+	FRESULT ff_result = FR_OK;
+
+	for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
+	{
+		if (!imu_file_handle[sensor].err)
+			ff_result |= f_sync(&imu_file_handle[sensor]);
+	}
+	if (!audio_file_handle.err)
+		ff_result |= f_sync(&audio_file_handle);
+	if (!scanner_file_handle.err)
+		ff_result |= f_sync(&scanner_file_handle);
+
+	if (ff_result != FR_OK)
+		NRF_LOG_ERROR("f_sync error: %d", ff_result);
+
 }
 
 uint32_t storage_close_file(data_source_t source)
@@ -78,7 +120,7 @@ uint32_t storage_close_file(data_source_t source)
 		ff_result = f_close(&audio_file_handle);
 		if (ff_result)
 		{
-			NRF_LOG_INFO("close file error");
+			NRF_LOG_INFO("close audio file error: %d", ff_result);
 			return -1;
 		}
 	}
@@ -90,7 +132,7 @@ uint32_t storage_close_file(data_source_t source)
 			ff_result = f_close(&imu_file_handle[sensor]);
 			if (ff_result)
 			{
-				NRF_LOG_INFO("close file error");
+				NRF_LOG_INFO("close IMU file error: %d", ff_result);
 				return -1;
 			}
 		}
@@ -101,7 +143,7 @@ uint32_t storage_close_file(data_source_t source)
 		ff_result = f_close(&scanner_file_handle);
 		if (ff_result)
 		{
-			NRF_LOG_INFO("close file error");
+			NRF_LOG_INFO("close proximity file error: %d", ff_result);
 			return -1;
 		}
 	}
@@ -143,6 +185,43 @@ void list_directory(void)
 	while (fno.fname[0]);
 }
 
+uint8_t sdc_errase_all(void)
+{
+	FRESULT ff_result;
+	DIR dir;
+	FILINFO file_info;
+	ff_result = f_opendir(&dir, "");
+	if (ff_result != FR_OK)
+	{		
+		NRF_LOG_INFO("f_opendir error");
+		return 0;
+	}		
+	while (1)
+	{
+		ff_result = f_readdir(&dir, &file_info);
+		if (ff_result != FR_OK || file_info.fname[0] == 0)
+		{		
+			return 1;
+		}		
+
+		if (file_info.fattrib & AM_ARC)
+		{
+			ff_result = f_unlink(file_info.fname);
+			if (ff_result == FR_OK)
+			{
+				NRF_LOG_INFO("File errased: %d", file_info.fname);
+			}
+
+			else {
+				NRF_LOG_INFO("Error deleting file: %d, name: %s", ff_result, file_info.fname);
+				return 0;
+			}
+			
+		}
+		
+	}
+}
+
 uint32_t storage_get_free_space(uint32_t *total_MB, uint32_t *free_MB)
 {
 	FRESULT ff_result;
@@ -168,6 +247,7 @@ uint32_t storage_get_free_space(uint32_t *total_MB, uint32_t *free_MB)
     return NRF_SUCCESS;
 }
 
+
 uint32_t storage_init(void)
 {
     FRESULT ff_result;
@@ -192,10 +272,6 @@ uint32_t storage_init(void)
         return 1;
     }
 
-//    uint32_t blocks_per_mb = (1024uL * 1024uL) / m_block_dev_sdc.block_dev.p_ops->geometry(&m_block_dev_sdc.block_dev)->blk_size;
-//    uint32_t capacity = m_block_dev_sdc.block_dev.p_ops->geometry(&m_block_dev_sdc.block_dev)->blk_count / blocks_per_mb;
-//    NRF_LOG_INFO("Capacity: %d MB", capacity);
-
     NRF_LOG_INFO("Mounting volume...");
     ff_result = f_mount(&fs, "", 1);
     if (ff_result)
@@ -204,19 +280,21 @@ uint32_t storage_init(void)
         return 2;
     }
 
-//    storage_get_free_space(NULL,NULL);
-    //    list_directory();
+	// Create the f_write supervisor
+	uint32_t ret = app_timer_create(&f_write_timeout_timer, APP_TIMER_MODE_SINGLE_SHOT, f_write_timeout_handler);
+	if(ret != NRF_SUCCESS) return NRF_ERROR_INTERNAL;
 
-//    WORD ssize;
-//    ff_result =  disk_ioctl( 0,MMC_GET_CID,&ssize);
-//    NRF_LOG_INFO("sector size: %x", ssize);
-//    if (ff_result)
-//    {
-//        NRF_LOG_INFO("sector size get failed with %d", ff_result);
-//        return 2;
-//    }
+	// init the error flag so no syncing will occur
+	for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
+		imu_file_handle[sensor].err = 1;
+	audio_file_handle.err = 1;
+	scanner_file_handle.err = 1;
+	// Create the f_sync repeated timer
+	ret = app_timer_create(&f_sync_timer, APP_TIMER_MODE_REPEATED, f_sync_timeout_handler);
+	if(ret != NRF_SUCCESS) return NRF_ERROR_INTERNAL;
+	app_timer_start(f_sync_timer, APP_TIMER_TICKS(F_SYNC_PERIOD_MS), NULL);
 
-        return 0;
+    return 0;
 }
 
 
@@ -224,9 +302,11 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds)
 {
 	NRF_LOG_INFO("open folder");
 	FRESULT ff_result;
+	BadgeAssignment badge_assignment;
+	advertiser_get_badge_assignement(&badge_assignment);
+	TCHAR folder[30] = {};
 
-	TCHAR folder[10] = {};
-	sprintf(folder, "/%ld", sync_time_seconds);
+	sprintf(folder, "/%d_%ld", badge_assignment.ID, sync_time_seconds);
 	ff_result = f_mkdir(folder);
 	if (ff_result)
 	{
@@ -244,20 +324,45 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds)
 	return 0;
 }
 
+int fileCount = 0;
+
 uint32_t storage_open_file(data_source_t source)
 {
 	FRESULT ff_result;
 
-	uint32_t seconds = systick_get_millis()/1000;
+	uint64_t millis = systick_get_millis();
+	uint32_t seconds = millis/1000;
 	TCHAR filename[50] = {};
-
+	NRF_LOG_INFO("SD: seconds: %ld", seconds);
+	NRF_LOG_INFO("SD: source: %d", source);
 	if (source == AUDIO)
 	{
-		sprintf(filename, "%ld_audio_%d", seconds, audio_switch_get_position());
+
+        fileCount = 0;
+        while (true)
+        {    
+            if (audio_switch_get_position()==HIGH) sprintf(filename, "%dMicHi%d", drv_audio_get_mode(), fileCount);
+            if (audio_switch_get_position()==LOW) sprintf(filename, "%dMicLo%d", drv_audio_get_mode(), fileCount);
+            ff_result = f_stat(filename, &fno);  // Check if the file already exists
+            if (ff_result == FR_NO_FILE)
+            {
+                break;  // File does not exist, break the loop
+            }
+            if (fileCount >= 99)
+            {
+                return -1;  // Maximum file count reached
+            }
+            fileCount++;
+        }
+
+
+
+		
 	    ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
+		NRF_LOG_INFO("SD Audio: ff_result: %d", ff_result);
 	    if (ff_result != FR_OK)
 	    {
-	        NRF_LOG_INFO("Unable to open or create file: %s", filename);
+	        NRF_LOG_INFO("SD Audio: Unable to open or create file: %d", filename);
 	        return -1;
 	    }
 		audio_file_handle.err = 0;
@@ -266,11 +371,28 @@ uint32_t storage_open_file(data_source_t source)
 	{
 		for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
 		{
-			sprintf(filename, "%ld_%s", seconds, imu_sensor_name[sensor]);
+			fileCount = 0;
+			while (true)
+			{
+				sprintf(filename, "%s_%d", imu_sensor_name[sensor], fileCount);
+				ff_result = f_stat(filename, &fno);  // Check if the file already exists
+				if (ff_result == FR_NO_FILE)
+				{
+					break;  // File does not exist, break the loop
+				}
+				if (fileCount >= 99)
+				{
+					return -1;  // Maximum file count reached
+				}
+				fileCount++;
+			}
+
+		
 			ff_result = f_open(&imu_file_handle[sensor], filename, FA_WRITE | FA_CREATE_ALWAYS);
+			NRF_LOG_INFO("SD IMU: ff_result: %d", ff_result);
 			if (ff_result != FR_OK)
 			{
-				NRF_LOG_INFO("Unable to open or create file: %s", filename);
+				NRF_LOG_INFO("SD IMU: Unable to open or create file: %d", filename);
 				return -1;
 			}
 			imu_file_handle[sensor].err = 0;
@@ -278,16 +400,32 @@ uint32_t storage_open_file(data_source_t source)
 	}
 	if (source == SCANNER)
 	{
-		sprintf(filename, "%ld_proximity", seconds);
+	
+		fileCount = 0;
+		while (true)
+		{
+			sprintf(filename, "scan_%d", fileCount);
+			ff_result = f_stat(filename, &fno);  // Check if the file already exists
+			if (ff_result == FR_NO_FILE)
+			{
+				break;  // File does not exist, break the loop
+			}
+			if (fileCount >= 99)
+			{
+				return -1;  // Maximum file count reached
+			}
+			fileCount++;
+		}
 	    ff_result = f_open(&scanner_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
-	    if (ff_result != FR_OK)
+	    NRF_LOG_INFO("SD Scanner: ff_result: %d", ff_result);
+		if (ff_result != FR_OK)
 	    {
-	        NRF_LOG_INFO("Unable to open or create file: %s", filename);
+	        NRF_LOG_INFO("SD Scanner: Unable to open or create file: %d", filename);
 	        return -1;
 	    }
 	    scanner_file_handle.err = 0;
 	}
-
+	NRF_LOG_INFO("SD: Success creating: %d", filename);
 
     return 0;
 }

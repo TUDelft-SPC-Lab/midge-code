@@ -25,6 +25,10 @@
 
 void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 {
+    __disable_irq();
+	NRF_LOG_ERROR("error id: %d, pc: %d, info: %d", id, pc, info);
+    NRF_LOG_FINAL_FLUSH();
+
     NVIC_SystemReset();
 }
 
@@ -43,7 +47,7 @@ int main(void)
 	ret = systick_init(0);
 	check_init_error(ret, 1);
 
-	ret = timeout_init();
+ 	ret = timeout_init();
 	check_init_error(ret, 2);
 
 	ret = ble_init();
@@ -62,7 +66,8 @@ int main(void)
 
 	ret = request_handler_init();
 	check_init_error(ret, 7);
-
+	
+	led_update_status();
 	led_init_success();
 
 	while(1) {
@@ -73,5 +78,3 @@ int main(void)
 		}
 	}
 }
-
-
