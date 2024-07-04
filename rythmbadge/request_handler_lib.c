@@ -1,8 +1,9 @@
 #include "request_handler_lib.h"
-
+#include "audio_switch.h"
 #include <protocol_messages.h>
 #include <string.h>
 #include "app_fifo.h"
+#include "drv_audio_pdm.h"
 #include "app_scheduler.h"
 #include "sender_lib.h"
 #include "systick_lib.h"
@@ -10,9 +11,11 @@
 #include "advertiser_lib.h"	// To retrieve the current badge-assignement and set the clock-sync status
 #include "storage.h" // getfreespace
 #include "nrf_gpio.h"
-
+#include "saadc.h"
+#include "ICM20948_driver_interface.h"
 #include "nrf_log.h"
 #include "boards.h"
+#include "ble_lib.h"
 
 #define RECEIVE_NOTIFICATION_FIFO_SIZE					256		/**< Buffer size for the receive-notification FIFO. Has to be a power of two */
 #define AWAIT_DATA_TIMEOUT_MS							1000
@@ -67,13 +70,17 @@ static void stop_imu_request_handler(void * p_event_data, uint16_t event_size);
 static void identify_request_handler(void * p_event_data, uint16_t event_size);
 static void restart_request_handler(void * p_event_data, uint16_t event_size);
 static void free_sdc_space_request_handler(void * p_event_data, uint16_t event_size);
+static void sdc_errase_all_request_handler(void * p_event_data, uint16_t event_size);
+
+static void get_imu_data_request_handler(void * p_event_data, uint16_t event_size);
 
 static void status_response_handler(void * p_event_data, uint16_t event_size);
 static void start_microphone_response_handler(void * p_event_data, uint16_t event_size);
 static void start_scan_response_handler(void * p_event_data, uint16_t event_size);
 static void start_imu_response_handler(void * p_event_data, uint16_t event_size);
 static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_size);
-
+static void sdc_errase_all_response_handler(void * p_event_data, uint16_t event_size);
+static void get_imu_data_response_handler(void * p_event_data, uint16_t event_size);
 
 static request_handler_for_type_t request_handlers[] = {
         {
@@ -115,7 +122,15 @@ static request_handler_for_type_t request_handlers[] = {
 		{
                 .type = Request_free_sdc_space_request_tag,
                 .handler = free_sdc_space_request_handler,
-        }
+        },
+		{
+                .type = Request_sdc_errase_all_request_tag,
+                .handler = sdc_errase_all_request_handler,
+        },
+		{
+                .type = Request_get_imu_data_request_tag,
+                .handler = get_imu_data_request_handler,
+        }	
 };
 
 
@@ -316,13 +331,13 @@ static void process_receive_notification(void * p_event_data, uint16_t event_siz
 		} else {			
 			// Adapt the notification-len of the consume_index-th notification
 			receive_notification.notification_len = receive_notification.notification_len - consume_len;
-			//NRF_LOG_INFO("REQUEST_HANDLER: Adapt %u. notification len to %u\n", consume_index, receive_notification.notification_len);
+			NRF_LOG_INFO("REQUEST_HANDLER: Adapt %u. notification len to %u\n", consume_index, receive_notification.notification_len);
 			receive_notification_fifo_set_receive_notification(&receive_notification, consume_index);
 			// Set consume len to 0
 			consume_len = 0;
 		}
 	}
-	//NRF_LOG_INFO("REQUEST_HANDLER: Consume %u notifications\n", consume_index);
+	NRF_LOG_INFO("REQUEST_HANDLER: Consume %u notifications\n", consume_index);
 	
 	// Now manually consume the notifications
 	for(uint32_t i = 0; i < consume_index; i++) {
@@ -374,7 +389,7 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 	
 	
 	uint32_t len = sizeof(response_event.response.type); // no point in this, it is always the size of the largest entry = 16bytes for get free space
-	memcpy(&notserialized_buf[2], &(response_event.response), len);
+	memcpy(&notserialized_buf[2], &(response_event.response), len); //notserialized_buf[2]=response_event.response
 	
 	ret_code_t ret = NRF_SUCCESS;
 
@@ -416,10 +431,13 @@ static void status_response_handler(void * p_event_data, uint16_t event_size)
 		return;
 
 	response_event.response.which_type = Response_status_response_tag;
-	response_event.response.type.status_response.clock_status = response_clock_status;
-	response_event.response.type.status_response.microphone_status = (sampling_get_sampling_configuration() & SAMPLING_MICROPHONE) ? 1 : 0;
-	response_event.response.type.status_response.scan_status = (sampling_get_sampling_configuration() & SAMPLING_SCAN) ? 1 : 0;
-	response_event.response.type.status_response.imu_status = (sampling_get_sampling_configuration() & SAMPLING_IMU) ? 1 : 0;
+	response_event.response.type.status_response.clock_status = advertiser_get_status_flag_is_clock_synced();
+	response_event.response.type.status_response.microphone_status = advertiser_get_status_flag_microphone_enabled();
+	response_event.response.type.status_response.scan_status = advertiser_get_status_flag_scan_enabled();
+	response_event.response.type.status_response.imu_status = advertiser_get_status_flag_imu_enabled();
+	response_event.response.type.status_response.battery_level = get_battery_level();
+	response_event.response.type.status_response.pdm_data = pdm_buf[0].mic_buf[0];
+	response_event.response.type.status_response.scan_data = ble_get_scan_rssi();
 	response_event.response.type.status_response.timestamp = response_timestamp;
 
 	response_event.response_retries = 0;
@@ -437,7 +455,12 @@ static void start_microphone_response_handler(void * p_event_data, uint16_t even
 	response_event.response.which_type = Response_start_microphone_response_tag;
 	response_event.response_retries = 0;
 	response_event.response.type.start_microphone_response.timestamp = response_timestamp;
-	
+	response_event.response.type.start_microphone_response.mode = drv_audio_get_mode();
+	response_event.response.type.start_microphone_response.switch_pos = audio_switch_get_position();
+	response_event.response.type.start_microphone_response.gain_l = drv_audio_get_gain_l();
+	response_event.response.type.start_microphone_response.gain_r = drv_audio_get_gain_r();
+	response_event.response.type.start_microphone_response.pdm_freq = drv_audio_get_pdm_freq();
+
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	
 }
@@ -451,6 +474,8 @@ static void start_scan_response_handler(void * p_event_data, uint16_t event_size
 	response_event.response.which_type = Response_start_scan_response_tag;
 	response_event.response_retries = 0;
 	response_event.response.type.start_scan_response.timestamp = response_timestamp;
+	response_event.response.type.start_scan_response.window = ble_get_scan_window();
+	response_event.response.type.start_scan_response.interval = ble_get_scan_interval();
 	
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	
@@ -463,6 +488,10 @@ static void start_imu_response_handler(void * p_event_data, uint16_t event_size)
 	response_event.response.which_type = Response_start_imu_response_tag;
 	response_event.response_retries = 0;
 	response_event.response.type.start_imu_response.timestamp = response_timestamp;
+	response_event.response.type.start_imu_response.self_test_done = inv_icm20948_get_self_test_done(); 
+	response_event.response.type.start_imu_response.gyr_fsr = get_gyr_fsr();
+	response_event.response.type.start_imu_response.acc_fsr = get_acc_fsr();
+	response_event.response.type.start_imu_response.datarate = get_datarate();
 	
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification. 
 	send_response(NULL, 0);	
@@ -480,7 +509,65 @@ static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_
 	send_response(NULL, 0);
 }
 
+static void sdc_errase_all_response_handler(void * p_event_data, uint16_t event_size)
+{
+	response_event.response.which_type = Response_sdc_errase_all_response_tag;
+	response_event.response_retries = 0;
+	response_event.response.type.sdc_errase_all_response.done_errase = 0;
+	if (sampling_get_sampling_configuration() == 0) //if sd card is writing, we will drop samples
+		response_event.response.type.sdc_errase_all_response.done_errase = sdc_errase_all();
+	response_event.response.type.sdc_errase_all_response.timestamp = response_timestamp;
 
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
+
+static void get_imu_data_response_handler(void * p_event_data, uint16_t event_size)
+{
+	response_event.response.which_type = Response_get_imu_data_response_tag;
+	response_event.response_retries = 0;
+
+	if (advertiser_get_status_flag_imu_enabled() == 1)
+	{ //if sd card is writing, we will drop samples
+		response_event.response.type.get_imu_data_response.gyr_x = get_gyr_x();
+		response_event.response.type.get_imu_data_response.gyr_y = get_gyr_y();
+		response_event.response.type.get_imu_data_response.gyr_z = get_gyr_z();
+
+		response_event.response.type.get_imu_data_response.mag_x = get_mag_x();
+		response_event.response.type.get_imu_data_response.mag_y = get_mag_y();
+		response_event.response.type.get_imu_data_response.mag_z = get_mag_z();
+
+		response_event.response.type.get_imu_data_response.acc_x = get_acc_x();
+		response_event.response.type.get_imu_data_response.acc_y = get_acc_y();
+		response_event.response.type.get_imu_data_response.acc_z = get_acc_z();
+
+		response_event.response.type.get_imu_data_response.rot_x = get_rot_x();
+		response_event.response.type.get_imu_data_response.rot_y = get_rot_y();
+		response_event.response.type.get_imu_data_response.rot_z = get_rot_z();
+	}
+	else { //if sd card is writing, we will drop samples
+		response_event.response.type.get_imu_data_response.gyr_x = 0;
+		response_event.response.type.get_imu_data_response.gyr_y = 0;
+		response_event.response.type.get_imu_data_response.gyr_z = 0;
+
+		response_event.response.type.get_imu_data_response.mag_x = 0;
+		response_event.response.type.get_imu_data_response.mag_y = 0;
+		response_event.response.type.get_imu_data_response.mag_z = 0;
+
+		response_event.response.type.get_imu_data_response.acc_x = 0;
+		response_event.response.type.get_imu_data_response.acc_y = 0;
+		response_event.response.type.get_imu_data_response.acc_z = 0;
+
+		response_event.response.type.get_imu_data_response.rot_x = 0;
+		response_event.response.type.get_imu_data_response.rot_y = 0;
+		response_event.response.type.get_imu_data_response.rot_z = 0;
+	
+	}
+	response_event.response.type.get_imu_data_response.timestamp = response_timestamp;
+
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
 
 
 
@@ -509,12 +596,13 @@ static void start_microphone_request_handler(void * p_event_data, uint16_t event
 {
 	// Set the timestamp:
 	Timestamp timestamp = request_event.request.type.start_microphone_request.timestamp;
+	uint8_t mode = request_event.request.type.start_microphone_request.mode;
 	systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
 	advertiser_set_status_flag_is_clock_synced(1);
 	
-	NRF_LOG_INFO("REQUEST_HANDLER: Start microphone");
+	NRF_LOG_INFO("REQUEST_HANDLER: Start microphone, mode: %d", mode);
 
-	ret_code_t ret = sampling_start_microphone();
+	ret_code_t ret = sampling_start_microphone(mode);
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_microphone_response_handler);
@@ -526,7 +614,7 @@ static void start_microphone_request_handler(void * p_event_data, uint16_t event
 static void stop_microphone_request_handler(void * p_event_data, uint16_t event_size)
 {
 	sampling_stop_microphone();
-	NRF_LOG_INFO("REQUEST_HANDLER: Stop microphone\n");
+	NRF_LOG_INFO("REQUEST_HANDLER: Stop microphone");
 	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
 }
 
@@ -617,4 +705,18 @@ static void free_sdc_space_request_handler(void * p_event_data, uint16_t event_s
 	NRF_LOG_INFO("REQUEST_HANDLER: Free sdc space request handler\n");
 
 	app_sched_event_put(NULL, 0, free_sdc_space_response_handler);
+}
+
+static void sdc_errase_all_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: Free sdc space request handler\n");
+
+	app_sched_event_put(NULL, 0, sdc_errase_all_response_handler);
+}
+
+static void get_imu_data_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: get_imu_data\n");
+
+	app_sched_event_put(NULL, 0, get_imu_data_response_handler);
 }

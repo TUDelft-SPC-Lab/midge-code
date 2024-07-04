@@ -20,7 +20,7 @@
 #ifdef NRF_LOG_INFO_ENABLE
 #define DISCONNECT_TIMEOUT_ENABLED	0		/**<  Disconnect timeout enabled */
 #else
-#define DISCONNECT_TIMEOUT_ENABLED	1		/**<  Disconnect timeout enabled */
+#define DISCONNECT_TIMEOUT_ENABLED	0		/**<  Disconnect timeout enabled */
 #endif
 
 
@@ -160,7 +160,7 @@ static ret_code_t transmit_queued_bytes(void) {
 	
 	ret_code_t ret = NRF_SUCCESS;
 	if(len > 0) {	
-//		NRF_LOG_INFO("len to send: %d", len);
+		NRF_LOG_INFO("len to send: %d", len);
 		// Read the bytes manually from the fifo to be efficient:
 		for(uint32_t i = 0; i < len; i++) 
 			transmit_buf[i] = tx_fifo.p_buf[(tx_fifo.read_pos + i) & tx_fifo.buf_size_mask];	// extracted from app_fifo.c: "static __INLINE void fifo_peek(app_fifo_t * p_fifo, uint16_t index, uint8_t * p_byte)"
@@ -305,7 +305,7 @@ ret_code_t sender_transmit(const uint8_t* data, uint32_t len, uint32_t timeout_m
 
 void sender_disconnect(void)
 {
-	//NRF_LOG_INFO("SENDER: sender_disconnect()-called\n");
+	NRF_LOG_INFO("SENDER: sender_disconnect()-called\n");
 	sender_reset();
 	ble_disconnect();
 }

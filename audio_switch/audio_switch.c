@@ -1,6 +1,6 @@
 #include "audio_switch.h"
 #include "nrfx_gpiote.h"
-#include "spcl.h"
+#include "boards.h"
 #include "nrf_log.h"
 #include "app_scheduler.h"
 #include "nrf_gpio.h"
@@ -11,7 +11,7 @@
 #define DEBOUNCE_TIMEOUT				APP_TIMER_TICKS(3000)
 APP_TIMER_DEF(m_debounce_timer_id);
 
-audio_switch_position_t audio_switch_position;
+static audio_switch_position_t audio_switch_position;
 
 void audio_switch_debounce_timer_handler(void * p_context)
 {
@@ -29,7 +29,7 @@ void audio_switch_debounce_timer_handler(void * p_context)
 			{
 				sampling_stop_microphone();
 				audio_switch_position = LOW;
-				sampling_start_microphone();
+				sampling_start_microphone(-1);
 			}
 
 		audio_switch_position = LOW;
@@ -42,7 +42,7 @@ void audio_switch_debounce_timer_handler(void * p_context)
 			{
 				sampling_stop_microphone();
 				audio_switch_position = HIGH;
-				sampling_start_microphone();
+				sampling_start_microphone(-1);
 			}
 
 		audio_switch_position = HIGH;

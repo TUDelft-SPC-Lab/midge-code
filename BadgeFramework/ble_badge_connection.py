@@ -16,7 +16,7 @@ import Queue
 logger = logging.getLogger(__name__)
 
 # Enable debug output.
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 # Define service and characteristic UUIDs used by the UART service.
 UART_SERVICE_UUID = uuid.UUID('6E400001-B5A3-F393-E0A9-E50E24DCCA9E')

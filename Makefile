@@ -2,7 +2,7 @@ PROJECT_NAME     := spcl
 TARGETS          := nrf52832_xxaa
 OUTPUT_DIRECTORY := _build
 
-SDK_ROOT := ..
+SDK_ROOT := $(HOME)/nRF5_SDK_15.3.0
 PROJ_DIR := 
 
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa.out: \
@@ -192,6 +192,7 @@ INC_FOLDERS += \
   rythmbadge \
   audio_switch \
   led \
+  . \
 
   
 # Libraries common to all targets
@@ -206,7 +207,7 @@ OPT = -O0 -g3 #-Os
 CFLAGS += $(OPT)
 #CFLAGS += -DDEBUG #removed to allow the error handler to reset the MCU
 CFLAGS += -DBL_SETTINGS_ACCESS_ONLY
-CFLAGS += -DBOARD_SPCL
+CFLAGS += -DBOARD_CUSTOM
 CFLAGS += -DFLOAT_ABI_HARD
 CFLAGS += -DNRF52
 CFLAGS += -DNRF52832_XXAA
@@ -234,7 +235,7 @@ ASMFLAGS += -mcpu=cortex-m4
 ASMFLAGS += -mthumb -mabi=aapcs
 ASMFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 ASMFLAGS += -DBL_SETTINGS_ACCESS_ONLY
-ASMFLAGS += -DBOARD_SPCL
+ASMFLAGS += -DBOARD_CUSTOM
 ASMFLAGS += -DFLOAT_ABI_HARD
 ASMFLAGS += -DNRF52
 ASMFLAGS += -DNRF52832_XXAA
@@ -255,6 +256,8 @@ LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 LDFLAGS += -Wl,--gc-sections
 # use newlib in nano version
 LDFLAGS += --specs=nano.specs
+LDFLAGS += --specs=nosys.specs
+
 
 nrf52832_xxaa: CFLAGS += -D__HEAP_SIZE=1024
 nrf52832_xxaa: CFLAGS += -D__STACK_SIZE=4096
@@ -308,3 +311,11 @@ SDK_CONFIG_FILE := config/sdk_config.h
 CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
 sdk_config:
 	java -jar $(CMSIS_CONFIG_TOOL) $(SDK_CONFIG_FILE)
+
+openocd:
+	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg
+load_gdb:
+	arm-none-eabi-gdb -se _build/nrf52832_xxaa.out -x debug.gdb
+logs:
+	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
+	picocom /tmp/ttyvnrf -b 115200
