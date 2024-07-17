@@ -4,8 +4,12 @@
 
 ## Environment Setup:
 
-1. Download the `arm-none-eabi` toolchain (compiler and binutils) for your distro
-2. Create a folder for housing the SDK in your home folder
+1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro
+    * For ubuntu `sudo apt install gcc-arm-none-eabi`
+2. Install the opencd debugger [https://openocd.org/](https://openocd.org/)
+    * For ubuntu `sudo apt install opencd`
+3. Create a folder for housing the SDK in your home folder
+
 
 ```Shell
 mkdir ~/nRF5_SDK/15.3.0 -p
