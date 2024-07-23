@@ -32,10 +32,16 @@ mkdir ~/nRF5_SDK/15.3.0 -p
 ## How to compile and debug
 
 We are assuming you don't have the Segger J-Link available, but you do have a
-spare MCU capable of running a CMSIS-DAP compliant firmware, for example:
+spare MCU capable of running a CMSIS-DAP compliant firmware.
 
-- PicoProbe for RP2040 based MCUs like the Pi Pico: <https://github.com/raspberrypi/picoprobe/releases/tag/picoprobe-cmsis-v1.02>
-- Seeed DAPLink for Cortex M0 and M4 devices: <https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/>
+We use the [Seeed XIAO SAMD21 board](https://wiki.seeedstudio.com/Seeeduino-XIAO/) with the [Seeed DAPLink](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink) for Cortex M0 and M4 devices.
+* To put the board in DAPLink mode you should:
+   * Put the board in bootloader mode as described [here](https://wiki.seeedstudio.com/Seeeduino-XIAO/#enter-bootloader-mode), it should show up as usb stick in the computer
+   * Copy over the uf2 file from [here](http://files.seeedstudio.com/wiki/Seeeduino-XIAO/res/simple_daplink_xiao.uf2)
+   * Disconnect and
+
+The PicoProbe for RP2040 based MCUs like the [Pi Pico](https://github.com/raspberrypi/picoprobe/releases/tag/picoprobe-cmsis-v1.02) should also work.
+   * TODO: add instructions for this board 
 
 ### Barebones
 
