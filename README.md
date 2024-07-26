@@ -35,10 +35,23 @@ We are assuming you don't have the Segger J-Link available, but you do have a
 spare MCU capable of running a CMSIS-DAP compliant firmware.
 
 We use the [Seeed XIAO SAMD21 board](https://wiki.seeedstudio.com/Seeeduino-XIAO/) with the [Seeed DAPLink](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink) for Cortex M0 and M4 devices.
-* To put the board in DAPLink mode you should:
+
+Additionally you will need the following components:
+* A pogo pin probe clip https://www.adafruit.com/product/5434
+  * For a permanent solution, soldering the pins via a box header is also an option https://www.adafruit.com/product/752 
+* Female to female jumper wires https://www.adafruit.com/product/1951 (this examples comes with 20, only 3 are needed)
+
+The setup is:
+1. Connect the board to the computer via usb
+2. Flash the DAPLink firmware (only needs to be done once):
    * Put the board in bootloader mode as described [here](https://wiki.seeedstudio.com/Seeeduino-XIAO/#enter-bootloader-mode), it should show up as usb stick in the computer
    * Copy over the uf2 file from [here](http://files.seeedstudio.com/wiki/Seeeduino-XIAO/res/simple_daplink_xiao.uf2)
    * Disconnect and reconnect the usb cable.
+3. Connect the board to the pogo pin and the pogo pin to the midge
+   * Which pin connects where is described [here](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/blob/master/PCB/Explainer.pdf) for the midge and [here](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/blob/master/src/DAP_config.h#L179-L188)
+   * Do not connect the 3V cable
+4. Turn on the midge, the LEDs in the board should turn blue and stop flashing
+
 
 The PicoProbe for RP2040 based MCUs like the [Pi Pico](https://github.com/raspberrypi/picoprobe/releases/tag/picoprobe-cmsis-v1.02) should also work.
    * TODO: add instructions for this board 
