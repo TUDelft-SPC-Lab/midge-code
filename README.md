@@ -25,11 +25,13 @@ If you installed the toolchain via the ubuntu package, the binary is already in 
 - You will probably have to use `conda` for setting up a python2 env. In that
   env, you will need to download the `bluepy` module
 
-## How to compile and debug
+## Board options
 
-We are assuming you don't have the Segger J-Link available, but you do have a
-spare MCU capable of running a CMSIS-DAP compliant firmware.
+There are several MCU boards that can be used for compiling and debuging the midge fimware.
+The main requisite is that they can run CMSIS-DAP compliant firmware.
+The Segger J-Link is known to provide the fastest data transfer rates, while the the Seeed XIAO SAMD21 board is more affordable and easier to acquire.
 
+### Seeed XIAO SAMD21 board
 We use the [Seeed XIAO SAMD21 board](https://wiki.seeedstudio.com/Seeeduino-XIAO/) with the [Seeed DAPLink](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink) for Cortex M0 and M4 devices.
 
 Additionally you will need the following components:
@@ -37,29 +39,50 @@ Additionally you will need the following components:
   * For a permanent solution, soldering the pins via a box header is also an option https://www.adafruit.com/product/752 
 * Female to female jumper wires https://www.adafruit.com/product/1951 (this examples comes with 20, only 3 are needed)
 
-The setup is:
+Flash the DAPLink firmware in the SAMD21 board (only needs to be done once):
 1. Connect the board to the computer via usb
-2. Flash the DAPLink firmware (only needs to be done once):
-   * Put the board in bootloader mode as described [here](https://wiki.seeedstudio.com/Seeeduino-XIAO/#enter-bootloader-mode), it should show up as usb stick in the computer
-   * Copy over the uf2 file from [here](http://files.seeedstudio.com/wiki/Seeeduino-XIAO/res/simple_daplink_xiao.uf2)
-   * Disconnect and reconnect the usb cable.
-3. Connect the board to the pogo pin and the pogo pin to the midge
-   * Which pin connects where is described [here](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/blob/master/PCB/Explainer.pdf) for the midge and [here](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/blob/master/src/DAP_config.h#L179-L188)
-   * Do not connect the 3V cable
-4. Turn on the midge, the LEDs in the board should turn blue and stop flashing
+2. Put the board in bootloader mode as described [here](https://wiki.seeedstudio.com/Seeeduino-XIAO/#enter-bootloader-mode), it should show up as usb stick in the computer
+3. Copy over the uf2 file from [here](http://files.seeedstudio.com/wiki/Seeeduino-XIAO/res/simple_daplink_xiao.uf2)
+4. Disconnect and reconnect the usb cable
+5. Connect the midge to the board and the board to the computer as described in [here](#Hardware-connection-to-the-board)
+6. The flashing was performed successfully if the LEDs in the board turned blue and stoped flashing
 
-
+### PicoProbe for RP2040 
 The PicoProbe for RP2040 based MCUs like the [Pi Pico](https://github.com/raspberrypi/picoprobe/releases/tag/picoprobe-cmsis-v1.02) should also work.
    * TODO: add instructions for this board 
 
-### Barebones
+### Segger J-Link
+
+https://www.segger.com/products/debug-probes/j-link/
+   * TODO: add instructions for this board 
+
+### Hardware connection to the board
+
+Openocd is known to crash with `Error connecting DP: cannot read IDR` when debugging the MIDGE while plugged in to power.
+To ensure a smooth debugging process follow these steps when connecting the MIDGE to the computer.
+
+1. Make sure the battery charged
+2. Connect the board to the pogo pin and the pogo pin to the midge
+   * Which pin connects where is described [here](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/blob/master/PCB/Explainer.pdf) for the midge and [here](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/blob/master/src/DAP_config.h#L179-L188) for the board
+   * Note that the pogo pin switches around the A and B side of the pins
+   * Do not connect the 3V pin, only the SWDIO, SWCLK and GND pins should be attached
+3. Disconnect the charging cable of the MIDGE before debugging
+4. After having the connections ready, connect the debug probe to the computer 
+5. Switch ON the battery
+
+## Compile and debug
+
+There are two options for compiling and debugging the code.
+A barebones gdb server that can be executed via Makefile rules or using the VScode IDE with the Cortex-debug plugin.
+
+### Using Makefile rules
 
 1. Build with `make nrf52832_xxaa`
 2. Start the openocd server with `make openocd`
 3. Start the gdb session and load the binary with `make load_gdb`
 4. Start the RTT console to see log messages with `make logs`
 
-### Using Cortex-debug
+### Using VSCode with Cortex-debug
 
 Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug)
 and setup the `.vscode/launch.json`. This should enable the "Run and Debug"
