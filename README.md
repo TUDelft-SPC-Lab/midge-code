@@ -13,8 +13,8 @@
 3. Install the dependencies for visualising the debug logs:
     * For ubuntu `sudo apt install socat picocom`
     * For a different OS: TODO
-3. Install the nRF5 version 15 SDK
-    * Download the nRF5 SDK 15.3.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
+3. Install the nRF5 SDK
+    * Download the nRF5 SDK version 15.3.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
     * Create a folder for housing the SDK in your home folder
         ```Shell
         mkdir ~/nRF5_SDK/15.3.0 -p
