@@ -58,15 +58,15 @@ https://www.segger.com/products/debug-probes/j-link/
 
 ### Hardware connection to the board
 
-Openocd is known to crash with `Error connecting DP: cannot read IDR` when debugging the MIDGE while plugged in to power.
-To ensure a smooth debugging process follow these steps when connecting the MIDGE to the computer.
+Openocd is known to crash with `Error connecting DP: cannot read IDR` when debugging the midge while plugged in to power.
+To ensure a smooth debugging process follow these steps when connecting the midge to the computer.
 
 1. Make sure the battery charged
 2. Connect the board to the pogo pin and the pogo pin to the midge
    * Which pin connects where is described [here](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/blob/master/PCB/Explainer.pdf) for the midge and [here](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/blob/master/src/DAP_config.h#L179-L188) for the board
    * Note that the pogo pin switches around the A and B side of the pins
    * Do not connect the 3V pin, only the SWDIO, SWCLK and GND pins should be attached
-3. Disconnect the charging cable of the MIDGE before debugging
+3. Disconnect the charging cable of the midge before debugging
 4. After having the connections ready, connect the debug probe to the computer 
 5. Switch ON the battery
 
