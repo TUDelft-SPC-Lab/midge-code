@@ -123,7 +123,7 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 	}
 }
 
-ret_code_t drv_audio_init(uint8_t mode)
+ret_code_t drv_audio_init(nrf_pdm_mode_t mode)
 {
 
 	switch (mode)
