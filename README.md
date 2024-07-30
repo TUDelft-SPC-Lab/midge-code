@@ -6,19 +6,23 @@
 
 1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro
     * For ubuntu `sudo apt install gcc-arm-none-eabi gdb-multiarch`
-2. Install the opencd debugger [https://openocd.org/](https://openocd.org/)
-    * For ubuntu `sudo apt install opencd`
-3. Install the dependencies for extracting debug logs:
-    `sudo apt install socat picocom`
-3. Create a folder for housing the SDK in your home folder
-    ```Shell
-    mkdir ~/nRF5_SDK/15.3.0 -p
-    ```
-3. Download nRF5 SDK 15.3.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
-4. Extract the SDK zip on the folder created in the previous step
-5. Modify `~/nRF5_SDK/15.3.0/components/toolchain/gcc/Makefile.posix` so`GNU_INSTALL_ROOT` points to your `arm-none-eabi` toolchain.
-If you installed the toolchain via the ubuntu package, the binary is already in your `PATH`, so just set `GNU_INSTALL_ROOT :=`.
-6. Modify `~/nRF5_SDK/15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` define be set as `2`.
+    * For a different OS: <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
+2. Install the opencd debugger 
+    * For ubuntu `sudo apt install openocd`
+    * For a different OS: <https://openocd.org/>
+3. Install the dependencies for visualising the debug logs:
+    * For ubuntu `sudo apt install socat picocom`
+    * For a different OS: TODO
+3. Install the nRF5 version 15 SDK
+    * Download the nRF5 SDK 15.3.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
+    * Create a folder for housing the SDK in your home folder
+        ```Shell
+        mkdir ~/nRF5_SDK/15.3.0 -p
+        ```
+    * Extract the SDK zip in the folder created in the previous step
+    * Modify `~/nRF5_SDK/15.3.0/components/toolchain/gcc/Makefile.posix` so `GNU_INSTALL_ROOT` points to your `arm-none-eabi` toolchain.
+      If you installed the toolchain via the ubuntu package, the binary is already in your `PATH`, so just set `GNU_INSTALL_ROOT :=`.
+    * Modify `~/nRF5_SDK/15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` define be set as `2`.
 
 ### Other requirements:
 
