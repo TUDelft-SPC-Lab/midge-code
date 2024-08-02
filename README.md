@@ -67,7 +67,10 @@ To ensure a smooth debugging process follow these steps when connecting the midg
 
 1. Make sure the battery charged
 2. Connect the board to the pogo pin and the pogo pin to the midge
-   * Which pin connects where is described [here](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/blob/master/PCB/Explainer.pdf) for the midge and [here](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/blob/master/src/DAP_config.h#L179-L188) for the board
+   * The pin connections to the midge are described [here](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/blob/master/PCB/Explainer.pdf)
+   * The pin connections to the boards are as follows: 
+      * Seeed XIAO SAMD21 board, described [here](https://wiki.seeedstudio.com/Seeeduino-XIAO/#hardware-overview) and [here](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/blob/master/src/DAP_config.h#L179-L188)
+      * TODO: add pin connections for the other boards
    * Note that the pogo pin switches around the A and B side of the pins
    * Do not connect the 3V pin, only the SWDIO, SWCLK and GND pins should be attached
 3. Disconnect the charging cable of the midge before debugging
