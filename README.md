@@ -4,10 +4,10 @@
 
 ## Environment Setup:
 
-1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro
-    * For ubuntu `sudo apt install gcc-arm-none-eabi gdb-multiarch`
-    * For a different OS: <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
-2. Install the opencd debugger 
+1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
+    * To avoid issues it is recommended to have matching `gcc` and `gdb` versions from the toolchain
+    * The `gdb-multiarch` package in ubuntu is know to cause debug errors when used with the `arm-none-eabi`'s `gcc`.
+2. Install the openocd debugger 
     * For ubuntu `sudo apt install openocd`
     * For a different OS: <https://openocd.org/>
 3. Install the dependencies for visualising the debug logs:
@@ -21,8 +21,8 @@
         ```
     * Extract the SDK zip in the folder created in the previous step
     * Modify `~/nRF5_SDK/15.3.0/components/toolchain/gcc/Makefile.posix` so `GNU_INSTALL_ROOT` points to your `arm-none-eabi` toolchain.
-      If you installed the toolchain via the ubuntu package, the binary is already in your `PATH`, so just set `GNU_INSTALL_ROOT :=`.
-    * Modify `~/nRF5_SDK/15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` define be set as `2`.
+      If the binary is already in your `PATH`, so just set `GNU_INSTALL_ROOT :=`.
+    * Modify `~/nRF5_SDK/15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` macro be defined as `2`.
 
 ### Other requirements:
 
