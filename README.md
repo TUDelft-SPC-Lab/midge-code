@@ -138,7 +138,9 @@ Example `launch.json` for using Cortex-Debug for flashing and debugging
 
 ## Flashing the final binary
 
-//! TODO, but is basically just erasing and reflashing the device via gdb
+1. Build with `make nrf52832_xxaa`
+2. Start the openocd server with `make openocd`
+3. Flash the binary with `make flash_with_gdb`
 
 ## Hardware
 
