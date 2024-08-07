@@ -4,7 +4,7 @@
         {
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
-            "executable": "_build/nrf52832_xxaa.out",
+            "executable": "_build/nrf52832_xxaa_debug.out",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",

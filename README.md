@@ -84,7 +84,7 @@ A barebones gdb server that can be executed via Makefile rules or using the VSco
 
 ### Using Makefile rules
 
-1. Build with `make nrf52832_xxaa`
+1. Build with `make nrf52832_xxaa_debug`
 2. Start the openocd server with `make openocd`
 3. Start the gdb session and load the binary with `make load_gdb`
 4. Start the RTT console to see log messages with `make logs`
@@ -104,7 +104,7 @@ Example `launch.json` for using Cortex-Debug for flashing and debugging
         {
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
-            "executable": "_build/nrf52832_xxaa.out",
+            "executable": "_build/nrf52832_xxaa_debug.out",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
@@ -138,7 +138,7 @@ Example `launch.json` for using Cortex-Debug for flashing and debugging
 
 ## Flashing the final binary
 
-1. Build with `make nrf52832_xxaa`
+1. Build with `make nrf52832_xxaa_release`
 2. Start the openocd server with `make openocd`
 3. Flash the binary with `make flash_with_gdb`
 
