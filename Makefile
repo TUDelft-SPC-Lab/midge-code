@@ -319,3 +319,6 @@ logs: SHELL:=/bin/bash   # Use the bash shell for the logs target, as sh does no
 logs:
 	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
 	picocom /tmp/ttyvnrf -b 115200
+
+flash_with_gdb:
+	arm-none-eabi-gdb -e _build/nrf52832_xxaa.out -x flash.gdb
