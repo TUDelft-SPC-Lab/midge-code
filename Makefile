@@ -2,7 +2,7 @@ PROJECT_NAME     := spcl
 TARGETS          := nrf52832_xxaa_debug nrf52832_xxaa_release 
 OUTPUT_DIRECTORY := _build
 
-SDK_ROOT := /home/era/code/neon-repos/nRF5_SDK/15.3.0
+SDK_ROOT := $(HOME)/nRF5_SDK_15.3.0
 PROJ_DIR := 
 
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.out: \
