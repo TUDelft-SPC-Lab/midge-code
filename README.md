@@ -91,9 +91,9 @@ A barebones gdb server that can be executed via Makefile rules or using the VSco
 
 ### Using VSCode with Cortex-debug
 
-Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug)
-and setup the `.vscode/launch.json`. This should enable the "Run and Debug"
-functionality in VSCode (Left menu, green arrow to launch the application).
+Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) and setup the `.vscode/launch.json`.
+This should enable the "Run and Debug" functionality in VSCode (Left menu, green arrow to launch the application).
+In the C++ extension `ms-vscode.cpptools` set the configuration to `arm-none-eabi` to get include paths for the SDK recognised by intellisense.
 
 Example `launch.json` for using Cortex-Debug for flashing and debugging
 
