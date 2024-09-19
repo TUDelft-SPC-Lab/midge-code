@@ -25,9 +25,9 @@ void led_init_success(void)
 	// If initialization was successful, blink the green LED 3 times.
 	for(uint8_t i = 0; i < 3; i++) {
 		nrf_gpio_pin_write(LED, LED_ON);  //turn on LED
-		nrf_delay_ms(100);
+		nrf_delay_ms(1000);
 		nrf_gpio_pin_write(LED, LED_OFF);  //turn off LED
-		nrf_delay_ms(100);
+		nrf_delay_ms(1000);
 	}
 }
 

@@ -8,7 +8,7 @@ from typing import Optional, Final
 UART_SERVICE_UUID = uuid.UUID("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
 TX_CHAR_UUID = uuid.UUID("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
 RX_CHAR_UUID = uuid.UUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
-df_badge = pandas.read_csv("mappings_allBackup.csv")
+df_badge = pandas.read_csv("mappings2.csv")
 
 
 def get_logger(name):

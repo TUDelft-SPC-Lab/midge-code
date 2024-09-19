@@ -5,7 +5,7 @@ import functools
 import time
 import logging
 import struct
-import Queue
+import queue
 from collections.abc import Callable
 
 from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
@@ -153,11 +153,11 @@ class OpenBadge(OpenBadgeMeta):
         serialized_request = request_message.encode()
         # Adding length header:
         serialized_request_len = struct.pack("<H", len(serialized_request))
-        logger.debug(
-            "Sending: {}, Raw: {}".format(
-                request_message, serialized_request.encode("hex")
-            )
-        )
+        # logger.debug(
+        #     "Sending: {}, Raw: {}".format(
+        #         request_message, serialized_request.encode("hex")
+        #     )
+        # )
         serialized_request: bytes = serialized_request_len + serialized_request
         return serialized_request
 

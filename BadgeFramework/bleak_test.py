@@ -9,17 +9,17 @@ from badge import OpenBadge
 async def synchronize_device(open_badge: OpenBadge, logger: logging.Logger) -> None:
     # TODO: pass in the universal time code here?
     status = await open_badge.get_status()
-    logger.info(f"Status received for the following midge: {open_badge.id}.")
+    logger.info(f"Status received for the following midge: {open_badge.device_id}.")
     # TODO This is not actually the timestamp before, find how to get it.
     logger.debug(f"Device timestamp before sync - seconds: {status.timestamp.seconds}, ms:{status.timestamp.ms}.")
     if status.imu_status == 0:
-        logger.info(f"IMU is not recording for participant {open_badge.id}.")
+        logger.info(f"IMU is not recording for participant {open_badge.device_id}.")
     if status.microphone_status == 0:
-        logger.info(f"Mic is not recording for participant {open_badge.id}.")
+        logger.info(f"Mic is not recording for participant {open_badge.device_id}.")
     if status.scan_status == 0:
-        logger.info(f"Scan is not recording for participant {open_badge.id}.")
+        logger.info(f"Scan is not recording for participant {open_badge.device_id}.")
     if status.clock_status == 0:
-        logger.info(f"Can't sync for participant {open_badge.id}.")
+        logger.info(f"Can't sync for participant {open_badge.device_id}.")
 
 
 async def main():
@@ -42,10 +42,10 @@ async def main():
         async with OpenBadge(ble_device) as open_badge:
             # space = await open_badge.get_free_sdc_space()
             out = await open_badge.get_status(t=40)
-            start = await open_badge.start_microphone()
-        time.sleep(15)
-        async with OpenBadge(ble_device) as open_badge:
-            stop = await open_badge.stop_microphone()
+            # start = await open_badge.start_microphone()
+        # time.sleep(15)
+        # async with OpenBadge(ble_device) as open_badge:
+            # stop = await open_badge.stop_microphone()
             # await synchronize_device(open_badge, logger)
         c = 9
     print('completed')
