@@ -25,6 +25,7 @@
       If the binary is already in your `PATH`, so just set `GNU_INSTALL_ROOT :=`.
       For example `GNU_INSTALL_ROOT ?= /home/user/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/`
     * Modify `~/nRF5_SDK_15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` macro be defined as `2`.
+    * For ubuntu if the sdk complains about missing `libncursesw.so.5` install it with `sudo apt install libncursesw5`.  
 
 ### Other requirements:
 
