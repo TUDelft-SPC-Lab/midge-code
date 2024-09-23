@@ -29,19 +29,19 @@ def mic_test(badge, mode):
             else:
                 print(" mic gain:         FAIL            ")               
         else:
-			print(" mic mode:         FAIL             ")
+            print(" mic mode:         FAIL             ")
 
         time.sleep(10) # reecording time
 
         mic = badge.get_status()
         # check if mic was enabled 
         if (mic.microphone_status):
-			print(" mic enabled:      PASS            ")
+            print(" mic enabled:      PASS            ")
         else:
             print(" mic enabled:      FAIL            ")
 
         badge.stop_microphone() # stop recording
-	
+
         time.sleep(0.5)
 
         mic = badge.get_status()
@@ -70,19 +70,19 @@ def mic_test(badge, mode):
                 print(" mic gain:         FAIL            ")                
             
         else:
-			print(" mic mode:         FAIL            ")
+            print(" mic mode:         FAIL            ")
 
         time.sleep(10) # reecording time
 
         mic = badge.get_status()
         # check if mic was enabled 
         if (mic.microphone_status):
-			print(" mic enabled:      PASS            ")
+            print(" mic enabled:      PASS            ")
         else:
             print(" mic enabled:      FAIL            ")
 
         badge.stop_microphone() # stop recording
-	
+
         time.sleep(0.5)
 
         mic = badge.get_status()
@@ -236,4 +236,4 @@ def main():
     connection.disconnect()
 
 if __name__ == "__main__":
-	main()
+    main()
