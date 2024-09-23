@@ -5,7 +5,7 @@ import functools
 import time
 import logging
 import struct
-import Queue
+# import queue
 from collections.abc import Callable
 
 from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
@@ -153,11 +153,11 @@ class OpenBadge(OpenBadgeMeta):
         serialized_request = request_message.encode()
         # Adding length header:
         serialized_request_len = struct.pack("<H", len(serialized_request))
-        logger.debug(
-            "Sending: {}, Raw: {}".format(
-                request_message, serialized_request.encode("hex")
-            )
-        )
+        # logger.debug(
+        #     "Sending: {}, Raw: {}".format(
+        #         request_message, serialized_request.encode("hex")
+        #     )
+        # )
         serialized_request: bytes = serialized_request_len + serialized_request
         return serialized_request
 
@@ -170,10 +170,12 @@ class OpenBadge(OpenBadgeMeta):
     async def receive(client: BleakClient) -> bytes or bytearray:
         """receive message from client"""
         response_rx = b''
-        for x in range(10):
-            # if len(response_rx) > 0:
-            #     break
-            response_rx = await client.read_gatt_char(utils.RX_CHAR_UUID)
+        for k1 in range(5):
+            for _ in range(5):
+                # if len(response_rx) > 0:
+                #     break
+                response_rx = await client.read_gatt_char(utils.RX_CHAR_UUID)
+            time.sleep(3)
         return response_rx
 
     @staticmethod
@@ -218,13 +220,15 @@ class OpenBadge(OpenBadgeMeta):
     #     queue_options[response_message.type.which].put(
     #         response_options[response_message.type.which]
     #     )
-    
+
     async def request_response(self, message: bp.Request, require_response: Optional[bool] = True):
         """request response from client"""
         serialized_request = self.add_serialized_header(message)
         # logger.debug("Sending: {}, Raw: {}".format(message, serialized_request.hex()))
         await self.send(self.client, serialized_request)
         response = await self.receive(self.client)
+        # response = 0
+        # print('request_response ended')
         return response if require_response else None
 
     @staticmethod
@@ -232,13 +236,25 @@ class OpenBadge(OpenBadgeMeta):
         """decode response from client. First two bytes represent the length."""
         response_len = struct.unpack("<H", response[:2])[0]
         serialized_response = response[2:2 + response_len]
+        print('response_len:', response_len)
+        print('original sequence:', response)
+        print('deserialized sequence:', serialized_response)
         return bp.Response.decode(serialized_response)
 
     def deal_response(self):
         """deal response from client. Currently, this only involves decoding."""
+        self.clean_list()  # NASTY STUFF! I REALLY HATE HAVING TO WRITE THIS.
         serialized_response = self.rx_list.pop(0)['message']
         response_message = self.decode_response(serialized_response)
         return response_message
+
+    def clean_list(self):
+        """NASTY STUFF! I REALLY HATE HAVING TO WRITE THIS."""
+        new_list = []
+        for x in self.rx_list:
+            if x not in new_list:
+                new_list.append(x)
+        self.rx_list = new_list
 
     @request_handler_marker(action_desc='get status')
     async def get_status(self, t=None, new_id: Optional[int] = None, new_group_number: Optional[int] = None)\
@@ -385,7 +401,7 @@ class OpenBadge(OpenBadgeMeta):
         await self.stop_scan()
         await self.stop_microphone()
         await self.stop_imu()
-        #TODO: 
+        #TODO:
         # while self.free_sdc_space_response_queue.empty():
         #     self.receive_response()
 

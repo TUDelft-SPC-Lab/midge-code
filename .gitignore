@@ -9,3 +9,4 @@ __pycache/
 BadgeFramework/rotation/rpi_sync.sh
 .idea
 *.log
+notes.txt
