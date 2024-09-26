@@ -5,7 +5,6 @@ import functools
 import time
 import logging
 import struct
-# import queue
 from collections.abc import Callable
 
 from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
@@ -13,20 +12,27 @@ from typing import Optional, Final
 import badge_protocol as bp
 import utils
 
-DEFAULT_SCAN_WINDOW = 250
-DEFAULT_SCAN_INTERVAL = 1000
+DEFAULT_SCAN_WINDOW: Final[int] = 250
+DEFAULT_SCAN_INTERVAL: Final[int] = 1000
 
-DEFAULT_IMU_ACC_FSR = 4  # Valid ranges: 2, 4, 8, 16
-DEFAULT_IMU_GYR_FSR = 1000  # Valid ranges: 250, 500, 1000, 2000
-DEFAULT_IMU_DATARATE = 50
+DEFAULT_IMU_ACC_FSR: Final[int] = 4  # Valid ranges: 2, 4, 8, 16
+DEFAULT_IMU_GYR_FSR: Final[int] = 1000  # Valid ranges: 250, 500, 1000, 2000
+DEFAULT_IMU_DATARATE: Final[int] = 50
 
-DEFAULT_MICROPHONE_MODE = 0	#Valid options: 0=Stereo, 1=Mono
+DEFAULT_MICROPHONE_MODE: Final[int] = 1  # Valid options: 0=Stereo, 1=Mono
 
-CONNECTION_RETRY_TIMES = 10
+CONNECTION_RETRY_TIMES = 15
 DUPLICATE_TIME_INTERVAL = 2
+
+DECODE_STATUS_RESPONSE = 1
+DECODE_START_MICROPHONE_RESPONSE = 2
+DECODE_START_SCAN_RESPONSE = 3
+DECODE_START_IMU_REQUEST = 4
+DECODE_FREE_SDC_SPACE_RESPONSE = 5
+
 logger = logging.getLogger(__name__)
 
-# -- Helper methods used often in badge communication -- 
+# -- Helper methods used often in badge communication --
 
 # We generally define timestamp_seconds to be in number of seconds since UTC epoch
 # and timestamp_miliseconds to be the miliseconds portion of that UTC timestamp.
@@ -47,18 +53,6 @@ def get_timestamps_from_time(t=None) -> (int, int):
 #     return float(timestamp_seconds) + (float(timestamp_miliseconds) / 1000.0)
 
 
-# class OpenBadge(object):
-#     def __init__(self, connection):
-#         self.connection = connection
-#         self.status_response_queue = Queue.Queue()
-#         self.start_microphone_response_queue = Queue.Queue()
-#         self.start_scan_response_queue = Queue.Queue()
-#         self.start_imu_response_queue = Queue.Queue()
-#         self.free_sdc_space_response_queue = Queue.Queue()
-#         self.sdc_errase_all_response_queue = Queue.Queue()
-#         self.get_imu_data_response_queue = Queue.Queue()
-
-# TODO: check erase all and get imu data function
 def bp_timestamp_from_time(t=None) -> bp.Timestamp:
     ts = bp.Timestamp()
     ts.seconds, ts.ms = get_timestamps_from_time(t)
@@ -126,7 +120,7 @@ class OpenBadge(OpenBadgeMeta):
     async def __aenter__(self):
         for _ in range(CONNECTION_RETRY_TIMES):
             try:
-                await self.client.connect(timeout=10)
+                await self.client.connect(timeout=1000)
                 await self.client.start_notify(utils.RX_CHAR_UUID, self.received_callback)
                 return self
             except Exception as e:
@@ -145,7 +139,7 @@ class OpenBadge(OpenBadgeMeta):
 
     def badge_disconnected(self, b: BleakClient) -> None:
         """disconnection callback"""
-        print(f"Warning: disconnected badge")
+        print(f"Warning: disconnected badge", b.address)
 
     @staticmethod
     def add_serialized_header(request_message: bp.Request) -> bytes or bytearray:
@@ -153,29 +147,34 @@ class OpenBadge(OpenBadgeMeta):
         serialized_request = request_message.encode()
         # Adding length header:
         serialized_request_len = struct.pack("<H", len(serialized_request))
-        # logger.debug(
-        #     "Sending: {}, Raw: {}".format(
-        #         request_message, serialized_request.encode("hex")
-        #     )
-        # )
         serialized_request: bytes = serialized_request_len + serialized_request
         return serialized_request
 
-    @staticmethod
-    async def send(client, message) -> None:
+    # @staticmethod
+    async def send(self, client, message) -> None:
         """send message to client"""
-        await client.write_gatt_char(utils.TX_CHAR_UUID, message, response=True)
+        trial_times = 0
+        while trial_times < 5:
+            if client.is_connected:
+                await client.write_gatt_char(utils.TX_CHAR_UUID, message, response=True)
+                return
+            else:
+                await self.__aenter__()
+                trial_times += 1
+        raise TimeoutError
 
-    @staticmethod
-    async def receive(client: BleakClient) -> bytes or bytearray:
+    # @staticmethod
+    async def receive(self, client: BleakClient) -> bytes or bytearray:
         """receive message from client"""
         response_rx = b''
-        for k1 in range(5):
-            for _ in range(5):
-                # if len(response_rx) > 0:
-                #     break
+        for _ in range(2):
+            # if len(response_rx) > 0:
+            #     break
+            if client.is_connected:
                 response_rx = await client.read_gatt_char(utils.RX_CHAR_UUID)
-            time.sleep(3)
+            else:
+                await self.__aenter__()
+            time.sleep(1)
         return response_rx
 
     @staticmethod
@@ -198,37 +197,12 @@ class OpenBadge(OpenBadgeMeta):
                 # self.rx_message = message
                 self.rx_list.append(new_message)
 
-    # TODO: figure out how to implement the queue options
-    # queue_options = {
-    #         Response_status_response_tag: self.status_response_queue,
-    #         Response_start_microphone_response_tag: self.start_microphone_response_queue,
-    #         Response_start_scan_response_tag: self.start_scan_response_queue,
-    #         Response_start_imu_response_tag: self.start_imu_response_queue,
-    #         Response_free_sdc_space_response_tag: self.free_sdc_space_response_queue,
-    #         Response_sdc_errase_all_response_tag: self.sdc_errase_all_response_queue,
-    #         Response_get_imu_data_response_tag: self.get_imu_data_response_queue,
-    #     }
-    #     response_options = {
-    #         Response_status_response_tag: response_message.type.status_response,
-    #         Response_start_microphone_response_tag: response_message.type.start_microphone_response,
-    #         Response_start_scan_response_tag: response_message.type.start_scan_response,
-    #         Response_start_imu_response_tag: response_message.type.start_imu_response,
-    #         Response_free_sdc_space_response_tag: response_message.type.free_sdc_space_response,
-    #         Response_sdc_errase_all_response_tag: response_message.type.sdc_errase_all_response,
-    #         Response_get_imu_data_response_tag: response_message.type.get_imu_data_response
-    #     }
-    #     queue_options[response_message.type.which].put(
-    #         response_options[response_message.type.which]
-    #     )
-
     async def request_response(self, message: bp.Request, require_response: Optional[bool] = True):
         """request response from client"""
         serialized_request = self.add_serialized_header(message)
         # logger.debug("Sending: {}, Raw: {}".format(message, serialized_request.hex()))
         await self.send(self.client, serialized_request)
         response = await self.receive(self.client)
-        # response = 0
-        # print('request_response ended')
         return response if require_response else None
 
     @staticmethod
@@ -236,25 +210,25 @@ class OpenBadge(OpenBadgeMeta):
         """decode response from client. First two bytes represent the length."""
         response_len = struct.unpack("<H", response[:2])[0]
         serialized_response = response[2:2 + response_len]
-        print('response_len:', response_len)
-        print('original sequence:', response)
-        print('deserialized sequence:', serialized_response)
         return bp.Response.decode(serialized_response)
 
-    def deal_response(self):
+    def deal_response(self, response_type):
         """deal response from client. Currently, this only involves decoding."""
-        self.clean_list()  # NASTY STUFF! I REALLY HATE HAVING TO WRITE THIS.
-        serialized_response = self.rx_list.pop(0)['message']
-        response_message = self.decode_response(serialized_response)
-        return response_message
+        # print('rx list:', self.rx_list)
+        if response_type < 0:
+            self.rx_list.pop(0)
+        else:
+            while True:
+                try:
+                    serialized_response = self.rx_list.pop(0)['message']
+                    if self.check_response_type(response_type, serialized_response):
+                        return self.decode_response(serialized_response)
+                except IndexError:
+                    print('Requested response type not found in list!')
 
-    def clean_list(self):
-        """NASTY STUFF! I REALLY HATE HAVING TO WRITE THIS."""
-        new_list = []
-        for x in self.rx_list:
-            if x not in new_list:
-                new_list.append(x)
-        self.rx_list = new_list
+    @staticmethod
+    def check_response_type(response_type: int, response: bytes or bytearray):
+        return response[2] == response_type
 
     @request_handler_marker(action_desc='get status')
     async def get_status(self, t=None, new_id: Optional[int] = None, new_group_number: Optional[int] = None)\
@@ -273,7 +247,7 @@ class OpenBadge(OpenBadgeMeta):
             request.type.status_request.has_badge_assignement = True
 
         await self.request_response(request)
-        return self.deal_response().type.status_response
+        return self.deal_response(response_type=DECODE_STATUS_RESPONSE).type.status_response
 
     async def set_id_at_start(self, badge_id, group_number):
         try:
@@ -292,7 +266,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.start_microphone_request.mode = mode
 
         await self.request_response(request)
-        return self.deal_response().type.start_microphone_response
+        return self.deal_response(response_type=DECODE_START_MICROPHONE_RESPONSE).type.start_microphone_response
 
     @request_handler_marker(action_desc='stop microphone')
     async def stop_microphone(self) -> None:
@@ -302,6 +276,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.stop_microphone_request = bp.StopMicrophoneRequest()
 
         await self.request_response(request, require_response=False)
+        self.deal_response(response_type=-1)
         return None
 
     @request_handler_marker(action_desc='start scan')
@@ -319,7 +294,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.start_scan_request.interval = interval_ms
 
         await self.request_response(request)
-        return self.deal_response().type.start_scan_response
+        return self.deal_response(response_type=DECODE_START_SCAN_RESPONSE).type.start_scan_response
 
     @request_handler_marker(action_desc='stop scan')
     async def stop_scan(self) -> None:
@@ -329,7 +304,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.stop_scan_request = bp.StopScanRequest()
 
         await self.request_response(request)
-        return self.deal_response()
+        return self.deal_response(response_type=-1)
 
     @request_handler_marker(action_desc='start imu')
     async def start_imu(self, t=None, acc_fsr=DEFAULT_IMU_ACC_FSR, gyr_fsr=DEFAULT_IMU_GYR_FSR,
@@ -344,7 +319,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.start_imu_request.datarate = datarate
 
         await self.request_response(request)
-        return self.deal_response().type.start_imu_response
+        return self.deal_response(response_type=DECODE_START_IMU_REQUEST).type.start_imu_response
 
     @request_handler_marker(action_desc='stop imu')
     async def stop_imu(self) -> None:
@@ -354,6 +329,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.stop_imu_request = bp.StopImuRequest()
 
         await self.request_response(request)
+        self.deal_response(response_type=-1)
         return None
 
     @request_handler_marker(action_desc='identify')
@@ -367,7 +343,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.identify_request.timeout = duration_seconds
 
         await self.request_response(request)
-        self.deal_response()
+        self.deal_response(response_type=-1)
         return True
 
     @request_handler_marker(action_desc='restart')
@@ -378,7 +354,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.restart_request = bp.RestartRequest()
 
         await self.request_response(request)
-        self.deal_response()
+        self.deal_response(response_type=-1)
         return True
 
     @request_handler_marker(action_desc='get free sdc space')
@@ -389,7 +365,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.free_sdc_space_request = bp.FreeSDCSpaceRequest()
 
         await self.request_response(request)
-        return self.deal_response().type.free_sdc_space_response
+        return self.deal_response(response_type=DECODE_FREE_SDC_SPACE_RESPONSE).type.free_sdc_space_response
 
     async def start_recording_all_sensors(self):
         await self.get_status()
@@ -401,47 +377,7 @@ class OpenBadge(OpenBadgeMeta):
         await self.stop_scan()
         await self.stop_microphone()
         await self.stop_imu()
-        #TODO:
-        # while self.free_sdc_space_response_queue.empty():
-        #     self.receive_response()
 
-        # return self.free_sdc_space_response_queue.get()
-
-
-    def sdc_errase_all(self):
-
-        request = Request()
-        request.type.which = Request_sdc_errase_all_request_tag
-        request.type.sdc_errase_all_request = ErraseAllRequest()
-
-        self.send_request(request)
-
-        # Clear the queue before receiving
-        with self.sdc_errase_all_response_queue.mutex:
-            self.sdc_errase_all_response_queue.queue.clear()
-
-        while self.sdc_errase_all_response_queue.empty():
-            self.receive_response()
-
-        return self.sdc_errase_all_response_queue.get()
-
-    def get_imu_data(self):
-
-        request = Request()
-        request.type.which = Request_get_imu_data_request_tag
-        request.type.get_imu_data_request = GetIMUDataRequest()
-        request.type.get_imu_data_request.timestamp = Timestamp()
-
-        self.send_request(request)
-
-        # Clear the queue before receiving
-        with self.get_imu_data_response_queue.mutex:
-            self.get_imu_data_response_queue.queue.clear()
-
-        while self.get_imu_data_response_queue.empty():
-            self.receive_response()
-
-        return self.get_imu_data_response_queue.get()
     @staticmethod
     def print_help():
         print(" Available commands:")
