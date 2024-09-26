@@ -63,7 +63,7 @@ The PicoProbe for RP2040 based MCUs like the [Pi Pico](https://github.com/raspbe
 1. Get a J-link debug probe from here:  https://www.segger.com/products/debug-probes/j-link/
 The EDU version is available for educational instituions. 
 2. Download and install the J Link SDK from [here](https://www.segger.com/products/debug-probes/j-link/tools/j-link-sdk/).
-3. Make sure the midge badge is powered on. 
+3. Make sure the midge badge is powered on, and connect the J-link to the SWD programming port on the midge badge. 
 4. Open your terminal (or command prompt) and enter the following command to start J-Link Commander and connect to the nRF52832 using SWD at a speed of 4 MHz:
    ```
    JLinkExe -device nRF52832_xxAA -if SWD -speed 4000
