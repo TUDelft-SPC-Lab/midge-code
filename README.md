@@ -70,7 +70,7 @@ The EDU version is available for educational instituions.
    ```
 5. Load the binary file at the required address:
    ```
-   loadbin <firmware.bin> 0x00000000
+   loadfile <firmware.hex>
    ```
 
 ### Hardware connection to the board
