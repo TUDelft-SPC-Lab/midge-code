@@ -68,7 +68,7 @@ The EDU version is available for educational instituions.
    ```
    JLinkExe -device nRF52832_xxAA -if SWD -speed 4000
    ```
-5. Load the binary file at the required address:
+5. Flash the binary file:
    ```
    loadfile <firmware.hex>
    ```
