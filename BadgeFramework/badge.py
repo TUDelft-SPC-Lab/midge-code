@@ -216,6 +216,7 @@ class OpenBadge(OpenBadgeMeta):
         """deal response from client. Currently, this only involves decoding."""
         # print('rx list:', self.rx_list)
         if response_type < 0:
+            # response_type < 0 means this response does not contain messages
             self.rx_list.pop(0)
         else:
             while True:

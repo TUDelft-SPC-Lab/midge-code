@@ -14,9 +14,13 @@ SENSOR_MICROPHONE = 1
 SENSOR_IMU = 2
 SENSOR_SCAN = 3
 SENSOR_CHECK_STATUS = 100
+SENSOR_TIMEOUT = 15
 
 SENSOR_START = True
 SENSOR_STOP = False
+
+BADGES_ALL = -1000
+USE_ALL = False  # True to use all badges in .csv file and False to use only marked badges
 
 sensors = ['All', 'Mic', 'IMU', 'Scan']
 indicators_long = ['clock', 'microphone', 'imu', 'scan']
@@ -100,23 +104,39 @@ class BadgeMonitorApp(tk.Tk):
         self.timestamps = {}
         self.update_tasks = {}
 
+        badge_label = ttk.Label(self.frame, text=f"ALL BADGES")
+        badge_label.grid(row=0, column=0, padx=80, pady=5)
+        check_button = ttk.Button(self.frame, text="Check Status",
+                       command=lambda b=BADGES_ALL, s=SENSOR_CHECK_STATUS,
+                       m=SENSOR_CHECK_STATUS: self.schedule_async_task(b, s, m))
+        check_button.grid(row=0, column=1, padx=20, pady=5)
+        for s_idx, sensor in enumerate(sensors):
+            s_start_button = ttk.Button(self.frame, text=sensor + " Start", command=
+            lambda b=BADGES_ALL, s=s_idx, m=SENSOR_START: self.schedule_async_task(b, s, m))
+            s_start_button.grid(row=0, column=2 + 2 * s_idx, padx=5, pady=5)
+
+            s_stop_button = ttk.Button(self.frame, text=sensor + " Stop", command=
+            lambda b=BADGES_ALL, s=s_idx, m=SENSOR_STOP: self.schedule_async_task(b, s, m))
+            s_stop_button.grid(row=0, column=3 + 2 * s_idx, padx=5, pady=5)
+
         # Create rows for each badge
+
         for idx, badge in enumerate(badges, start=1):
-            row_button, row_status = idx * 2 - 1, idx * 2
+            row_button, row_status = idx * 2 + 1, idx * 2 + 2
             badge_label = ttk.Label(self.frame, text=f"Badge {badge}")
             badge_label.grid(row=row_button, column=0, padx=80, pady=5)
 
             check_button = ttk.Button(self.frame, text="Check Status",
-                                      command=lambda b=badge, s=100, m=1: self.schedule_async_task(b, s, m))
+                           command=lambda b=badge, s=100, m=SENSOR_START: self.schedule_async_task(b, s, m))
             check_button.grid(row=row_button, column=1, padx=20, pady=5)
 
             for s_idx, sensor in enumerate(sensors):
                 s_start_button = ttk.Button(self.frame, text=sensor+" Start", command=
-                                            lambda b=badge, s=s_idx, m=SENSOR_START: self.schedule_async_task(b, s, m))
+                                 lambda b=badge, s=s_idx, m=SENSOR_START: self.schedule_async_task(b, s, m))
                 s_start_button.grid(row=row_button, column=2+2*s_idx, padx=5, pady=5)
 
                 s_stop_button = ttk.Button(self.frame, text=sensor+" Stop", command=
-                                           lambda b=badge, s=s_idx, m=SENSOR_STOP: self.schedule_async_task(b, s, m))
+                                lambda b=badge, s=s_idx, m=SENSOR_STOP: self.schedule_async_task(b, s, m))
                 s_stop_button.grid(row=row_button, column=3+2*s_idx, padx=5, pady=5)
 
             sensor_light_canvases = []
@@ -160,24 +180,40 @@ class BadgeMonitorApp(tk.Tk):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def schedule_async_task(self, badge_id, sensor_idx, mode: bool):
-        # Schedule the coroutine to run asynchronously
-        async_sensor = partial(self.async_sensor_operation, badge_id=badge_id, mode=mode)
+        if badge_id == BADGES_ALL:
+            asyncio.create_task(self.async_task_all_badges(sensor_idx, mode, use_all=USE_ALL))
+        else:
+            asyncio.create_task(self.async_task_sensors(badge_id, sensor_idx, mode))
+
+    async def async_task_all_badges(self, sensor_idx, mode: bool, use_all: bool):
+        for row_id in self.badges.index:
+            badge_id, use_flag = self.badges['Participant Id'][row_id], self.badges['Use'][row_id]
+            if use_flag or use_all:
+                await self.async_task_sensors(badge_id=badge_id, sensor_idx=sensor_idx, mode=mode)
+
+
+    async def async_task_sensors(self, badge_id: int, sensor_idx: int, mode: bool):
         if sensor_idx == SENSOR_CHECK_STATUS:
-            asyncio.create_task(self.async_check_status(badge_id))
+            await self.async_check_status(badge_id)
+            # await self.async_check_status(badge_id=badge_id, mode=mode, sensor_name='status')
         elif sensor_idx == SENSOR_MICROPHONE:
-            asyncio.create_task(async_sensor(sensor_name='microphone'))
+            await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='microphone')
         elif sensor_idx == SENSOR_IMU:
-            asyncio.create_task(async_sensor(sensor_name='imu'))
+            await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='imu')
         elif sensor_idx == SENSOR_SCAN:
-            asyncio.create_task(async_sensor(sensor_name='scan'))
+            await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='scan')
         elif sensor_idx == SENSOR_ALL:
-            asyncio.create_task(async_sensor(sensor_name='microphone'))
-            asyncio.create_task(async_sensor(sensor_name='imu'))
-            asyncio.create_task(async_sensor(sensor_name='scan'))
+            await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='microphone')
+            await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='imu')
+            await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='scan')
+
 
     async def async_check_status(self, badge_id):
         # Call the async function to check the status
-        statuses, timestamp = await self.check_status(badge_id)
+        # statuses, timestamp = await self.check_status(badge_id)
+        statuses, timestamp = await self.async_sensor(badge_id=badge_id, mode=True, sensor_name='status')
+        if statuses is None:
+            return
         sensor_statuses = [getattr(statuses, s + '_status') for s in indicators_long]
 
         # Get the canvas and light object for the badge
@@ -203,36 +239,45 @@ class BadgeMonitorApp(tk.Tk):
         task = asyncio.create_task(self.update_elapsed_time(badge_id, elapsed_time_label, timestamp))
         self.update_tasks[badge_id] = task
 
-    async def check_status(self, badge_id):
-        badge_addr = self.get_badge_address(badge_id)
-        print(f"Checking status for badge {badge_id}...")
+    @staticmethod
+    def get_operation_name(mode_name: str, sensor_name: str) -> str:
+        if sensor_name in indicators_long:
+            return f'{mode_name}_{sensor_name}'
+        elif sensor_name == 'status':
+            return 'get_status'
+        elif sensor_name == 'sdc_space':
+            return 'get_free_sdc_space'
+        else:
+            raise ValueError
 
-        # simulate
-        # await asyncio.sle(2)  # Simulate delay
-        # statuses = np.random.randint(2, size=sensor_num)
-
-        # real status
-        async with OpenBadge(badge_id, badge_addr) as open_badge:
-            statuses = await open_badge.get_status()
-
-        timestamp = datetime.now()  # Get the current timestamp
-        print(statuses)
-        print(f"Check status for badge {badge_id} completed.")
-        return statuses, timestamp
-
-    async def async_sensor_operation(self, badge_id, sensor_name, mode: bool):
-        badge_addr = self.get_badge_address(badge_id)
+    async def async_sensor(self, badge_id, sensor_name, mode: bool):
+        # badge_addr = self.get_badge_address(badge_id)
         mode_name = 'start' if mode == SENSOR_START else 'stop'
-        op_name = f'{mode_name}_{sensor_name}'
-        print(f"Executing: {mode_name} {sensor_name} for badge {badge_id}...")
+        op_name = self.get_operation_name(mode_name, sensor_name)
+        badge_op_desc = f'Badge {badge_id} {op_name}'
+        print(f"Executing: {badge_op_desc}...")
+        try:
+            # await asyncio.wait_for(self.eternity(), timeout=1.0)
+            response = await asyncio.wait_for(self.async_sensor_operation(badge_id, op_name), timeout=SENSOR_TIMEOUT)
+            print(f'Info: {badge_op_desc} successfully.')
+        except asyncio.TimeoutError:
+            print(f"Warning: {badge_op_desc} has timed out! (>{SENSOR_TIMEOUT}s)")
+            response = None
+        except Exception as e:
+            print(e)
+            response = None
+
+        # await asyncio.sleep(1)  # Simulate delay
+        timestamp = datetime.now()  # Get the current timestamp
+        return response, timestamp
+
+    async def async_sensor_operation(self, badge_id, op_name):
+        badge_addr = self.get_badge_address(badge_id)
         async with OpenBadge(badge_id, badge_addr) as open_badge:
             sensor_operation = getattr(open_badge, op_name)
             return_message = await sensor_operation()
             print(return_message)
-        # await asyncio.sleep(1)  # Simulate delay
-        timestamp = datetime.now()  # Get the current timestamp
-        print(f'Badge {badge_id} {sensor_name} {mode_name} successfully.')
-        return timestamp
+        return return_message
 
     def get_badge_address(self, badge_id: int) -> str:
         badge = self.badges[self.badges['Participant Id'] == badge_id]
