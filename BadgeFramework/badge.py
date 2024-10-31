@@ -5,7 +5,8 @@ import functools
 import time
 import logging
 import struct
-from collections.abc import Callable
+import ntplib
+from datetime import datetime, timezone
 
 from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
 from typing import Optional, Final
@@ -32,11 +33,28 @@ DECODE_FREE_SDC_SPACE_RESPONSE = 5
 
 logger = logging.getLogger(__name__)
 
+
+def get_ntp_time(ntp_server='pool.ntp.org'):
+    # Create an NTP client
+    client = ntplib.NTPClient()
+
+    try:
+        # Query the NTP server
+        response = client.request(ntp_server)
+
+        # Convert the response to datetime
+        ntp_time = datetime.fromtimestamp(response.tx_time, tz=timezone.utc)
+        print("NTP time:", ntp_time.strftime('%Y-%m-%d %H:%M:%S %Z'))
+        return ntp_time
+
+    except Exception as e:
+        print("Could not connect to NTP server:", e)
+        return None
+
 # -- Helper methods used often in badge communication --
 
 # We generally define timestamp_seconds to be in number of seconds since UTC epoch
 # and timestamp_miliseconds to be the miliseconds portion of that UTC timestamp.
-
 
 def get_timestamps_from_time(t=None) -> (int, int):
     """Returns the given time as two parts - seconds and milliseconds"""
