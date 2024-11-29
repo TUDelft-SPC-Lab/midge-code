@@ -63,8 +63,7 @@ def bp_timestamp_from_time(t=None) -> bp.Timestamp:
 
 def badge_disconnected(b: BleakClient) -> None:
     """disconnection callback"""
-    # print(f"Warning: disconnected badge")
-    pass
+    print(f"Warning: disconnected badge")
 
 
 def request_handler(device_id, action_desc):
@@ -142,8 +141,7 @@ class OpenBadge(OpenBadgeMeta):
 
     def badge_disconnected(self, b: BleakClient) -> None:
         """disconnection callback"""
-        # print(f"Warning: disconnected badge", b.address)
-        pass
+        print(f"Warning: disconnected badge")
 
     @staticmethod
     def add_serialized_header(request_message: bp.Request) -> bytes or bytearray:
@@ -151,6 +149,11 @@ class OpenBadge(OpenBadgeMeta):
         serialized_request = request_message.encode()
         # Adding length header:
         serialized_request_len = struct.pack("<H", len(serialized_request))
+        # logger.debug(
+        #     "Sending: {}, Raw: {}".format(
+        #         request_message, serialized_request.encode("hex")
+        #     )
+        # )
         serialized_request: bytes = serialized_request_len + serialized_request
         return serialized_request
 
