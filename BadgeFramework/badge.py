@@ -34,27 +34,11 @@ DECODE_FREE_SDC_SPACE_RESPONSE = 5
 logger = logging.getLogger(__name__)
 
 
-def get_ntp_time(ntp_server='pool.ntp.org'):
-    # Create an NTP client
-    client = ntplib.NTPClient()
-
-    try:
-        # Query the NTP server
-        response = client.request(ntp_server)
-
-        # Convert the response to datetime
-        ntp_time = datetime.fromtimestamp(response.tx_time, tz=timezone.utc)
-        print("NTP time:", ntp_time.strftime('%Y-%m-%d %H:%M:%S %Z'))
-        return ntp_time
-
-    except Exception as e:
-        print("Could not connect to NTP server:", e)
-        return None
-
 # -- Helper methods used often in badge communication --
 
 # We generally define timestamp_seconds to be in number of seconds since UTC epoch
 # and timestamp_miliseconds to be the miliseconds portion of that UTC timestamp.
+
 
 def get_timestamps_from_time(t=None) -> (int, int):
     """Returns the given time as two parts - seconds and milliseconds"""
@@ -79,7 +63,8 @@ def bp_timestamp_from_time(t=None) -> bp.Timestamp:
 
 def badge_disconnected(b: BleakClient) -> None:
     """disconnection callback"""
-    print(f"Warning: disconnected badge")
+    # print(f"Warning: disconnected badge")
+    pass
 
 
 def request_handler(device_id, action_desc):
@@ -157,7 +142,8 @@ class OpenBadge(OpenBadgeMeta):
 
     def badge_disconnected(self, b: BleakClient) -> None:
         """disconnection callback"""
-        print(f"Warning: disconnected badge", b.address)
+        # print(f"Warning: disconnected badge", b.address)
+        pass
 
     @staticmethod
     def add_serialized_header(request_message: bp.Request) -> bytes or bytearray:
@@ -211,7 +197,7 @@ class OpenBadge(OpenBadgeMeta):
         if len(message) > 0:
             new_message = {'time': time.time(), 'message': message}
             if not self.message_is_duplicated(self.rx_list, new_message):
-                print(f"RX changed {sender}: {message}" + str(time.time()))
+                # print(f"RX changed {sender}: {message}" + str(time.time()))
                 # self.rx_message = message
                 self.rx_list.append(new_message)
 
@@ -235,7 +221,8 @@ class OpenBadge(OpenBadgeMeta):
         # print('rx list:', self.rx_list)
         if response_type < 0:
             # response_type < 0 means this response does not contain messages
-            self.rx_list.pop(0)
+            if len(self.rx_list) > 0:
+                self.rx_list.pop(0)
         else:
             while True:
                 try:
@@ -415,3 +402,26 @@ class OpenBadge(OpenBadgeMeta):
         print(" help")
         print(" All commands use current system time as transmitted time.")
         sys.stdout.flush()
+
+
+def display_current_time():
+    try:
+        while True:
+            # Get current time with millisecond accuracy
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            # current_time = time.time()
+            print(f"\r{current_time}", end='')  # Use carriage return to overwrite the line
+            time.sleep(0.001)  # Sleep for 1 millisecond
+    except KeyboardInterrupt:
+        print("\nStopped.")
+
+
+def main():
+    display_current_time()
+#     c = 0
+#     # ntp_server_ip = "127.0.0.1"
+#     # get_ntp_time(ntp_server_ip)
+
+
+if __name__ == '__main__':
+    main()
