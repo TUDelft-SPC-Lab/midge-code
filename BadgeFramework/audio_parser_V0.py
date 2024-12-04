@@ -8,15 +8,15 @@ LOW_SAMPLE_RATE = 1250
 def main(fn):
     data_folder = Path(fn)
     for path_raw_input in sorted(data_folder.iterdir()):
-        print(path_raw_input, path_raw_input.suffix == "")
         if (path_raw_input.is_file() and path_raw_input.suffix == "" and
             ("MICLO" in path_raw_input.stem or "MICHI" in path_raw_input.stem)):
+
+            print("Raw input file " + str(path_raw_input))
 
             path_wav_output = path_raw_input.parent / (path_raw_input.stem + ".wav")
 
             if path_raw_input.stem[4:6] == "LO":
                 sample_rate = LOW_SAMPLE_RATE  # Low frequency sampling
-                raise NotImplementedError("Low sample rate does not work yet")
             elif path_raw_input.stem[4:6] == "HI":
                 sample_rate = HIGH_SAMPLE_RATE  # High frequency sampling
             else:
@@ -47,9 +47,7 @@ def main(fn):
                 else:
                     fp0 = np.interp(x, xp, audio_data[:, 0])
                     fp1 = np.interp(x, xp, audio_data[:, 1])
-                    audio_data = np.stack([fp0, fp1], axis=1)                    
-                
-                print(audio_data.shape)
+                    audio_data = np.stack([fp0, fp1], axis=1)
 
             # Save the audio data as a WAV file
             write(filename=str(path_wav_output), rate=HIGH_SAMPLE_RATE, data=audio_data)
