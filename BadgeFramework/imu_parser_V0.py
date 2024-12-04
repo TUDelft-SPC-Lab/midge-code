@@ -188,6 +188,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     main(fn=args.fn, acc=args.acc, mag=args.mag, gyr=args.gyr, rot=args.rot, plot=args.plot, scan=args.scan)
 
+    # Example command
+    # python ./imu_parser_V0.py --fn ../midge_0_files/ --scan TRUE --acc TRUE --mag TRUE --rot TRUE --gyr TRUE --rot TRUE --plot True
 
 
 
