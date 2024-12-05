@@ -72,6 +72,7 @@ def main():
     midge_folder = os.path.join('/home/zonghuan/tudelft/projects/datasets/new_collection/tech_pilot_1/midge_data/',
                                 str(midge_id), '65535_1730466472')
     deal_audio(fn=midge_folder)
+    # add something at home
 
 
 if __name__ == '__main__':
