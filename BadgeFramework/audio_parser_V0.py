@@ -39,7 +39,7 @@ def main(fn):
             if num_channels == 2:
                 audio_data = audio_data.reshape(-1, 2)
 
-            # Save the audio data as a WAV file
+            # Save the data in a WAV file
             write(filename=str(path_wav_output), rate=sample_rate, data=audio_data)
 
 
