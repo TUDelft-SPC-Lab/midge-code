@@ -17,8 +17,10 @@ def main(fn):
 
             if path_raw_input.stem[4:6] == "LO":
                 sample_rate = LOW_SAMPLE_RATE  # Low frequency sampling
+                buffer_dtype = np.int16 # 16-bit PCM
             elif path_raw_input.stem[4:6] == "HI":
                 sample_rate = HIGH_SAMPLE_RATE  # High frequency sampling
+                buffer_dtype = np.int32 # 32-bit PCM
             else:
                 raise RuntimeError("Unknown number of channels")
 
@@ -31,26 +33,14 @@ def main(fn):
 
             with path_raw_input.open("rb") as f:
                 raw_data = f.read()
-
-            # 32-bit PCM uses numpy dtype int32 
-            audio_data = np.frombuffer(raw_data, dtype=np.int32)
+            
+            audio_data = np.frombuffer(raw_data, dtype=buffer_dtype)
 
             if num_channels == 2:
                 audio_data = audio_data.reshape(-1, 2)
 
-            # Upsample the low sample rate to high sample rate by linear interpolation
-            if sample_rate == LOW_SAMPLE_RATE:    
-                xp = np.linspace(0, audio_data.shape[0], audio_data.shape[0])
-                x = np.linspace(0, audio_data.shape[0], audio_data.shape[0] * (HIGH_SAMPLE_RATE / LOW_SAMPLE_RATE))
-                if num_channels == 1:
-                    audio_data = np.interp(x, xp, audio_data)
-                else:
-                    fp0 = np.interp(x, xp, audio_data[:, 0])
-                    fp1 = np.interp(x, xp, audio_data[:, 1])
-                    audio_data = np.stack([fp0, fp1], axis=1)
-
             # Save the audio data as a WAV file
-            write(filename=str(path_wav_output), rate=HIGH_SAMPLE_RATE, data=audio_data)
+            write(filename=str(path_wav_output), rate=sample_rate, data=audio_data)
 
 
 if __name__ == '__main__':
