@@ -4,16 +4,63 @@ from datetime import datetime as dt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import argparse
+from audio_parser_V0 import get_kth_latest
+import os
+
+def get_sensor_paths(folder_path: str) -> dict:
+    """
+    Returns 5 lists of file names that end with specific suffixes.
+
+    Args:
+        folder_path (str): Path to the folder.
+
+    Returns:
+        tuple: Five lists of file names matching the suffixes:
+               - "_accel"
+               - "_gyr"
+               - "mag"
+               - "_rotation"
+               - "_proximity"
+    """
+    # Initialize lists for each suffix
+    files = {
+        'accel': [], 'gyr': [], 'mag': [], 'rotation': [], 'proximity': []
+    }
+
+    # Iterate through all files in the folder
+    for file_name in os.listdir(folder_path):
+        if os.path.isfile(os.path.join(folder_path, file_name)):
+            if file_name.endswith("_accel"):
+                files['accel'].append(file_name)
+            elif file_name.endswith("_gyr"):
+                files['gyr'].append(file_name)
+            elif file_name.endswith("mag"):
+                files['mag'].append(file_name)
+            elif file_name.endswith("_rotation"):
+                files['rotation'].append(file_name)
+            elif file_name.endswith("_proximity"):
+                files['proximity'].append(file_name)
+
+    check_multiple_sensor_files(files)
+    return files
+
+def check_multiple_sensor_files(files):
+    for file_list in files.values():
+        if len(file_list) == 0:
+            print("Warning: No sensor files found!")
+        if len(file_list) > 1:
+            print('Warning: Multiple sensor files detected!')
 
 class IMUParser(object):
-
-    def __init__(self,filename):
-        self.filename = filename
-        self.path_accel = filename+'ACC_0'
-        self.path_gyro = filename+'GYR_0'
-        self.path_mag = filename+'MAG_0'
-        self.path_rotation = filename+'ROT_0'
-        self.path_scan = filename+'SCAN_0'
+    def __init__(self, record_path):
+        sensor_files = get_sensor_paths(record_path)
+        self.record_path = record_path
+        self.path_accel = os.path.join(record_path, sensor_files['accel'][0])
+        self.path_gyro = os.path.join(record_path, sensor_files['gyr'][0])
+        self.path_mag = os.path.join(record_path, sensor_files['mag'][0])
+        self.path_rotation = os.path.join(record_path, sensor_files['rotation'][0])
+        self.path_scan = os.path.join(record_path, sensor_files['proximity'][0])
 
     def parse_generic(self,sensorname):
         data = []
@@ -116,17 +163,17 @@ class IMUParser(object):
 
     def plot_and_save(self,a,g,m):
         if a:
-            fname = self.filename + '_accel.png'
+            fname = self.record_path + '_accel.png'
             ax = self.accel_df.plot(x='time')
             fig = ax.get_figure()
             fig.savefig(fname)
         if g:
-            fname = self.filename + '_gyro.png'
+            fname = self.record_path + '_gyro.png'
             ax = self.gyro_df.plot(x='time')
             fig = ax.get_figure()
             fig.savefig(fname)
         if m:
-            fname = self.filename + '_mag.png'
+            fname = self.record_path + '_mag.png'
             ax = self.mag_df.plot(x='time')
             fig = ax.get_figure()
             fig.savefig(fname)
@@ -158,7 +205,7 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-def main(fn,acc,mag,gyr,rot,plot,scan):
+def parse_imu(fn,acc,mag,gyr,rot,plot,scan):
     parser = IMUParser(fn)
     if acc:
         parser.parse_accel()
@@ -174,22 +221,25 @@ def main(fn,acc,mag,gyr,rot,plot,scan):
     if plot:
         parser.plot_and_save(acc,mag,gyr)
 
-if __name__ == '__main__':
-    import argparse
+def get_default_file_path():
+    midge_data_parent = "/home/zonghuan/tudelft/projects/datasets/new_collection/tech_pilot_1/midge_data/"
+    midge_id = 54
+    return get_kth_latest(os.path.join(midge_data_parent, str(midge_id)), 1)
+
+def main():
     parser = argparse.ArgumentParser(description='Parser for the IMU data obtained from Minge Midges\
-    (Acceleration, Gyroscope, Magnetometer, Rotation)')
-    parser.add_argument('--fn', required=True,help='Please enter the path to the file')
-    parser.add_argument('--acc', default=True,type=str2bool ,help='Check to parse and save acceleration data')
-    parser.add_argument('--mag', default=True,type=str2bool ,help='Check to parse and save magnetometer data')
-    parser.add_argument('--gyr', default=True,type=str2bool,help='Check to parse and save gyroscope data')
-    parser.add_argument('--scan', default=True,type=str2bool,help='Check to parse and save scan data')
-    parser.add_argument('--rot', default=True,type=str2bool ,help='Check to parse and save rotation data')
-    parser.add_argument('--plot', default=True,type=str2bool ,help='Check to plot the parsed data')
+        (Acceleration, Gyroscope, Magnetometer, Rotation)')
+    parser.add_argument('--fn', default=get_default_file_path(), help='Please enter the path to the file')
+    parser.add_argument('--acc', default=True, type=str2bool, help='Check to parse and save acceleration data')
+    parser.add_argument('--mag', default=True, type=str2bool, help='Check to parse and save magnetometer data')
+    parser.add_argument('--gyr', default=True, type=str2bool, help='Check to parse and save gyroscope data')
+    parser.add_argument('--scan', default=True, type=str2bool, help='Check to parse and save scan data')
+    parser.add_argument('--rot', default=True, type=str2bool, help='Check to parse and save rotation data')
+    parser.add_argument('--plot', default=True, type=str2bool, help='Check to plot the parsed data')
     args = parser.parse_args()
-    main(fn=args.fn, acc=args.acc, mag=args.mag, gyr=args.gyr, rot=args.rot, plot=args.plot, scan=args.scan)
+    parse_imu(fn=args.fn, acc=args.acc, mag=args.mag, gyr=args.gyr, rot=args.rot, plot=args.plot, scan=args.scan)
 
-
-
-
-
-
+if __name__ == '__main__':
+    main()
+    # Example command
+    # python ./imu_parser_V0.py --fn ../midge_0_files/ --scan TRUE --acc TRUE --mag TRUE --rot TRUE --gyr TRUE --rot TRUE --plot True
