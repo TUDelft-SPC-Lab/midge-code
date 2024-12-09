@@ -76,9 +76,11 @@ class IMUParser(object):
                     x,y,z = struct.unpack('<fff', data_bytes)
                     data.append([x,y,z])
                     timestamps.append(ts)
-                    i = i + 32
+                    i = i + 24
                 else:
                     break
+        self.check_ts(timestamps)
+
         data_xyz = np.asarray(data)
         timestamps = np.asarray(timestamps)
         timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
@@ -87,6 +89,15 @@ class IMUParser(object):
         df['Y'] = data_xyz[:,1]
         df['Z'] = data_xyz[:,2]
         return df
+
+    @staticmethod
+    def check_ts(nums, thres=1e13):
+        timestamps = [x[0] for x in nums]
+        results = [(i, f"{num:.0f}") for i, num in enumerate(timestamps) if num > thres]
+        timestamp_good = [x for x in timestamps if x < 1e13]
+        good_diff = [timestamp_good[x + 1] - timestamp_good[x] for x in range(len(timestamp_good) - 2)]
+        d = [x for x in good_diff if x > 20 or x < 10]
+        c = 9
 
     def parse_scanner(self):
         data = []
