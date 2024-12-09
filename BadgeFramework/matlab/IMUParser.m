@@ -57,14 +57,15 @@ classdef IMUParser
             data_flat = typecast(uint8(data_bytes(:)), 'single');
             data = reshape(data_flat, 4, num_blocks)';
         
-            % Convert timestamps to datetime
-            timestamps_dt = datetime(timestamps / 1000, 'ConvertFrom', 'posixtime');
-        
             % Create a table
             obj.rot_df = table(timestamps, data(:,1), data(:,2), data(:,3), ...
                 data(:,4), 'VariableNames', {'time', 'a', 'b', 'c', 'd'});
 
+            % Remove erroneous timestamps
             obj.rot_df = remove_large_time_rows(obj.rot_df);
+
+            % Convert timestamps to datetime
+            obj.rot_df.time = datetime(obj.rot_df.time / 1000, 'ConvertFrom', 'posixtime');
         end
 
         function save_dataframes(obj, acc, gyr, mag, rot)

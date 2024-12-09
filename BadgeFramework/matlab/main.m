@@ -14,6 +14,9 @@ parser = parser.parse_mag();
 parser = parser.parse_rot();
 
 plot_xyz(parser.accel_df);
+plot_xyz(parser.gyro_df);
+plot_xyz(parser.mag_df);
+plot_abcd(parser.rot_df);
 
 % Save parsed data
 parser.save_dataframes(true, true, true, true);

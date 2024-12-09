@@ -21,12 +21,14 @@ function df = parse_generic(file_path)
     data_flat = typecast(uint8(data_bytes(:)), 'single');
     data = reshape(data_flat, 3, num_blocks)';
 
-    % Convert timestamps to datetime
-    timestamps_dt = datetime(timestamps / 1000, 'ConvertFrom', 'posixtime');
 
     % Create a table
     df = table(timestamps, data(:,1), data(:,2), data(:,3), ...
                'VariableNames', {'time', 'X', 'Y', 'Z'});
-
+    
+    % Remove erroneous timestamps
     df = remove_large_time_rows(df);
+
+    % Convert timestamps to datetime
+    df.time = datetime(df.time / 1000, 'ConvertFrom', 'posixtime');
 end
