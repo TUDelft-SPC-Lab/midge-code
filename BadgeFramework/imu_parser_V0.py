@@ -83,8 +83,8 @@ class IMUParser(object):
 
         data_xyz = np.asarray(data)
         timestamps = np.asarray(timestamps)
-        timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
-        df = pd.DataFrame(timestamps_dt, columns=['time'])
+        # timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
+        df = pd.DataFrame(timestamps, columns=['time'])
         df['X'] = data_xyz[:,0]
         df['Y'] = data_xyz[:,1]
         df['Z'] = data_xyz[:,2]
@@ -164,8 +164,8 @@ class IMUParser(object):
                     break
         rotation_xyz = np.asarray(rotation)
         timestamps = np.asarray(timestamps)
-        timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
-        df = pd.DataFrame(timestamps_dt, columns=['time'])
+        # timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
+        df = pd.DataFrame(timestamps, columns=['time'])
         df['a'] = rotation_xyz[:,0]
         df['b'] = rotation_xyz[:,1]
         df['c'] = rotation_xyz[:,2]
@@ -244,7 +244,7 @@ def main():
     parser.add_argument('--acc', default=True, type=str2bool, help='Check to parse and save acceleration data')
     parser.add_argument('--mag', default=True, type=str2bool, help='Check to parse and save magnetometer data')
     parser.add_argument('--gyr', default=True, type=str2bool, help='Check to parse and save gyroscope data')
-    parser.add_argument('--scan', default=True, type=str2bool, help='Check to parse and save scan data')
+    parser.add_argument('--scan', default=False, type=str2bool, help='Check to parse and save scan data')
     parser.add_argument('--rot', default=True, type=str2bool, help='Check to parse and save rotation data')
     parser.add_argument('--plot', default=True, type=str2bool, help='Check to plot the parsed data')
     args = parser.parse_args()
