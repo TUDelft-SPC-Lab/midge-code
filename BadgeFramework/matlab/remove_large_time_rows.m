@@ -1,3 +1,4 @@
+
 function filteredTable = remove_large_time_rows(inputTable)
     % REMOVE_LARGE_TIME_ROWS Removes rows where the time in the first column is > 1e13.
     %
