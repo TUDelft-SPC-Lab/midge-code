@@ -1,4 +1,4 @@
-function plot_table(T, plot_title)
+function plot_table(T, plot_title, fig_handle)
     % Assuming 'T' is a table where the first column is 'time' and the rest are data columns
     assert (length(T.time) == length(unique(T.time)));
 
@@ -17,9 +17,15 @@ function plot_table(T, plot_title)
     % Define a set of colors to cycle through
     colors = {'r', 'g', 'b', 'y', 'm', 'c', 'k'};
     num_colors = length(colors);
+    
+    % Check if a figure handle is provided
+    if nargin < 3 || isempty(fig_handle)
+        figure;  % Create a new figure if no handle is provided
+    else
+        figure(fig_handle);  % Use the provided figure handle
+    end
 
     % Create the figure and plot each series
-    figure;
     hold on;
     for i = 1:num_series
         color = colors{mod(i - 1, num_colors) + 1};  % Cycle through colors

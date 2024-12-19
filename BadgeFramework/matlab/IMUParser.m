@@ -5,6 +5,7 @@ classdef IMUParser
         path_mag
         path_rotation
         path_scan
+        path_save
 
         accel_df
         gyro_df
@@ -12,17 +13,20 @@ classdef IMUParser
         rot_df
         scan_df
 
+        midge_id
         block_size
     end
 
     methods
-        function obj = IMUParser(record_path, block_size)
+        function obj = IMUParser(record_path, midge_id, block_size, local_path)
             sensor_files = get_sensor_paths(record_path);
             obj.path_accel = sensor_files.accel{1};
             obj.path_gyro = sensor_files.gyr{1};
             obj.path_mag = sensor_files.mag{1};
             obj.path_rotation = sensor_files.rotation{1};
             obj.path_scan = sensor_files.proximity{1};
+            obj.path_save = local_path;
+            obj.midge_id = midge_id;
             obj.block_size = block_size;
         end
 
@@ -75,7 +79,7 @@ classdef IMUParser
                     data(:,4), 'VariableNames', {'time', 'x', 'y', 'z', 'w'});
             end
             % Remove erroneous timestamps
-            df = remove_large_time_rows(df);
+            % df = remove_large_time_rows(df);
         
             % Convert timestamps to datetime
             df.time = datetime(df.time / 1000, 'ConvertFrom', 'posixtime');
@@ -83,21 +87,28 @@ classdef IMUParser
 
         function save_dataframes(obj, acc, gyr, mag, rot)
             if acc && ~isempty(obj.accel_df)
-                writetable(obj.accel_df, [obj.path_accel, '.csv']);
-                save([obj.path_accel, '.mat'], 'obj.accel_df');
+                obj.save_single_csv(obj.accel_df, "acc")
             end
             if gyr && ~isempty(obj.gyro_df)
-                writetable(obj.gyro_df, [obj.path_gyro, '.csv']);
-                save([obj.path_gyro, '.mat'], 'obj.gyro_df');
+                obj.save_single_csv(obj.gyro_df, "gyr")
             end
             if mag && ~isempty(obj.mag_df)
-                writetable(obj.mag_df, [obj.path_mag, '.csv']);
-                save([obj.path_mag, '.mat'], 'obj.mag_df');
+                obj.save_single_csv(obj.mag_df, "mag")
             end
             if rot && ~isempty(obj.rot_df)
-                writetable(obj.rot_df, [obj.path_rotation, '.csv']);
-                save([obj.path_rotation, '.mat'], 'obj.rot_df');
+                obj.save_single_csv(obj.rot_df, "rot")
             end
+            mat_file = obj.path_save + obj.midge_id + "_data.mat";
+            acc_data = obj.accel_df;
+            gyr_data = obj.gyro_df;
+            mag_data = obj.mag_df;
+            rot_data = obj.rot_df;
+            save(mat_file, 'acc_data', 'gyr_data', 'mag_data', 'rot_data');
+        end
+
+        function save_single_csv(obj, var, sensor_name)
+            csv_file = obj.path_save + "csv/" + obj.midge_id + "_" + sensor_name + ".csv";
+            writetable(var, csv_file);
         end
     end
 end
