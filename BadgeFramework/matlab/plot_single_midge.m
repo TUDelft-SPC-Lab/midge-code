@@ -1,10 +1,10 @@
-function plot_table(T, plot_title, fig_handle)
+function plot_single_midge(data, plot_title, fig_handle)
     % Assuming 'T' is a table where the first column is 'time' and the rest are data columns
-    assert (length(T.time) == length(unique(T.time)));
+    assert (length(data.time) == length(unique(data.time)));
 
     % Extract time and data
-    time = T{:, 1};                % The first column is 'time'
-    data = T{:, 2:end};            % All other columns contain the data to be plotted
+    time = data{:, 1};                % The first column is 'time'
+    data = data{:, 2:end};            % All other columns contain the data to be plotted
 
     % Generate labels dynamically based on the number of columns
     num_series = size(data, 2);    % Number of data columns

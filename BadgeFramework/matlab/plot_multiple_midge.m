@@ -5,61 +5,65 @@ function plot_multiple_midge(data, plot_options, use_mag)
     % Example: badge_data{1}.acc_data, badge_data{1}.gyr_data, etc.
 
     % Define sensor types and titles
-    sensor_types = {'acc', 'gyr', 'mag', 'rot'};
-    sensor_titles = {'Accelerometer', 'Gyroscope', 'Magnetometer', 'Rotation'};
+    midge_info = struct();
+    midge_info.ids = {};
+    for k=1:length(data)
+        midge_info.ids{k} = data{k}.midge_id;
+        midge_info.names{k} = "Midge " + data{k}.midge_id;
+    end
+    midge_info.plot_options = plot_options.midge;
+    midge_info.plot_num_all = length(data);
 
-    % Define colors for each axis: x, y, z, w
-    % Red for x, Green for y, Blue for z, Magenta for w (if applicable)
-    axis_colors = {'r', 'g', 'b', 'm'};  
+    sensor_info = struct();
+    sensor_info.types = {'acc', 'gyr', 'mag', 'rot'};
+    sensor_info.names = {'Accelerometer', 'Gyro', 'Magnitude', 'Rotation'};
+    sensor_info.plot_options = plot_options.sensor;
+    sensor_info.plot_num_all = length(sensor_info.types);
 
-    % Number of badges
-    num_badges = length(data);
-    sensor_axes = 'xyzwuv';
 
+    if plot_options.display == "midge"
+        s1 = midge_info;
+        s2 = sensor_info;
+    elseif plot_options.display == "sensor"
+        s1 = sensor_info;
+        s2 = midge_info;
+    else
+        error("Invalid display option");
+    end
+    
+    subplot_ids = find(s2.plot_options == 1);
     % Loop through each sensor type
-    for s = 1:length(sensor_types)
-        if ~plot_options(s)
+    for k1 = 1:s1.plot_num_all
+        if ~s1.plot_options(k1)
             continue;
         end
-        figure('Name', sensor_titles{s}, 'NumberTitle', 'off');
+        fig = figure('Name', s1.names{k1}, 'NumberTitle', 'off');
         
         % Loop through each badge to create a subplot for each badge's data
-        for b = 1:num_badges
-
-            % Get the current badge's sensor data
-            sensor_field = [sensor_types{s}, '_data'];  % e.g., 'acc_data'
-            data_single = data{b}.(sensor_field);
-            
-            % Extract timestamps and values
-            time = data_single{:, 1};    % First column is the timestamp
-            values = data_single{:, 2:end};  % Remaining columns are x, y, z, (possibly w)
-            num_axes = size(values, 2);
-
-            if use_mag
-                % Compute the magnitude of the sensor data
-                mag_values = sqrt(sum(values.^2, 2));
+        for k2 = 1:s2.plot_num_all
+            if ~s2.plot_options(k2)
+                continue;
             end
             
-            % Create subplot with vertical spacing
-            subplot(num_badges, 1, b);
-            hold on;
-            if use_mag
-                plot(time, mag_values, 'k-', 'DisplayName', 'Magnitude');
+            % Get the current midge's sensor data
+            if plot_options.display == "midge"
+                sensor_field = [s2.types{k2}, '_data'];
+                data_single = data{k1}.(sensor_field);
+            elseif plot_options.display == "sensor"
+                sensor_field = [s1.types{k1}, '_data'];
+                data_single = data{k2}.(sensor_field);
             else
-                for a = 1:num_axes
-                    % axis = axes(a);
-                    plot(time, values(:, a), 'Color', axis_colors{a}, ...
-                        'DisplayName', sensor_axes(a));
-                end
+                error("Invalid display option");
             end
-            hold off;
+            subplot(length(subplot_ids), 1, k2);
+            plot_single_sensor(data_single, fig, use_mag);
             
             % Add labels and legend
-            ylabel(['Badge ', num2str(data{b}.midge_id)]);
-            if b == 1
-                title([sensor_titles{s}, ' Data']);
+            ylabel(s2.names(k2));
+            if k2 == subplot_ids(1)
+                title(s1.names{k1});
             end
-            if b == num_badges
+            if k2 == subplot_ids(end)
                 xlabel('Timestamp');
             end
             legend('show');

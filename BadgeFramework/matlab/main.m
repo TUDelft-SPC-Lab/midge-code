@@ -27,8 +27,12 @@ for k=1:length(midges)
     data{k}.midge_id = midge_id;
 end
 
-plot_options = logical([1, 1, 0, 0]);
+plot_options = struct();
+plot_options.midge = [1, 0, 0, 0];
+plot_options.sensor = [1, 1, 1, 1];
+plot_options.display = "midge";
 plot_multiple_midge(data, plot_options, false);
+% plot_single_midge(data{1}.acc_data, '44rr');
 
 %% functions
 function filteredData = filter_midge_data(midge)
