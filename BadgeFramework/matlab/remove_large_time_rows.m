@@ -10,12 +10,18 @@ function filteredTable = remove_large_time_rows(inputTable)
 
     % Define the threshold
     timeThreshold = 1e13;
+    
 
     % Get the time values from the first column
     timeValues = inputTable{:, 1};
 
     % Create a logical index for rows where time <= 1e13
-    validRows = timeValues <= timeThreshold;
+    try
+        validRows = timeValues <= timeThreshold;
+    catch
+        timeThreshold = datetime(1e13 / 1000, 'ConvertFrom', 'posixtime');
+        validRows = timeValues <= timeThreshold;
+    end
 
     % Filter the table using the valid rows
     filteredTable = inputTable(validRows, :);

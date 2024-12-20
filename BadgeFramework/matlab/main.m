@@ -13,19 +13,31 @@ local_path = "./local/";
 
 %% save data to mat and csv
 % for k=good_midges
-%     save_imu_data(block_sizes, k);
+%     save_imu_data(block_sizes, k, local_path);
 % end
 
 %% plot
-midge_id = [7, 12, 25];
-% plot_table(parser.accel_df, "accelerometer");
-% plot_table(parser.gyro_df, "gyro");
-% plot_table(parser.mag_df, "magnitude");
-% plot_table(parser.rot_df, "rotation");
+midges = [7, 12, 25, 48];
+data = cell(1, length(midges));
+for k=1:length(midges)
+    midge_id = midges(k);
+    data{k} = load(local_path + midge_id + "_data.mat");
+    % remove large timestamps
+    data{k} = filter_midge_data(data{k});
+    data{k}.midge_id = midge_id;
+end
 
-% Save parsed data
+plot_options = logical([1, 1, 0, 0]);
+plot_multiple_midge(data, plot_options, false);
 
 %% functions
+function filteredData = filter_midge_data(midge)
+    filteredData.acc_data = remove_large_time_rows(midge.acc_data);
+    filteredData.gyr_data = remove_large_time_rows(midge.gyr_data);
+    filteredData.mag_data = remove_large_time_rows(midge.mag_data);
+    filteredData.rot_data = remove_large_time_rows(midge.rot_data);
+end
+
 function data_folder = get_data_folder()
     if ispc
         data_folder = "C:/Users/zongh/OneDrive - Delft University of " + ...
@@ -36,7 +48,7 @@ function data_folder = get_data_folder()
     end
 end
 
-function save_imu_data(block_sizes, midge_id)
+function save_imu_data(block_sizes, midge_id, local_path)
     midge_data_parent = get_data_folder();
     midge_folder = get_kth_latest(midge_data_parent + midge_id + "/", 1);
 
