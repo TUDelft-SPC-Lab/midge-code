@@ -4,47 +4,109 @@
 
 ## Environment Setup:
 
-1. Download the `arm-none-eabi` toolchain (compiler and binutils) for your distro
-2. Create a folder for housing the SDK in your home folder
-
-```Shell
-mkdir ~/nRF5_SDK/15.3.0 -p
-```
-
-3. Download nRF5 SDK 15.3.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
-4. Extract the SDK zip on the folder created in step 2
-5. Modify `~/nRF5_SDK/15.3.0/components/toolchain/gcc/Makefile.posix` so
-   `GNU_INSTALL_ROOT` points to your `arm-none-eabi` toolchain. In case that the
-   distro you are using adds `arm-none-eabi` toolchain installdir to your path,
-   you can just set `GNU_INSTALL_ROOT := ` and leave an empty space.
-6. modify `~/nRF5_SDK/15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH`
-   define be set as `2`.
+1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
+    * To avoid issues it is recommended to have matching `gcc` and `gdb` versions from the toolchain
+    * The `gdb-multiarch` package in ubuntu is know to cause debug errors when used with the `arm-none-eabi`'s `gcc`.
+    * Version 13.3 is known to work well
+2. Install the openocd debugger 
+    * For ubuntu `sudo apt install openocd`
+    * For a different OS: <https://openocd.org/>
+3. Install the dependencies for visualising the debug logs:
+    * For ubuntu `sudo apt install socat picocom`
+    * For a different OS: TODO
+3. Install the nRF5 SDK
+    * Download the nRF5 SDK version 15.3.0 from <https://www.nordicsemi.com/Products/Development-software/nrf5-sdk/download>
+    * Create a folder for housing the SDK in your home folder
+        ```Shell
+        mkdir ~/nRF5_SDK_15.3.0 -p
+        ```
+    * Extract the SDK zip in the folder created in the previous step
+    * Modify `~/nRF5_SDK_15.3.0/components/toolchain/gcc/Makefile.posix` so `GNU_INSTALL_ROOT` points to your `arm-none-eabi` toolchain.
+      If the binary is already in your `PATH`, so just set `GNU_INSTALL_ROOT :=`.
+      For example `GNU_INSTALL_ROOT ?= /home/user/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/`
+    * Modify `~/nRF5_SDK_15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` macro be defined as `2`.
+    * For ubuntu if the sdk complains about missing `libncursesw.so.5` install it with `sudo apt install libncursesw5`.  
 
 ### Other requirements:
 
 - You will probably have to use `conda` for setting up a python2 env. In that
   env, you will need to download the `bluepy` module
 
-## How to compile and debug
+## Board options
 
-We are assuming you don't have the Segger J-Link available, but you do have a
-spare MCU capable of running a CMSIS-DAP compliant firmware, for example:
+There are several MCU boards that can be used for compiling and debuging the midge fimware.
+The main requisite is that they can run CMSIS-DAP compliant firmware.
+The Segger J-Link is known to provide the fastest data transfer rates, while the the Seeed XIAO SAMD21 board is more affordable and easier to acquire.
 
-- PicoProbe for RP2040 based MCUs like the Pi Pico: <https://github.com/raspberrypi/picoprobe/releases/tag/picoprobe-cmsis-v1.02>
-- Seeed DAPLink for Cortex M0 and M4 devices: <https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/>
+### Seeed XIAO SAMD21 board
+We use the [Seeed XIAO SAMD21 board](https://wiki.seeedstudio.com/Seeeduino-XIAO/) with the [Seeed DAPLink](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink) for Cortex M0 and M4 devices.
 
-### Barebones
+Additionally you will need the following components:
+* A pogo pin probe clip https://www.adafruit.com/product/5434
+  * For a permanent solution, soldering the pins via a box header is also an option https://www.adafruit.com/product/752 
+* Female to female jumper wires https://www.adafruit.com/product/1951 (this examples comes with 20, only 3 are needed)
 
-1. Build with `make nrf52832_xxaa`
+Flash the DAPLink firmware in the SAMD21 board (only needs to be done once):
+1. Connect the board to the computer via usb
+2. Put the board in bootloader mode as described [here](https://wiki.seeedstudio.com/Seeeduino-XIAO/#enter-bootloader-mode), it should show up as usb stick in the computer
+3. Copy over the uf2 file from [here](http://files.seeedstudio.com/wiki/Seeeduino-XIAO/res/simple_daplink_xiao.uf2)
+4. Disconnect and reconnect the usb cable
+5. Connect the midge to the board and the board to the computer as described in [here](#Hardware-connection-to-the-board)
+6. The flashing was performed successfully if the LEDs in the board turned blue and stoped flashing
+
+### PicoProbe for RP2040 
+The PicoProbe for RP2040 based MCUs like the [Pi Pico](https://github.com/raspberrypi/picoprobe/releases/tag/picoprobe-cmsis-v1.02) should also work.
+   * TODO: add instructions for this board 
+
+### Segger J-Link
+
+1. Get a J-link debug probe from here:  https://www.segger.com/products/debug-probes/j-link/
+The EDU version is available for educational instituions. 
+2. Download and install the J Link SDK from [here](https://www.segger.com/products/debug-probes/j-link/tools/j-link-sdk/).
+3. Make sure the midge badge is powered on, and connect the J-link to the SWD programming port on the midge badge. 
+4. Open your terminal (or command prompt) and enter the following command to start J-Link Commander and connect to the nRF52832 using SWD at a speed of 4 MHz:
+   ```
+   JLinkExe -device nRF52832_xxAA -if SWD -speed 4000
+   ```
+5. Flash the binary file:
+   ```
+   loadfile <firmware.hex>
+   ```
+
+### Hardware connection to the board
+
+Openocd is known to crash with `Error connecting DP: cannot read IDR` when debugging the midge while plugged in to power.
+To ensure a smooth debugging process follow these steps when connecting the midge to the computer.
+
+1. Make sure the battery charged
+2. Connect the board to the pogo pin and the pogo pin to the midge
+   * The pin connections to the midge are described [here](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware/blob/master/PCB/Explainer.pdf)
+   * The pin connections to the boards are as follows: 
+      * Seeed XIAO SAMD21 board, described [here](https://wiki.seeedstudio.com/Seeeduino-XIAO/#hardware-overview) and [here](https://github.com/Seeed-Studio/Seeed_Arduino_DAPLink/blob/master/src/DAP_config.h#L179-L188)
+      * TODO: add pin connections for the other boards
+   * Note that the pogo pin switches around the A and B side of the pins
+   * Do not connect the 3V pin, only the SWDIO, SWCLK and GND pins should be attached
+3. Disconnect the charging cable of the midge before debugging
+4. After having the connections ready, connect the debug probe to the computer 
+5. Switch ON the battery
+
+## Compile and debug
+
+There are two options for compiling and debugging the code.
+A barebones gdb server that can be executed via Makefile rules or using the VScode IDE with the Cortex-debug plugin.
+
+### Using Makefile rules
+
+1. Build with `make nrf52832_xxaa_debug`
 2. Start the openocd server with `make openocd`
 3. Start the gdb session and load the binary with `make load_gdb`
 4. Start the RTT console to see log messages with `make logs`
 
-### Using Cortex-debug
+### Using VSCode with Cortex-debug
 
-Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug)
-and setup the `.vscode/launch.json`. This should enable the "Run and Debug"
-functionality in VSCode (Left menu, green arrow to launch the application).
+Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) and setup the `.vscode/launch.json`.
+This should enable the "Run and Debug" functionality in VSCode (Left menu, green arrow to launch the application).
+In the C++ extension `ms-vscode.cpptools` set the configuration to `arm-none-eabi` to get include paths for the SDK recognised by intellisense.
 
 Example `launch.json` for using Cortex-Debug for flashing and debugging
 
@@ -55,7 +117,7 @@ Example `launch.json` for using Cortex-Debug for flashing and debugging
         {
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
-            "executable": "_build/nrf52832_xxaa.out",
+            "executable": "_build/nrf52832_xxaa_debug.out",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
@@ -89,7 +151,9 @@ Example `launch.json` for using Cortex-Debug for flashing and debugging
 
 ## Flashing the final binary
 
-//! TODO, but is basically just erasing and reflashing the device via gdb
+1. Build with `make nrf52832_xxaa_release`
+2. Start the openocd server with `make openocd`
+3. Flash the binary with `make flash_with_gdb`
 
 ## Hardware
 
@@ -157,4 +221,14 @@ Same 8 byte timestamp.
 4 bytes padding
 
 
-**the rest should be as you've asked on the requirements, please let me know if something is not clear**
+# Data recording workflow
+
+1. Turn the midges on
+2. Get their MAC address with the `scan_all.py` script
+3. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
+4. Stop recording
+5. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
+   plug it in the computer) 
+6. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
+
+

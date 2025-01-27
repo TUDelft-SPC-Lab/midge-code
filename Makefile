@@ -1,11 +1,14 @@
 PROJECT_NAME     := spcl
-TARGETS          := nrf52832_xxaa
+TARGETS          := nrf52832_xxaa_debug nrf52832_xxaa_release 
 OUTPUT_DIRECTORY := _build
 
 SDK_ROOT := $(HOME)/nRF5_SDK_15.3.0
 PROJ_DIR := 
 
-$(OUTPUT_DIRECTORY)/nrf52832_xxaa.out: \
+$(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.out: \
+  LINKER_SCRIPT  := spcl.ld
+
+$(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.out: \
   LINKER_SCRIPT  := spcl.ld
 
 # Source files common to all targets
@@ -198,13 +201,15 @@ INC_FOLDERS += \
 # Libraries common to all targets
 LIB_FILES += \
 
-# Optimization flags
-OPT = -O0 -g3 #-Os
+# Optimization flags for the debug build
+OPT_DEBUG = -O0 -g3 -Werror #-Os
 # Uncomment the line below to enable link time optimization
-#OPT += -flto
+#OPT_DEBUG += -flto
+
+# Optimization flags for the release build
+OPT_RELEASE = -O3 -DNDEBUG
 
 # C flags common to all targets
-CFLAGS += $(OPT)
 #CFLAGS += -DDEBUG #removed to allow the error handler to reset the MCU
 CFLAGS += -DBL_SETTINGS_ACCESS_ONLY
 CFLAGS += -DBOARD_CUSTOM
@@ -220,14 +225,13 @@ CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -DSWI_DISABLE0
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
-CFLAGS += -Wall -Werror
+CFLAGS += -Wall
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin -fshort-enums
-
-# C++ flags common to all targets
-CXXFLAGS += $(OPT)
+CFLAGS += -D__HEAP_SIZE=1024
+CFLAGS += -D__STACK_SIZE=4096
 
 # Assembler flags common to all targets
 ASMFLAGS += -g3
@@ -246,9 +250,10 @@ ASMFLAGS += -DNRF_SD_BLE_API_VERSION=6
 ASMFLAGS += -DS132
 ASMFLAGS += -DSOFTDEVICE_PRESENT
 ASMFLAGS += -DSWI_DISABLE0
+ASMFLAGS += -D__HEAP_SIZE=1024
+ASMFLAGS += -D__STACK_SIZE=4096
 
 # Linker flags
-LDFLAGS += $(OPT)
 LDFLAGS += -mthumb -mabi=aapcs -L$(SDK_ROOT)/modules/nrfx/mdk -T$(LINKER_SCRIPT)
 LDFLAGS += -mcpu=cortex-m4
 LDFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
@@ -259,10 +264,13 @@ LDFLAGS += --specs=nano.specs
 LDFLAGS += --specs=nosys.specs
 
 
-nrf52832_xxaa: CFLAGS += -D__HEAP_SIZE=1024
-nrf52832_xxaa: CFLAGS += -D__STACK_SIZE=4096
-nrf52832_xxaa: ASMFLAGS += -D__HEAP_SIZE=1024
-nrf52832_xxaa: ASMFLAGS += -D__STACK_SIZE=4096
+nrf52832_xxaa_debug: CFLAGS += $(OPT_DEBUG)
+nrf52832_xxaa_debug: CXXFLAGS += $(OPT_DEBUG)
+nrf52832_xxaa_debug: LDFLAGS += $(OPT_DEBUG)
+
+nrf52832_xxaa_release: CFLAGS += $(OPT_RELEASE)
+nrf52832_xxaa_release: CXXFLAGS += $(OPT_RELEASE)
+nrf52832_xxaa_release: LDFLAGS += $(OPT_RELEASE)
 
 # Add standard libraries at the very end of the linker input, after all objects
 # that may need symbols provided by these libraries.
@@ -272,15 +280,18 @@ LIB_FILES += -lc -lnosys -lm
 .PHONY: default help
 
 # Default target - first one defined
-default: nrf52832_xxaa
+default: nrf52832_xxaa_debug
 
 # Print all targets that can be built
 help:
 	@echo following targets are available:
-	@echo		nrf52832_xxaa
-	@echo		flash_softdevice
-	@echo		sdk_config - starting external tool for editing sdk_config.h
-	@echo		flash      - flashing binary
+	@echo		nrf52832_xxaa_debug   - build the debug binary
+	@echo		openocd               - start the openocd server
+	@echo		load_gdb              - load the binary and start a debug session
+	@echo		logs                  - start the RTT console to see log messages
+	@echo		nrf52832_xxaa_release - build the release binary
+	@echo		flash_with_gdb        - flashing the release binary
+  
 
 TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
 
@@ -293,8 +304,8 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 
 # Flash the program
 flash: default
-	@echo Flashing: $(OUTPUT_DIRECTORY)/nrf52832_xxaa.hex
-	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52832_xxaa.hex --sectorerase
+	@echo Flashing: $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.hex
+	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.hex --sectorerase
 	nrfjprog -f nrf52 --reset
 
 # Flash softdevice
@@ -315,7 +326,11 @@ sdk_config:
 openocd:
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg
 load_gdb:
-	arm-none-eabi-gdb -se _build/nrf52832_xxaa.out -x debug.gdb
+	arm-none-eabi-gdb -se _build/nrf52832_xxaa_debug.out -x debug.gdb
+logs: SHELL:=/bin/bash   # Use the bash shell for the logs target, as sh does not have the disown command 
 logs:
 	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
 	picocom /tmp/ttyvnrf -b 115200
+
+flash_with_gdb:
+	arm-none-eabi-gdb -e _build/nrf52832_xxaa_release.out -x flash.gdb

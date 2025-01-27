@@ -98,7 +98,7 @@ ret_code_t sampling_stop_imu(void)
 
 
 /************************** MICROPHONE ****************************/
-ret_code_t sampling_start_microphone(uint8_t mode)
+ret_code_t sampling_start_microphone(nrf_pdm_mode_t mode)
 {
 	ret_code_t ret = NRF_SUCCESS;
 	if (audio_switch_get_position()==OFF)

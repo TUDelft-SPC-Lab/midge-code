@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "name": "arm-none-eabi",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${env:HOME}/nRF5_SDK_15.3.0/**"
+            ],
+            "defines": []
+        }
+    ],
+    "version": 4
+}
