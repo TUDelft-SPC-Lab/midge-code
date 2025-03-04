@@ -1,13 +1,14 @@
-import Tkinter as tk
-import ttk
-from Tkinter import Label, Button, Canvas
-import tkFont
+import tkinter as tk
+from tkinter import ttk
+from tkinter import Label, Button, Canvas
+from tkinter import font
 import random
 import time
 import csv
-from badge_interface import *
+from badge import OpenBadge
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import asyncio
 
 DEFAULT_RADIUS = 20
 GET_STATUS_MAIN = True
@@ -27,23 +28,27 @@ class Circle(Canvas):
         self.create_oval(0, 0, 2 * radius, 2 * radius, fill=self.color)  # Draw a circular shape
 
 class CustomComponent(tk.Frame):
-    def __init__(self, parent, name, badge, address):
+    def __init__(self, parent, name, badge: OpenBadge, address):
         tk.Frame.__init__(self, parent, pady=10) 
         self.name = name
         self.badge = badge
         self.address = address
-        self.badge_status = badge.get_status()
-        self.free_space = badge.get_free_sdc_space().free_space
+        self.badge_status = None
+        self.free_space = None
         self.new_window = {}
         self.scan_info = {'window': '', 'interval': ''}
         self.mic_info = {'mode': '', 'gain_r': '', 'gain_l': '', 'switch_pos': '', 'pdm_freq': ''}
+
+    async def async_post_init(self):
+        self.badge_status = await self.badge.get_status()
+        self.free_space = await self.badge.get_free_sdc_space().free_space
         self.initUI()
 
     def initUI(self):
         # Device info
         self.badgeId = Label(self, text="Badge ID: {}".format(self.name))
         self.badgeId.grid(row=0, column=0, padx=10, pady=5)
-        self.midge = Label(self, text=self.address, font=tkFont.Font(size=12))
+        self.midge = Label(self, text=self.address, font=font.Font(size=12))
         self.midge.grid(row=1, column=0, padx=10, pady=5)
         self.battery = Label(self, text='Battery: {}%'.format(self.badge_status.battery_level), relief="solid")
         self.battery.grid(row=2, column=0, padx=10, pady=5)
@@ -207,7 +212,7 @@ class IMUConfig(tk.Frame):
     def initUI(self):
         info = ["acc_fsr (g): 16", "gyr_fsr (dps): 2000", "datarate: 50"]
         
-        title = tk.Label(self.top_frame, text='IMU Data', font=tkFont.Font(size=10, weight="bold"))
+        title = tk.Label(self.top_frame, text='IMU Data', font=font.Font(size=10, weight="bold"))
         title.grid(row=0, column=0, columnspan=2, sticky='w')
         # Create information header
         for i, text in enumerate(info):
@@ -263,7 +268,7 @@ class MicConfig(tk.Frame):
         top_frame.grid(row=0, column=0, sticky='nsew')
         table.grid(row=1, column=0, sticky='nsew')
         
-        title = tk.Label(top_frame, text='Microphones Data', font=tkFont.Font(size=10, weight="bold"))
+        title = tk.Label(top_frame, text='Microphones Data', font=font.Font(size=10, weight="bold"))
         title.grid(row=0, column=0, columnspan=2, sticky='w')
         # Loop over the dictionary and create labels
         for i, (key, value) in enumerate(self.info.items()):
@@ -296,7 +301,7 @@ class ScanConfig(tk.Frame):
         top_frame.grid(row=0, column=0, sticky='nsew')
         table.grid(row=1, column=0, sticky='nsew')
         
-        title = tk.Label(top_frame, text='Scanner Data', font=tkFont.Font(size=10, weight="bold"))
+        title = tk.Label(top_frame, text='Scanner Data', font=font.Font(size=10, weight="bold"))
         title.grid(row=0, column=0, columnspan=2, sticky='w')
         # Loop over the dictionary and create labels
         for i, (key, value) in enumerate(self.info.items()):
@@ -304,7 +309,7 @@ class ScanConfig(tk.Frame):
             label = tk.Label(top_frame, text=label_text)
             label.grid(row=i+1, column=0, columnspan=2, sticky='w')
 
-        table_title = tk.Label(table, text='RSSI', font=tkFont.Font( weight="bold"), relief=tk.RIDGE, width=45)
+        table_title = tk.Label(table, text='RSSI', font=font.Font( weight="bold"), relief=tk.RIDGE, width=45)
         table_title.grid(row=0, column=0, sticky="nsew")
         for i, e in enumerate(self.data):
             label = tk.Label(table, text=str(e), relief=tk.RIDGE, width=45)
@@ -366,11 +371,11 @@ class NewWindow(tk.Toplevel):
         right_down.grid(row=1, column=1, sticky='nsew')
         
         # header
-        self.badgeId = Label(left_top, text="Badge Id: {}".format(self.name), font=tkFont.Font(size=10, ))
+        self.badgeId = Label(left_top, text="Badge Id: {}".format(self.name), font=font.Font(size=10, ))
         self.badgeId.grid(row=0, column=0, columnspan=2, sticky='w')
-        self.midge = Label(left_top, text="Battery: {}%".format(self.status.battery_level), font=tkFont.Font(size=10)) 
+        self.midge = Label(left_top, text="Battery: {}%".format(self.status.battery_level), font=font.Font(size=10)) 
         self.midge.grid(row=1, column=0, columnspan=2, sticky='w')
-        self.battery = Label(left_top, text="Available memory: {}MB".format(self.free_space), font=tkFont.Font(size=10))
+        self.battery = Label(left_top, text="Available memory: {}MB".format(self.free_space), font=font.Font(size=10))
         self.battery.grid(row=2, column=0, columnspan=2, sticky='w')
         self.reset_battery = Button(left_top, text='Erase', command=self.badge.sdc_errase_all)
         self.reset_battery.grid(row=2, column=1, columnspan=2, sticky='w')
@@ -449,34 +454,56 @@ class NewWindow(tk.Toplevel):
 
 def get_badges():
     badges = []
+    # return []
     with open('sample_mapping_file.csv', 'r') as f:
         reader = csv.reader(f)
         next(reader)
-        for row in reader:
-            badge = BadgeInterface(row[1])
-            badge.connect()
-            badges.append({'badge': badge, 'name': row[0], 'address': row[1]})
+        for id, mac_address in reader:
+            badge = OpenBadge(int(id), mac_address)
+            # badge.connect()
+            badges.append({'badge': badge, 'name': id, 'address': mac_address})
     return badges
     
 class MainApp(tk.Tk):
-    def __init__(self):
+    def __init__(self, loop: asyncio.BaseEventLoop):
         tk.Tk.__init__(self)
-        self.title("Lista de dispositivos")
+        self.loop = loop
+        
+        # self.root = tk.Tk()
+        self.title("Device list")
         self.geometry("1100x700")
-        self.container_frame = ttk.Frame(self)
-        self.container_frame.pack(expand=True, fill="both")
+        
+        self.container_frame = ttk.Frame()
+        # self.container_frame.pack(expand=True, fill="both")
         self.custom_components = []
         self.badges = get_badges()
 
+        # self.after(1000, self.update_data)
+
+    async def async_post_init(self):
         for badge in self.badges:
+            # self.loop.create_task()
+            # await asyncio.sleep(0.1)
             custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
+            await custom_component.async_post_init()
             custom_component.pack()
             # Draw a border between custom components
             border = tk.Frame(self.container_frame, bg="gray", height=1)
             border.pack(fill="x")
             self.custom_components.append(custom_component)
 
-        self.after(1000, self.update_data)
+        button_block = tk.Button(text="Calculate Sync", width=10)
+        button_block.grid(row=2, column=0, sticky=tk.W, padx=8, pady=8)
+
+    async def show(self):
+        while True:
+            # self.label["text"] = self.animation
+            # self.animation = self.animation[1:] + self.animation[0]
+            # self.root.update_idletasks()
+            # self.root.update()
+            self.update_idletasks()
+            self.update()
+            await asyncio.sleep(.1)
 
     def update_data(self):
         for badge, custom_component in zip(self.badges, self.custom_components):
@@ -520,6 +547,11 @@ class MainApp(tk.Tk):
             print('updating main')
             self.after(1000, self.update_data)
 
+class App:
+    async def exec(self):
+        self.window = MainApp(asyncio.get_event_loop())
+        await self.window.async_post_init()
+        await self.window.show()
+
 if __name__ == '__main__':
-   app = MainApp()
-   app.mainloop()
+   asyncio.run(App().exec())
