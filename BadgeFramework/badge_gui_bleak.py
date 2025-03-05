@@ -5,6 +5,7 @@ import pandas as pd
 from badge import OpenBadge
 from datetime import datetime
 import sys
+from typing import Optional, Dict, Tuple
 
 
 SENSOR_ALL = 0
@@ -31,11 +32,11 @@ sensor_num = len(indicators_short)
 class RedirectText:
     """Class to redirect stdout to a tkinter Text widget."""
 
-    def __init__(self, text_widget):
+    def __init__(self, text_widget: tk.Text):
         self.text_widget = text_widget
         self.text_widget.config(state=tk.NORMAL)
 
-    def write(self, string):
+    def write(self, string: str):
         """Redirects the text to the Text widget."""
         self.text_widget.insert(tk.END, string)
         self.text_widget.see(tk.END)  # Auto-scroll to the bottom
@@ -64,7 +65,6 @@ class BadgeMonitorApp(tk.Tk):
         self.frame = ttk.Frame(self.canvas)
         self.scrollbar = ttk.Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
         self.scrollbar.grid(row=0, column=0, sticky="ns")
         self.canvas.grid(row=0, column=1, sticky="nsew")
 
@@ -72,14 +72,11 @@ class BadgeMonitorApp(tk.Tk):
 
         # Make the badge section expand vertically
         self.main_frame.grid_rowconfigure(0, weight=1)
-
         self.canvas_frame = self.canvas.create_window((0, 0), window=self.frame, anchor="nw")
-
         self.frame.bind("<Configure>", self.on_frame_configure)
 
         self.terminal_frame = ttk.Frame(self.main_frame)
         self.terminal_frame.grid(row=0, column=2, sticky="nsew")
-
         self.terminal_text = tk.Text(self.terminal_frame, wrap="word", state="normal", width=40, height=20)
         self.terminal_text.pack(fill="both", expand=True)
 
@@ -160,31 +157,31 @@ class BadgeMonitorApp(tk.Tk):
             self.timestamp_labels[badge] = (timestamp_label, elapsed_time_label)
             self.sensor_lights[badge] = sensor_light_canvases
 
-    def bind_mouse_scroll(self, widget):
+    def bind_mouse_scroll(self, widget: tk.Canvas):
         """Bind the mouse scroll event to the canvas."""
         # Windows OS uses "<MouseWheel>", others use "<Button-4>" and "<Button-5>"
         widget.bind_all("<MouseWheel>", self.on_mouse_wheel)
         widget.bind_all("<Button-4>", self.on_mouse_wheel)
         widget.bind_all("<Button-5>", self.on_mouse_wheel)
 
-    def on_mouse_wheel(self, event):
+    def on_mouse_wheel(self, event: tk.Event):
         """Handle the mouse scroll event."""
         if event.num == 4 or event.delta > 0:  # Scroll up
             self.canvas.yview_scroll(-1, "units")
         elif event.num == 5 or event.delta < 0:  # Scroll down
             self.canvas.yview_scroll(1, "units")
 
-    def on_frame_configure(self, event):
+    def on_frame_configure(self, event: tk.Event):
         """Reset the scroll region to encompass the inner frame."""
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def schedule_async_task(self, badge_id, sensor_idx, mode: bool):
+    def schedule_async_task(self, badge_id: int, sensor_idx: int, mode: bool):
         if badge_id == BADGES_ALL:
             asyncio.create_task(self.async_task_all_badges(sensor_idx, mode, use_all=USE_ALL))
         else:
             asyncio.create_task(self.async_task_sensors(badge_id, sensor_idx, mode))
 
-    async def async_task_all_badges(self, sensor_idx, mode: bool, use_all: bool):
+    async def async_task_all_badges(self, sensor_idx: int, mode: bool, use_all: bool):
         for row_id in self.badges.index:
             badge_id, use_flag = int(self.badges['Participant Id'][row_id]), bool(self.badges['Use'][row_id])
             if use_flag or use_all:
@@ -207,7 +204,7 @@ class BadgeMonitorApp(tk.Tk):
         else:
             await self.async_check_status(badge_id, mode=CHECK_NO_SYNC)
 
-    async def async_check_status(self, badge_id, mode=CHECK_NO_SYNC):
+    async def async_check_status(self, badge_id: int, mode: bool=CHECK_NO_SYNC):
         # Call the async function to check the status
         statuses, timestamp = await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='status')
         if statuses is None:
@@ -229,7 +226,7 @@ class BadgeMonitorApp(tk.Tk):
         if badge_id in self.update_tasks:
             self.update_tasks[badge_id].cancel()
 
-        task = asyncio.create_task(self.update_elapsed_time(badge_id, elapsed_time_label, timestamp))
+        task = asyncio.create_task(self.update_elapsed_time(elapsed_time_label, timestamp))
         self.update_tasks[badge_id] = task
 
     @staticmethod
@@ -243,7 +240,7 @@ class BadgeMonitorApp(tk.Tk):
         else:
             raise ValueError
 
-    async def async_sensor(self, badge_id, sensor_name, mode: bool):
+    async def async_sensor(self, badge_id: int, sensor_name: str, mode: bool) -> Tuple[Optional[Dict], datetime]:
         mode_name = 'start' if mode == SENSOR_START else 'stop'
         op_name = self.get_operation_name(mode_name, sensor_name)
         badge_op_desc = f'Badge {badge_id} {op_name}'
@@ -263,7 +260,7 @@ class BadgeMonitorApp(tk.Tk):
         timestamp = datetime.now()
         return response, timestamp
 
-    async def async_sensor_operation(self, badge_id, op_name, mode):
+    async def async_sensor_operation(self, badge_id: int, op_name: str, mode: int) -> Dict:
         badge_addr = self.get_badge_address(badge_id)
         async with OpenBadge(badge_id, badge_addr) as open_badge:
             sensor_operation = getattr(open_badge, op_name)
@@ -279,7 +276,7 @@ class BadgeMonitorApp(tk.Tk):
         return address
 
     @staticmethod
-    async def update_elapsed_time(badge_id, elapsed_time_label, last_update_time):
+    async def update_elapsed_time(elapsed_time_label: ttk.Label, last_update_time: datetime):
         """Continuously update the elapsed time since the last status update."""
         try:
             while True:
