@@ -4,11 +4,8 @@ import asyncio
 import pandas as pd
 from badge import OpenBadge
 from datetime import datetime
-# import numpy as np
 import sys
 import time
-import ntplib
-# from functools import partial
 
 
 SENSOR_ALL = 0
@@ -297,12 +294,11 @@ class BadgeMonitorApp(tk.Tk):
                 return_message = await sensor_operation(t=datetime.now().timestamp())
             else:
                 return_message = await sensor_operation()
-            # print(return_message)
         return return_message
 
     def get_badge_address(self, badge_id: int) -> str:
         badge = self.badges[self.badges['Participant Id'] == badge_id]
-        address = badge['Mac Address'].to_numpy()[0]  # There should be a more elegant way to do this
+        address = badge['Mac Address'].values[0]
         return address
 
     @staticmethod
