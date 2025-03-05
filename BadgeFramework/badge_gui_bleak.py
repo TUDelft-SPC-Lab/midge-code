@@ -5,7 +5,6 @@ import pandas as pd
 from badge import OpenBadge
 from datetime import datetime
 import sys
-import time
 
 
 SENSOR_ALL = 0
@@ -53,9 +52,7 @@ class BadgeMonitorApp(tk.Tk):
 
         self.title("Badge Status Monitor")
         self.badges = pd.read_csv('mappings2.csv')
-        # self.badges = []
 
-        # Create a frame to contain the badge area and the terminal area
         self.main_frame = ttk.Frame(self)
         self.main_frame.grid(row=0, column=0, sticky="nsew")  # Use grid for main_frame
 
@@ -63,36 +60,29 @@ class BadgeMonitorApp(tk.Tk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # Create a canvas to allow scrolling for the badge section
         self.canvas = tk.Canvas(self.main_frame, borderwidth=0)
         self.frame = ttk.Frame(self.canvas)
         self.scrollbar = ttk.Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
-        # Place the scrollbar and canvas in the window
         self.scrollbar.grid(row=0, column=0, sticky="ns")
         self.canvas.grid(row=0, column=1, sticky="nsew")
 
-        # Bind mouse scroll to canvas
         self.bind_mouse_scroll(self.canvas)
 
         # Make the badge section expand vertically
         self.main_frame.grid_rowconfigure(0, weight=1)
 
-        # Create a window within the canvas
         self.canvas_frame = self.canvas.create_window((0, 0), window=self.frame, anchor="nw")
 
-        # Configure the frame to resize with the canvas
         self.frame.bind("<Configure>", self.on_frame_configure)
 
-        # Terminal on the right
         self.terminal_frame = ttk.Frame(self.main_frame)
         self.terminal_frame.grid(row=0, column=2, sticky="nsew")
 
         self.terminal_text = tk.Text(self.terminal_frame, wrap="word", state="normal", width=40, height=20)
         self.terminal_text.pack(fill="both", expand=True)
 
-        # Redirect stdout to terminal Text widget
         self.stdout_redirector = RedirectText(self.terminal_text)
         sys.stdout = self.stdout_redirector
 
@@ -161,15 +151,12 @@ class BadgeMonitorApp(tk.Tk):
                 sensor_label = ttk.Label(self.frame, text=sensor + ' status:')
                 sensor_label.grid(row=row_status, column=2*s_idx, padx=5, pady=5)
 
-            # Create a label to display the last updated time and elapsed time
             timestamp_label = ttk.Label(self.frame, text="Last updated: N/A")
             timestamp_label.grid(row=row_status, column=0, padx=5, pady=5)
 
-            # Create a label to display the elapsed time in seconds
             elapsed_time_label = ttk.Label(self.frame, text="Elapsed: N/A")
             elapsed_time_label.grid(row=row_status, column=1, padx=5, pady=5)
 
-            # Store the canvas, light, sensor lights, timestamp label, and elapsed time label
             self.timestamp_labels[badge] = (timestamp_label, elapsed_time_label)
             self.sensor_lights[badge] = sensor_light_canvases
 
@@ -198,7 +185,6 @@ class BadgeMonitorApp(tk.Tk):
             asyncio.create_task(self.async_task_sensors(badge_id, sensor_idx, mode))
 
     async def async_task_all_badges(self, sensor_idx, mode: bool, use_all: bool):
-        # await self.async_task_sensors(badge_id=1, sensor_idx=sensor_idx, mode=mode)
         for row_id in self.badges.index:
             badge_id, use_flag = int(self.badges['Participant Id'][row_id]), bool(self.badges['Use'][row_id])
             if use_flag or use_all:
@@ -223,13 +209,11 @@ class BadgeMonitorApp(tk.Tk):
 
     async def async_check_status(self, badge_id, mode=CHECK_NO_SYNC):
         # Call the async function to check the status
-        # statuses, timestamp = await self.check_status(badge_id)
         statuses, timestamp = await self.async_sensor(badge_id=badge_id, mode=mode, sensor_name='status')
         if statuses is None:
             return
         sensor_statuses = [getattr(statuses, s + '_status') for s in indicators_long]
 
-        # Get the canvas and light object for the badge
         timestamp_label, elapsed_time_label = self.timestamp_labels[badge_id]
 
         sensor_light_canvases = self.sensor_lights[badge_id]
@@ -237,18 +221,14 @@ class BadgeMonitorApp(tk.Tk):
             sensor_color = "green" if sensor_statuses[sensor_idx] == 1 else "red"
             sensor_light_canvas.itemconfig(sensor_light, fill=sensor_color)
 
-        # Format the timestamp and update the timestamp label
         formatted_time = timestamp.strftime("%Y-%m-%d %H:%M:%S")
         timestamp_label.config(text=f"Last updated: {formatted_time}")
 
-        # Update the timestamps dictionary with the current time
         self.timestamps[badge_id] = timestamp
 
-        # Cancel the previous update task if it exists
         if badge_id in self.update_tasks:
             self.update_tasks[badge_id].cancel()
 
-        # Start a new task to update the elapsed time
         task = asyncio.create_task(self.update_elapsed_time(badge_id, elapsed_time_label, timestamp))
         self.update_tasks[badge_id] = task
 
@@ -264,14 +244,12 @@ class BadgeMonitorApp(tk.Tk):
             raise ValueError
 
     async def async_sensor(self, badge_id, sensor_name, mode: bool):
-        # badge_addr = self.get_badge_address(badge_id)
         mode_name = 'start' if mode == SENSOR_START else 'stop'
         op_name = self.get_operation_name(mode_name, sensor_name)
         badge_op_desc = f'Badge {badge_id} {op_name}'
         print(f"Executing: {badge_op_desc}...")
 
         try:
-            # await asyncio.wait_for(self.eternity(), timeout=1.0)
             response = await asyncio.wait_for(self.async_sensor_operation(badge_id, op_name, mode),
                                               timeout=SENSOR_TIMEOUT)
             print(f'Info: {badge_op_desc} successfully.')
@@ -282,8 +260,7 @@ class BadgeMonitorApp(tk.Tk):
             print(e)
             response = None
 
-        # await asyncio.sleep(1)  # Simulate delay
-        timestamp = datetime.now()  # Get the current timestamp
+        timestamp = datetime.now()
         return response, timestamp
 
     async def async_sensor_operation(self, badge_id, op_name, mode):
@@ -314,7 +291,6 @@ class BadgeMonitorApp(tk.Tk):
             pass  # Task was cancelled
 
     def run(self):
-        # Start the tkinter mainloop
         self.mainloop()
 
 
@@ -328,31 +304,7 @@ def run_tkinter_async():
             app.update_idletasks()
             app.update()
 
-    # Schedule the main loop in asyncio
     asyncio.run(main_loop())
-
-
-# def get_ntp_time(ntp_server='pool.ntp.org'):
-#     # Create an NTP client
-#     client = ntplib.NTPClient()
-#
-#     try:
-#         # Query the NTP server
-#         response = client.request(ntp_server)
-#
-#         # Convert the response to datetime
-#         ntp_time = datetime.fromtimestamp(response.tx_time, tz=timezone.utc)
-#         print("NTP time:", ntp_time.strftime('%Y-%m-%d %H:%M:%S %Z'))
-#         return ntp_time
-#
-#     except Exception as e:
-#         print("Could not connect to NTP server:", e)
-#         return None
-
-
-# Use a local NTP server (replace with your server IP if needed)
-# ntp_server_ip = '192.168.1.100'  # Example IP for a local NTP server
-# ntp_time = get_ntp_time(ntp_server=ntp_server_ip)
 
 
 if __name__ == "__main__":
