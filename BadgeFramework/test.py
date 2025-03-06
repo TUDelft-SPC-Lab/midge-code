@@ -274,5 +274,5 @@ async def test_conn():
     print(f'after connection: {datetime.now().timestamp()}')
 
 if __name__ == "__main__":
-    asyncio.run(main())
-    # asyncio.run(test_conn())
+    # asyncio.run(main())
+    asyncio.run(test_conn())
