@@ -4,12 +4,13 @@ import sys
 import threading
 import time
 
-from badge import *
+import badge
+from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
 from ble_badge_connection import *
-from bluepy import *
-from bluepy import btle
-from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
-from bluepy.btle import BTLEException
+# from bluepy import *
+# from bluepy import btle
+# from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
+# from bluepy.btle import BTLEException
 
 
 def mic_test(badge, mode):
@@ -147,8 +148,6 @@ def imu_test(badge):
         print(" imu disabled:     FAIL            ")
 
 
-
-
 def scan_test(badge):
     print("###################################")
     print(" sensor: scan                      ")
@@ -179,7 +178,8 @@ def scan_test(badge):
         print(" scan disabled:    PASS            ")		
     else:
         print(" scan disabled:    FAIL            ")
-    
+
+
 def errase_mem(badge):
     errased = badge.sdc_errase_all() # clean sd memory
 
@@ -235,5 +235,9 @@ def main():
     
     connection.disconnect()
 
+def test_conn():
+    pass
+
 if __name__ == "__main__":
-    main()
+    # main()
+    test_conn()
