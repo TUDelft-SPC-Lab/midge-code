@@ -3,19 +3,17 @@ import logging
 import sys
 import threading
 import time
-
-import badge
-from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
-from ble_badge_connection import *
-# from bluepy import *
-# from bluepy import btle
-# from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
-# from bluepy.btle import BTLEException
+from datetime import datetime
+import utils
+from badge import OpenBadge
+from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic, BleakScanner
+import asyncio
+# from ble_badge_connection import *
 
 
-def mic_test(badge, mode):
+async def mic_test(badge, mode):
     if (mode==0):
-        start_stereo = badge.start_microphone(t=None,mode=0) # start mic in stereo mode
+        start_stereo = await badge.start_microphone(t=None,mode=0) # start mic in stereo mode
         print(" sensor: mic, stereo mode            ")        
         # check if mic was started in stereo mode
         if (start_stereo.mode==0):
@@ -34,18 +32,18 @@ def mic_test(badge, mode):
 
         time.sleep(10) # reecording time
 
-        mic = badge.get_status()
+        mic = await badge.get_status()
         # check if mic was enabled 
         if (mic.microphone_status):
             print(" mic enabled:      PASS            ")
         else:
             print(" mic enabled:      FAIL            ")
 
-        badge.stop_microphone() # stop recording
+        await badge.stop_microphone() # stop recording
 
         time.sleep(0.5)
 
-        mic = badge.get_status()
+        mic = await badge.get_status()
         # check if mic was disabled with success
         if (~mic.microphone_status):
             print(" mic disabled:     PASS            ")
@@ -56,7 +54,7 @@ def mic_test(badge, mode):
         print(" sensor: mic, mono mode            ")
         #print("-----------------------------------")
 
-        start_mono = badge.start_microphone(t=None,mode=1)
+        start_mono = await badge.start_microphone(t=None,mode=1)
 
         if (start_mono.mode==1):
             print(" mic mode:         PASS            ")
@@ -75,30 +73,30 @@ def mic_test(badge, mode):
 
         time.sleep(10) # reecording time
 
-        mic = badge.get_status()
+        mic = await badge.get_status()
         # check if mic was enabled 
         if (mic.microphone_status):
             print(" mic enabled:      PASS            ")
         else:
             print(" mic enabled:      FAIL            ")
 
-        badge.stop_microphone() # stop recording
+        await badge.stop_microphone() # stop recording
 
         time.sleep(0.5)
 
-        mic = badge.get_status()
+        mic = await badge.get_status()
         # check if mic was disabled with success
         if (~mic.microphone_status):
             print(" mic disabled:     PASS            ")
         else:
             print(" mic disabled:     PASS            ")
 
-def imu_test(badge):
+async def imu_test(badge):
     print("###################################")
     print(" sensor: imu                       ")
     #print("#-----------------------------------#")
 
-    imu_start = badge.start_imu() # start imu
+    imu_start = await badge.start_imu() # start imu
     time.sleep(0.1) # safety wait 
     #check if imu self test was done
     if (imu_start.self_test_done):
@@ -106,9 +104,9 @@ def imu_test(badge):
     else:
         print(" imu self test:    FAIL            ")
 
-    imu = badge.get_status() # get imu status
+    imu = await badge.get_status() # get imu status
     time.sleep(0.1) # safety wait 
-    imu_data = badge.get_imu_data() # get imu data
+    imu_data = await badge.get_imu_data() # get imu data
 
     #print(imu_data)
     
@@ -137,10 +135,10 @@ def imu_test(badge):
 
     
     time.sleep(10) # imu enabled time
-    badge.stop_imu()
+    await badge.stop_imu()
     time.sleep(0.5) # safety wait
 
-    imu = badge.get_status()
+    imu = await badge.get_status()
 
     if (~imu.imu_status):
         print(" imu disabled:     PASS            ")
@@ -148,15 +146,15 @@ def imu_test(badge):
         print(" imu disabled:     FAIL            ")
 
 
-def scan_test(badge):
+async def scan_test(badge):
     print("###################################")
     print(" sensor: scan                      ")
     #print("#-----------------------------------#")
 
-    badge.start_scan(window_ms = 250, interval_ms = 1000) ## start scan with default parameters
+    await badge.start_scan(window_ms = 250, interval_ms = 1000) ## start scan with default parameters
     time.sleep(10) # scan enabled time  
 
-    scan = badge.get_status()
+    scan = await badge.get_status()
     # check if scan was enabled succesfully
     if (scan.scan_status):
         print(" scan enabled:     PASS            ")
@@ -168,11 +166,11 @@ def scan_test(badge):
     else:
         print(" scan data:        FAIL            ")
     
-    badge.stop_scan() # stop scan
+    await badge.stop_scan() # stop scan
 
     time.sleep(0.5) # safety wait
 
-    scan = badge.get_status() # get scan status
+    scan = await badge.get_status() # get scan status
     # check if scan was disabled succesfully
     if (~scan.scan_status):
         print(" scan disabled:    PASS            ")		
@@ -180,8 +178,8 @@ def scan_test(badge):
         print(" scan disabled:    FAIL            ")
 
 
-def errase_mem(badge):
-    errased = badge.sdc_errase_all() # clean sd memory
+async def errase_mem(badge):
+    errased = await badge.sdc_errase_all() # clean sd memory
 
     if (errased.done_errase):
         print(" memory cleaned:   PASS            ")
@@ -190,54 +188,91 @@ def errase_mem(badge):
         print(" memory cleaned:   FAIL            ")
         print("###################################")
 
-    def connect(self):
-        connection = BLEBadgeConnection.get_connection_to_badge(self.address)
-        connection.connect()
-        badge = OpenBadge(self.connection)
-        print("Connected!")
-        return badge
+    # def connect(self):
+    #     connection = BLEBadgeConnection.get_connection_to_badge(self.address)
+    #     connection.connect()
+    #     badge = OpenBadge(self.connection)
+    #     print("Connected!")
+    #     return badge
 
 
-def main():
-    device_addr = sys.argv[1]
+async def main():
+    # device_addr = sys.argv[1]
 
-    connection = BLEBadgeConnection.get_connection_to_badge(device_addr)
-    connection.connect()
-    badge = OpenBadge(connection)
-    print(" connetced                         ")
-    print("###################################")
-    print(" Midge test                        ")
+    devices = await BleakScanner.discover(timeout=10.0, return_adv=True)
 
-    try:
-        mic_test(badge,0)
-    except:
-        print("mic error")
+    # Filter out the devices that are not the midge
+    devices = [d for d in devices.values() if utils.is_spcl_midge(d[0])]
 
-    try:
-        mic_test(badge,1)
-    except:
-        print("mic error")
+    if devices:
+        ble_device, adv_data = devices[0]
+    else:
+        print("No devices found")
+        return
 
     try:
-        scan_test(badge)
-    except:
-        print("scan error")
+        async with OpenBadge(ble_device) as open_badge:
+            print(" connetced                         ")
+            print("###################################")
+            print(" Midge test                        ")
+            try:
+                await mic_test(open_badge, 0)
+            except:
+                print("mic error")
 
-    try:
-        imu_test(badge)
-    except:
-        print("imu error")
-    
-    try:
-        errase_mem(badge)
-    except:
-        print("errase memory error")
-    
-    connection.disconnect()
+            try:
+                await mic_test(open_badge, 1)
+            except:
+                print("mic error")
 
-def test_conn():
-    pass
+            try:
+                await scan_test(open_badge)
+            except:
+                print("scan error")
+
+            try:
+                await imu_test(open_badge)
+            except:
+                print("imu error")
+
+            try:
+                await errase_mem(open_badge)
+            except:
+                print("errase memory error")
+
+    except TimeoutError:
+        print("failed to connect to device")
+
+
+async def communicate_with_device(ble_device):
+    try:
+        async with OpenBadge(ble_device) as open_badge:
+            # async with OpenBadge(int(device_id), ble_device.address) as open_badge:
+            out = await open_badge.get_status()
+            # start = await open_badge.start_microphone()
+            print(out)
+    except TimeoutError:
+        print("failed to connect to device")
+
+async def test_conn():
+    logger = utils.get_logger('bleak_logger')
+    # Find all devices
+    # using both BLEdevice and advertisement data here since it has more information. Also mutes the warning.
+    devices = await BleakScanner.discover(timeout=10.0, return_adv=True)
+
+    # Filter out the devices that are not the midge
+    devices = [d for d in devices.values() if utils.is_spcl_midge(d[0])]
+
+    # Print Id to see if it matches with any devices in the csv file.
+    for ble_device, adv_data in devices:
+        device_id = utils.get_device_id(ble_device)
+        print(f"RSSI: {adv_data.rssi}, Id: {device_id}, Address: {ble_device.address}")
+
+    tasks = [communicate_with_device(ble_device) for ble_device, adv_data in devices]
+    await asyncio.gather(*tasks)
+
+    print(f'after connection: {datetime.now().timestamp()}')
 
 if __name__ == "__main__":
-    # main()
-    test_conn()
+    asyncio.run(main())
+    # asyncio.run(test_conn())
