@@ -91,22 +91,23 @@ async def mic_test(badge, mode):
         else:
             print(" mic disabled:     PASS            ")
 
+
 async def imu_test(badge):
     print("###################################")
     print(" sensor: imu                       ")
     #print("#-----------------------------------#")
 
-    imu_start = await badge.start_imu() # start imu
-    time.sleep(0.1) # safety wait 
-    #check if imu self test was done
-    if (imu_start.self_test_done):
+    imu_start = await badge.start_imu()  # start imu
+    time.sleep(0.1)  # safety wait
+    # check if imu self test was done
+    if imu_start.self_test_done:
         print(" imu self test:    PASS            ")
     else:
         print(" imu self test:    FAIL            ")
 
-    imu = await badge.get_status() # get imu status
-    time.sleep(0.1) # safety wait 
-    imu_data = await badge.get_imu_data() # get imu data
+    imu = await badge.get_status()  # get imu status
+    time.sleep(0.1)  # safety wait
+    imu_data = await badge.get_imu_data()  # get imu data
 
     #print(imu_data)
     
@@ -215,20 +216,20 @@ async def main():
             print(" connetced                         ")
             print("###################################")
             print(" Midge test                        ")
-            try:
-                await mic_test(open_badge, 0)
-            except:
-                print("mic error")
+            # try:
+            #     await mic_test(open_badge, 0)
+            # except:
+            #     print("mic error")
+            #
+            # try:
+            #     await mic_test(open_badge, 1)
+            # except:
+            #     print("mic error")
 
-            try:
-                await mic_test(open_badge, 1)
-            except:
-                print("mic error")
-
-            try:
-                await scan_test(open_badge)
-            except:
-                print("scan error")
+            # try:
+            #     await scan_test(open_badge)
+            # except:
+            #     print("scan error")
 
             try:
                 await imu_test(open_badge)
@@ -254,6 +255,7 @@ async def communicate_with_device(ble_device):
     except TimeoutError:
         print("failed to connect to device")
 
+
 async def test_conn():
     logger = utils.get_logger('bleak_logger')
     # Find all devices
@@ -269,11 +271,11 @@ async def test_conn():
     for ble_device, adv_data in devices:
         device_id = utils.get_device_id(ble_device)
         print(f"RSSI: {adv_data.rssi}, Id: {device_id}, Address: {ble_device.address}")
-    # tasks = [communicate_with_device(ble_device) for ble_device, adv_data in devices]
-    # await asyncio.gather(*tasks)
+    tasks = [communicate_with_device(ble_device) for ble_device, adv_data in devices]
+    await asyncio.gather(*tasks)
 
     print(f'after connection: {datetime.now().timestamp()}')
 
 if __name__ == "__main__":
-    # asyncio.run(main())
-    asyncio.run(test_conn())
+    asyncio.run(main())
+    # asyncio.run(test_conn())

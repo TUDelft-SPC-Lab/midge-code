@@ -30,6 +30,8 @@ DECODE_START_MICROPHONE_RESPONSE = 2
 DECODE_START_SCAN_RESPONSE = 3
 DECODE_START_IMU_REQUEST = 4
 DECODE_FREE_SDC_SPACE_RESPONSE = 5
+DECODE_SDC_ERASE_ALL_RESPONSE = 32
+DECODE_GET_IMU_DATA_RESPONSE = 34
 
 logger = logging.getLogger(__name__)
 
@@ -339,6 +341,17 @@ class OpenBadge(OpenBadgeMeta):
 
         await self.request_response(request)
         self.deal_response(response_type=-1)
+        return None
+
+    @request_handler_marker(action_desc='get imu data')
+    async def get_imu_data(self):
+        request = bp.Request()
+        request.type.which = bp.Request_get_imu_data_request_tag
+        request.type.get_imu_data_request = bp.GetIMUDataRequest()
+        request.type.get_imu_data_request.timestamp = bp.Timestamp()
+
+        await self.request_response(request)
+        self.deal_response(response_type=DECODE_GET_IMU_DATA_RESPONSE)
         return None
 
     @request_handler_marker(action_desc='identify')
