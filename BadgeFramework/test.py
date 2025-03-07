@@ -259,6 +259,8 @@ async def test_conn():
     # Find all devices
     # using both BLEdevice and advertisement data here since it has more information. Also mutes the warning.
     devices = await BleakScanner.discover(timeout=10.0, return_adv=True)
+    # async with BleakClient('de:94:80:39:25:be') as client:
+    #     print(client.is_connected)
 
     # Filter out the devices that are not the midge
     devices = [d for d in devices.values() if utils.is_spcl_midge(d[0])]
@@ -267,8 +269,8 @@ async def test_conn():
     for ble_device, adv_data in devices:
         device_id = utils.get_device_id(ble_device)
         print(f"RSSI: {adv_data.rssi}, Id: {device_id}, Address: {ble_device.address}")
-    tasks = [communicate_with_device(ble_device) for ble_device, adv_data in devices]
-    await asyncio.gather(*tasks)
+    # tasks = [communicate_with_device(ble_device) for ble_device, adv_data in devices]
+    # await asyncio.gather(*tasks)
 
     print(f'after connection: {datetime.now().timestamp()}')
 
