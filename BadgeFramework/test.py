@@ -267,7 +267,6 @@ async def test_conn():
     for ble_device, adv_data in devices:
         device_id = utils.get_device_id(ble_device)
         print(f"RSSI: {adv_data.rssi}, Id: {device_id}, Address: {ble_device.address}")
-
     tasks = [communicate_with_device(ble_device) for ble_device, adv_data in devices]
     await asyncio.gather(*tasks)
 
