@@ -847,7 +847,6 @@ class Request:
 
 
 class StatusResponse:
-
     def __init__(self):
         self.reset()
 
@@ -924,26 +923,19 @@ class StatusResponse:
         pass
 
     def decode_clock_status(self, istream):
-        # print("decode_clock_status:", istream.buf)
-        # print("decode_clock_status:", istream.read(1))
-
-        self.clock_status = struct.unpack('<B', istream.buf[3])[0]
+        self.clock_status = istream.buf[3]
 
     def decode_microphone_status(self, istream):
-        # print("decode_microphone_status: ", i)
-        self.microphone_status = struct.unpack('<B', istream.buf[4])[0]
+        self.microphone_status = istream.buf[4]
 
     def decode_scan_status(self, istream):
-        # print("decode_scan_status: ", i)
-        self.scan_status = struct.unpack('<B', istream.buf[5])[0]
+        self.scan_status = istream.buf[5]
 
     def decode_imu_status(self, istream):
-        # print("decode_imu_status: ", i)
-        self.imu_status = struct.unpack('<B', istream.buf[6])[0]
+        self.imu_status = istream.buf[6]
 
     def decode_battery_level(self, istream):
-        # print("decode_battery_level: ", i)
-        self.battery_level = struct.unpack('<B', istream.buf[7])[0]
+        self.battery_level = istream.buf[7]
 
     def decode_pdm_data(self, istream):
         self.pdm_data = (struct.unpack('<b', istream.buf[13])[0] << 16) + (
