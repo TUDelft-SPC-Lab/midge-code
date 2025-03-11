@@ -326,25 +326,11 @@ sdk_config:
 openocd:
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg
 load_gdb:
-	arm-none-eabi-gdb -se $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.out -x debug.gdb
+	arm-none-eabi-gdb -se _build/nrf52832_xxaa_debug.out -x debug.gdb
 logs: SHELL:=/bin/bash   # Use the bash shell for the logs target, as sh does not have the disown command 
 logs:
 	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
 	picocom /tmp/ttyvnrf -b 115200
 
-package_release_app:
-	@echo Packaging: s132_nrf52_6.1.1_softdevice.hex + $(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.out
-	cp $(SDK_ROOT)/components/softdevice/s132/hex/s132_nrf52_6.1.1_softdevice.hex $(OUTPUT_DIRECTORY)/s132_nrf52_6.1.1_softdevice.hex
-	mergehex --merge $(OUTPUT_DIRECTORY)/s132_nrf52_6.1.1_softdevice.hex $(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.hex \
-		-o $(OUTPUT_DIRECTORY)/$(PROJECT_NAME).hex
-	@echo Package created at: $(OUTPUT_DIRECTORY)/$(PROJECT_NAME).hex
-
-package_debug_app:
-	@echo Packaging: s132_nrf52_6.1.1_softdevice.hex + $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.out
-	cp $(SDK_ROOT)/components/softdevice/s132/hex/s132_nrf52_6.1.1_softdevice.hex $(OUTPUT_DIRECTORY)/s132_nrf52_6.1.1_softdevice.hex
-	mergehex --merge $(OUTPUT_DIRECTORY)/s132_nrf52_6.1.1_softdevice.hex $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.hex \
-		-o $(OUTPUT_DIRECTORY)/$(PROJECT_NAME).hex
-	@echo Package created at: $(OUTPUT_DIRECTORY)/$(PROJECT_NAME).hex
-
 flash_with_gdb:
-	arm-none-eabi-gdb -x flash_package.gdb
+	arm-none-eabi-gdb -e _build/nrf52832_xxaa_release.out -x flash.gdb

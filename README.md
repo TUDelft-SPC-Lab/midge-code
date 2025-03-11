@@ -32,6 +32,25 @@
 - You will probably have to use `conda` for setting up a python2 env. In that
   env, you will need to download the `bluepy` module
 
+### Using Nix:
+This project includes a `flake.nix` file that automatically sets up the development environment with all required dependencies.
+1. Install Nix package manager by following instructions at nixos.org
+2. Enable flakes by either:
+    * Adding `experimental-features = nix-command flakes` to your `~./config/nix/nix.conf`
+    * Or using the `-E` flash with each nix command
+3. Enter the development shell:
+    ```shell
+    nix develop
+    ```
+    This will setup an environment with:
+        * ARM GCC toolchain (gcc-arm-embedded-13)
+        * socat and picocom for debug logs
+        * Python with required packages
+        * C development tools
+4. Alternatively, you can use direnv to automatically enter the environment:
+    * Install direnv from direnv.net
+    * Run `direnv allow` in the project directory
+
 ## Board options
 
 There are several MCU boards that can be used for compiling and debuging the midge fimware.
