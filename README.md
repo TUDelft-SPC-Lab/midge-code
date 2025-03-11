@@ -151,9 +151,11 @@ Example `launch.json` for using Cortex-Debug for flashing and debugging
 
 ## Flashing the final binary
 
-1. Build with `make nrf52832_xxaa_release`
-2. Start the openocd server with `make openocd`
-3. Flash the binary with `make flash_with_gdb`
+### DAPLink
+
+1. Flash the softdevice (only required once): `make daplink_flash_softdevice`
+1. Build with `make nrf52832_xxaa_<release|debug>`
+3. Flash the binary with `make daplink_flash_<release|debug>`
 
 ## Hardware
 

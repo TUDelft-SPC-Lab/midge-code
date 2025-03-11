@@ -332,5 +332,32 @@ logs:
 	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
 	picocom /tmp/ttyvnrf -b 115200
 
-flash_with_gdb:
-	arm-none-eabi-gdb -e _build/nrf52832_xxaa_release.out -x flash.gdb
+daplink_erase_flash:
+	@echo Erase flash
+	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
+  -c "init" -c "reset init" -c "nrf5 mass_erase" \
+  -c "reset" -c "exit"
+
+# flash the bluetooth stack using the DAPlink
+daplink_flash_softdevice: daplink_erase_flash
+	@echo Flashing: s132_nrf52_6.1.1_softdevice.hex
+	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
+  -c "init" -c "reset init" \
+  -c "program $(SDK_ROOT)/components/softdevice/s132/hex/s132_nrf52_6.1.1_softdevice.hex" \
+  -c "reset" -c "exit"
+
+daplink_flash_debug: nrf52832_xxaa_debug
+	@echo Flashing Debug Firmware
+	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
+  -c "init" -c "reset init" \
+  -c "program $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.hex" \
+  -c "reset" -c "exit"
+
+
+daplink_flash_release: nrf52832_xxaa_release 
+	@echo Flashing Debug Firmware
+	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
+  -c "init" -c "reset init" \
+  -c "program $(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.hex" \
+  -c "reset" -c "exit"
+
