@@ -332,6 +332,7 @@ logs:
 	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
 	picocom /tmp/ttyvnrf -b 115200
 
+# Erases code sectors and user info regs
 daplink_erase_flash:
 	@echo Erase flash
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
