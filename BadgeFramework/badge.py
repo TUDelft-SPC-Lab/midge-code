@@ -6,6 +6,7 @@ import time
 import logging
 import struct
 import ntplib
+from collections import deque
 from datetime import datetime, timezone
 
 from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
@@ -24,14 +25,6 @@ DEFAULT_MICROPHONE_MODE: Final[int] = 1  # Valid options: 0=Stereo, 1=Mono
 
 CONNECTION_RETRY_TIMES = 15
 DUPLICATE_TIME_INTERVAL = 2
-
-DECODE_STATUS_RESPONSE = 1
-DECODE_START_MICROPHONE_RESPONSE = 2
-DECODE_START_SCAN_RESPONSE = 3
-DECODE_START_IMU_REQUEST = 4
-DECODE_FREE_SDC_SPACE_RESPONSE = 5
-DECODE_SDC_ERASE_ALL_RESPONSE = 32
-DECODE_GET_IMU_DATA_RESPONSE = 34
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +113,7 @@ class OpenBadge(OpenBadgeMeta):
         self.client = BleakClient(self.address, disconnected_callback=badge_disconnected)
         # self.rx_message = b''
         self.rx_list = []
+        self.message_buffer = deque()
 
     async def __aenter__(self):
         for _ in range(CONNECTION_RETRY_TIMES):
@@ -199,12 +193,29 @@ class OpenBadge(OpenBadgeMeta):
     def received_callback(self, sender: BleakGATTCharacteristic, message: bytearray):
         """callback function for receiving message. Note that this must be used in combination with the
         'receive' function to work properly."""
-        if len(message) > 0:
-            new_message = {'time': time.time(), 'message': message}
-            if not self.message_is_duplicated(self.rx_list, new_message):
-                # print(f"RX changed {sender}: {message}" + str(time.time()))
-                # self.rx_message = message
+        self.message_buffer.extend(message)  # Store received bytes sequentially
+        # print(f"Received message: {message}" + str(time.time()))
+        while len(self.message_buffer) >= 2:  # Ensure at least two bytes are available to read length
+            # Peek the first two bytes to get the expected message length
+            length_bytes = bytes([self.message_buffer[0], self.message_buffer[1]])
+            expected_length = struct.unpack('<H', length_bytes)[0]  # Assuming little-endian format
+
+            # Check if we have enough bytes for a full message
+            if len(self.message_buffer) >= expected_length + 2:
+                full_message = bytearray()
+                for _ in range(2 + expected_length):
+                    full_message.append(self.message_buffer.popleft())  # Remove bytes from buffer
+                new_message = {'time': time.time(), 'message': full_message}
                 self.rx_list.append(new_message)
+                print(f"Full message: {full_message}" + str(time.time()))
+            else:
+                break  # Wait for more data if full message is not yet received
+        # if len(message) > 0:
+        #     new_message = {'time': time.time(), 'message': message}
+        #     if not self.message_is_duplicated(self.rx_list, new_message):
+        #         print(f"RX changed {sender}: {message}" + str(time.time()))
+        #         # self.rx_message = message
+        #         self.rx_list.append(new_message)
 
     async def request_response(self, message: bp.Request, require_response: Optional[bool] = True):
         """request response from client"""
@@ -223,7 +234,6 @@ class OpenBadge(OpenBadgeMeta):
 
     def deal_response(self, response_type):
         """deal response from client. Currently, this only involves decoding."""
-        # print('rx list:', self.rx_list)
         if response_type < 0:
             # response_type < 0 means this response does not contain messages
             if len(self.rx_list) > 0:
@@ -258,7 +268,7 @@ class OpenBadge(OpenBadgeMeta):
             request.type.status_request.has_badge_assignement = True
 
         await self.request_response(request)
-        return self.deal_response(response_type=DECODE_STATUS_RESPONSE).type.status_response
+        return self.deal_response(response_type=bp.Response_status_response_tag).type.status_response
 
     async def set_id_at_start(self, badge_id, group_number):
         try:
@@ -277,7 +287,8 @@ class OpenBadge(OpenBadgeMeta):
         request.type.start_microphone_request.mode = mode
 
         await self.request_response(request)
-        return self.deal_response(response_type=DECODE_START_MICROPHONE_RESPONSE).type.start_microphone_response
+        return (self.deal_response(response_type=bp.Response_start_microphone_response_tag)
+                .type.start_microphone_response)
 
     @request_handler_marker(action_desc='stop microphone')
     async def stop_microphone(self) -> None:
@@ -305,7 +316,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.start_scan_request.interval = interval_ms
 
         await self.request_response(request)
-        return self.deal_response(response_type=DECODE_START_SCAN_RESPONSE).type.start_scan_response
+        return self.deal_response(response_type=bp.Response_start_scan_response_tag).type.start_scan_response
 
     @request_handler_marker(action_desc='stop scan')
     async def stop_scan(self) -> None:
@@ -330,7 +341,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.start_imu_request.datarate = datarate
 
         await self.request_response(request)
-        return self.deal_response(response_type=DECODE_START_IMU_REQUEST).type.start_imu_response
+        return self.deal_response(response_type=bp.Response_start_imu_response_tag).type.start_imu_response
 
     @request_handler_marker(action_desc='stop imu')
     async def stop_imu(self) -> None:
@@ -351,8 +362,16 @@ class OpenBadge(OpenBadgeMeta):
         request.type.get_imu_data_request.timestamp = bp.Timestamp()
 
         await self.request_response(request)
-        self.deal_response(response_type=DECODE_GET_IMU_DATA_RESPONSE)
-        return None
+        return self.deal_response(response_type=bp.Response_get_imu_data_response_tag).type.get_imu_data_response
+
+    @request_handler_marker(action_desc='sdc erase all')
+    async def sdc_erase_all(self):
+        request = bp.Request()
+        request.type.which = bp.Request_sdc_erase_all_request_tag
+        request.type.sdc_erase_all_request = bp.EraseAllRequest()
+
+        await self.request_response(request)
+        return self.deal_response(response_type=bp.Response_sdc_erase_all_response_tag).type.sdc_erase_all_response
 
     @request_handler_marker(action_desc='identify')
     async def identify(self, duration_seconds=10) -> bool:
@@ -387,7 +406,7 @@ class OpenBadge(OpenBadgeMeta):
         request.type.free_sdc_space_request = bp.FreeSDCSpaceRequest()
 
         await self.request_response(request)
-        return self.deal_response(response_type=DECODE_FREE_SDC_SPACE_RESPONSE).type.free_sdc_space_response
+        return self.deal_response(response_type=bp.Response_free_sdc_space_response_tag).type.free_sdc_space_response
 
     async def start_recording_all_sensors(self):
         await self.get_status()
