@@ -151,9 +151,26 @@ Example `launch.json` for using Cortex-Debug for flashing and debugging
 
 ## Flashing the final binary
 
-1. Build with `make nrf52832_xxaa_release`
-2. Start the openocd server with `make openocd`
-3. Flash the binary with `make flash_with_gdb`
+### About the BLE stack AKA softdevice 
+
+A softdevice is basically the stack used for controlling the different radios 
+in a nRF chip. It's a binary that must be flashed before other firmware. It can 
+be downloaded as a standalone binary, altough if you already had the nRF5 SDK 
+downloaded, it's probably already coupled with it. You should be able to find it
+at `$(SDK_ROOT)/components/softdevice/s132/hex/s132_nrf52_6.1.1_softdevice.hex`.
+The standalone files can be downloaded from
+<https://www.nordicsemi.com/Products/Development-software/S132/Download>
+
+### DAPLink
+
+1. Flash the softdevice (only required once): `make daplink_flash_softdevice`
+  - This by itself will call the `daplink_erase_flash` target which erases 
+    contents of code memory and config registers
+2. Build with `make nrf52832_xxaa_<release|debug>`
+3. Flash the binary with `make daplink_flash_<release|debug>`
+
+> Calling the `daplink_erase_flash` target is not a requirement to update 
+  firmware after the softdevice has been flashed
 
 ## Hardware
 
