@@ -50,12 +50,22 @@ void sd_write(void * p_event_data, uint16_t event_size)
 	if (data_source_info.data_source == AUDIO && !audio_file_handle.err)
 	{
 		app_timer_start(f_write_timeout_timer, APP_TIMER_TICKS(F_WRITE_TIMEOUT_MS), &data_source_info.data_source);
-		// size is times two, since this function receives number of bytes, not size of pointer
-		FRESULT ff_result = f_write(&audio_file_handle, data_source_info.audio_source_info.audio_buffer, data_source_info.audio_source_info.audio_buffer_length, NULL);
+		
+		uint64_t timestamp_ms = systick_get_millis();
+		FRESULT ff_result = f_write(&audio_file_handle, &timestamp_ms, sizeof(timestamp_ms), NULL);
 		if (ff_result != FR_OK)
 		{
-			NRF_LOG_INFO("Audio write to sd failed: %d", ff_result);
-		}
+			NRF_LOG_INFO("Audio timestamp write to sd failed: %d", ff_result);
+		} 
+		else 
+		{	
+			// size is times two, since this function receives number of bytes, not size of pointer
+			FRESULT ff_result = f_write(&audio_file_handle, data_source_info.audio_source_info.audio_buffer, data_source_info.audio_source_info.audio_buffer_length, NULL);
+			if (ff_result != FR_OK)
+			{
+				NRF_LOG_INFO("Audio write to sd failed: %d", ff_result);
+			}
+		}	
 		app_timer_stop(f_write_timeout_timer);
 	}
 	else if (data_source_info.data_source == IMU && !imu_file_handle[data_source_info.imu_source_info.imu_source].err)
@@ -355,10 +365,7 @@ uint32_t storage_open_file(data_source_t source)
             fileCount++;
         }
 
-
-
-		
-	    ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
+		ff_result = f_open(&audio_file_handle, filename, FA_WRITE | FA_CREATE_ALWAYS);
 		NRF_LOG_INFO("SD Audio: ff_result: %d", ff_result);
 	    if (ff_result != FR_OK)
 	    {
