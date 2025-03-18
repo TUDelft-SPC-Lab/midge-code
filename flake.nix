@@ -28,10 +28,13 @@
               "$PYTHONPATH"
             ];
             
-            # Define a helper function for running with the right environment
-            runWithBt = script: args: ''
-              PYTHONPATH="${pythonPath}" sudo -E PYTHONPATH="${pythonPath}" python2 ${builtins.toString ./.}/BadgeFramework/${script} ${args}
-            '';
+            runScript = { script, args ? "", sudo ? false }:
+              let
+                sudoPrefix = if sudo then "sudo -E " else "";
+              in 
+              ''
+                PYTHONPATH="${pythonPath}" ${sudoPrefix}PYTHONPATH="${pythonPath}" python2 ${builtins.toString ./.}/BadgeFramework/${script} ${args}
+              '';
           in
           {
             default = devenv.lib.mkShell {
@@ -75,31 +78,33 @@
                   # Scripts for running with bluetooth permissions
                   scripts = {
                     scan = {
-                      exec = runWithBt "scan_all.py" "";
+                      exec = runScript {
+                          script = "scan_all.py";
+                          sudo = true;
+                      };
                       description = "Scan for nearby badges";
                     };
                     
                     terminal = {
-                      exec = runWithBt "terminal.py" "$@";
+                      exec = runScript {
+                          script = "terminal.py";
+                          args = "$@";
+                      };
                       description = "Connect to a specific badge: terminal <MAC_ADDRESS>";
                     };
                     
                     badge-gui = {
-                      exec = runWithBt "badge_gui.py" "";
+                      exec = runScript {
+                          script = "badge_gui.py";
+                      };
                       description = "Launch the GUI interface";
                     };
                     
                     hub = {
-                      exec = runWithBt "hub_V1.py" "";
+                      exec = runScript {
+                          script = "hub_V1.py";
+                      };
                       description = "Run the hub to manage multiple badges";
-                    };
-                    
-                    # Helper to run any Python script with BT permissions
-                    run-with-bt = {
-                      exec = ''
-                        PYTHONPATH="${pythonPath}" sudo -E PYTHONPATH="${pythonPath}" python2 "$@"
-                      '';
-                      description = "Run any Python script with Bluetooth permissions";
                     };
                   };
                   
