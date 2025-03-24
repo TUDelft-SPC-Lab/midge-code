@@ -38,6 +38,7 @@ FATFS fs;
 DIR dir;
 FILINFO fno;
 FIL audio_file_handle;
+FIL audio_metadata_file_handle;
 FIL imu_file_handle[MAX_IMU_SOURCES];
 FIL scanner_file_handle;
 
@@ -56,6 +57,27 @@ void sd_write(void * p_event_data, uint16_t event_size)
 		{
 			NRF_LOG_INFO("Audio write to sd failed: %d", ff_result);
 		}
+
+    if (!audio_metadata_file_handle.err)
+    {
+      uint32_t seconds;
+      uint16_t milliseconds;
+      systick_get_timestamp(&seconds, &milliseconds);
+
+      audio_metadata_t audio_metadata_record;
+      audio_metadata_record.seconds = seconds;
+      audio_metadata_record.milliseconds = milliseconds;
+      audio_metadata_record.buffer_size = data_source_info.audio_source_info.audio_buffer_length;
+      audio_metadata_record.is_mono = (drv_audio_get_mode() == 1);
+
+      ff_result = f_write(&audio_metadata_file_handle, &audio_metadata_record, sizeof(audio_metadata_t), NULL);
+      if (ff_result != FR_OK)
+      {
+        NRF_LOG_INFO("Audio timestamp write to sd failed: %d", ff_result);
+      }
+    }
+
+
 		app_timer_stop(f_write_timeout_timer);
 	}
 	else if (data_source_info.data_source == IMU && !imu_file_handle[data_source_info.imu_source_info.imu_source].err)
@@ -102,6 +124,8 @@ static void f_sync_timeout_handler(void* p_context)
 	}
 	if (!audio_file_handle.err)
 		ff_result |= f_sync(&audio_file_handle);
+  if (!audio_metadata_file_handle.err)
+    ff_result |= f_sync(&audio_metadata_file_handle);
 	if (!scanner_file_handle.err)
 		ff_result |= f_sync(&scanner_file_handle);
 
@@ -123,6 +147,14 @@ uint32_t storage_close_file(data_source_t source)
 			NRF_LOG_INFO("close audio file error: %d", ff_result);
 			return -1;
 		}
+
+    audio_metadata_file_handle.err = 1;
+    ff_result = f_close(&audio_metadata_file_handle);
+    if (ff_result)
+    {
+      NRF_LOG_INFO("close audio timestamp file error: %d", ff_result);
+      return -1;
+    }
 	}
 	if (source == IMU)
 	{
@@ -288,6 +320,7 @@ uint32_t storage_init(void)
 	for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
 		imu_file_handle[sensor].err = 1;
 	audio_file_handle.err = 1;
+  audio_metadata_file_handle.err = 1;
 	scanner_file_handle.err = 1;
 	// Create the f_sync repeated timer
 	ret = app_timer_create(&f_sync_timer, APP_TIMER_MODE_REPEATED, f_sync_timeout_handler);
@@ -333,6 +366,7 @@ uint32_t storage_open_file(data_source_t source)
 	uint64_t millis = systick_get_millis();
 	uint32_t seconds = millis/1000;
 	TCHAR filename[50] = {};
+  TCHAR metadata_filename[55] = {};
 	NRF_LOG_INFO("SD: seconds: %ld", seconds);
 	NRF_LOG_INFO("SD: source: %d", source);
 	if (source == AUDIO)
@@ -366,6 +400,16 @@ uint32_t storage_open_file(data_source_t source)
 	        return -1;
 	    }
 		audio_file_handle.err = 0;
+
+    sprintf(metadata_filename, "%s.d", filename);
+    ff_result = f_open(&audio_metadata_file_handle, metadata_filename, FA_WRITE | FA_CREATE_ALWAYS);
+    NRF_LOG_INFO("SD Audio Metadata: ff_result: %d", ff_result);
+    if (ff_result != FR_OK)
+    {
+      NRF_LOG_INFO("SD Audio Metadata: Unable to open or create file: %d", metadata_filename);
+      return -1;
+    }
+    audio_metadata_file_handle.err = 0;
 	}
 	if (source == IMU)
 	{
