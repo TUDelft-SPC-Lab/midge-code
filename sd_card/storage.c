@@ -47,10 +47,12 @@ void sd_write(void * p_event_data, uint16_t event_size)
 {
 	static data_source_info_t data_source_info;
 	data_source_info = *(data_source_info_t *)p_event_data;
+	uint64_t timestamp;
 
 	if (data_source_info.data_source == AUDIO && !audio_file_handle.err)
 	{
 		app_timer_start(f_write_timeout_timer, APP_TIMER_TICKS(F_WRITE_TIMEOUT_MS), &data_source_info.data_source);
+		timestamp = systick_get_millis();
 		// size is times two, since this function receives number of bytes, not size of pointer
 		FRESULT ff_result = f_write(&audio_file_handle, data_source_info.audio_source_info.audio_buffer, data_source_info.audio_source_info.audio_buffer_length, NULL);
 		if (ff_result != FR_OK)
@@ -58,24 +60,19 @@ void sd_write(void * p_event_data, uint16_t event_size)
 			NRF_LOG_INFO("Audio write to sd failed: %d", ff_result);
 		}
 
-    if (!audio_metadata_file_handle.err)
-    {
-      uint32_t seconds;
-      uint16_t milliseconds;
-      systick_get_timestamp(&seconds, &milliseconds);
+	if (!audio_metadata_file_handle.err)
+	{
+		audio_metadata_t audio_metadata_record;
+		audio_metadata_record.timestamp = timestamp;
+		audio_metadata_record.buffer_size = data_source_info.audio_source_info.audio_buffer_length;
+		audio_metadata_record.is_mono = (drv_audio_get_mode() == 1);
 
-      audio_metadata_t audio_metadata_record;
-      audio_metadata_record.seconds = seconds;
-      audio_metadata_record.milliseconds = milliseconds;
-      audio_metadata_record.buffer_size = data_source_info.audio_source_info.audio_buffer_length;
-      audio_metadata_record.is_mono = (drv_audio_get_mode() == 1);
-
-      ff_result = f_write(&audio_metadata_file_handle, &audio_metadata_record, sizeof(audio_metadata_t), NULL);
-      if (ff_result != FR_OK)
-      {
-        NRF_LOG_INFO("Audio timestamp write to sd failed: %d", ff_result);
-      }
-    }
+		ff_result = f_write(&audio_metadata_file_handle, &audio_metadata_record, sizeof(audio_metadata_t), NULL);
+		if (ff_result != FR_OK)
+		{
+			NRF_LOG_INFO("Audio timestamp write to sd failed: %d", ff_result);
+		}
+	}
 
 
 		app_timer_stop(f_write_timeout_timer);
@@ -148,7 +145,7 @@ uint32_t storage_close_file(data_source_t source)
 			return -1;
 		}
 
-    audio_metadata_file_handle.err = 1;
+	audio_metadata_file_handle.err = 1;
     ff_result = f_close(&audio_metadata_file_handle);
     if (ff_result)
     {
@@ -320,7 +317,7 @@ uint32_t storage_init(void)
 	for (uint8_t sensor=0; sensor<MAX_IMU_SOURCES; sensor++)
 		imu_file_handle[sensor].err = 1;
 	audio_file_handle.err = 1;
-  audio_metadata_file_handle.err = 1;
+	audio_metadata_file_handle.err = 1;
 	scanner_file_handle.err = 1;
 	// Create the f_sync repeated timer
 	ret = app_timer_create(&f_sync_timer, APP_TIMER_MODE_REPEATED, f_sync_timeout_handler);
@@ -366,7 +363,7 @@ uint32_t storage_open_file(data_source_t source)
 	uint64_t millis = systick_get_millis();
 	uint32_t seconds = millis/1000;
 	TCHAR filename[50] = {};
-  TCHAR metadata_filename[55] = {};
+	TCHAR metadata_filename[55] = {};
 	NRF_LOG_INFO("SD: seconds: %ld", seconds);
 	NRF_LOG_INFO("SD: source: %d", source);
 	if (source == AUDIO)
@@ -401,15 +398,15 @@ uint32_t storage_open_file(data_source_t source)
 	    }
 		audio_file_handle.err = 0;
 
-    sprintf(metadata_filename, "%s.d", filename);
-    ff_result = f_open(&audio_metadata_file_handle, metadata_filename, FA_WRITE | FA_CREATE_ALWAYS);
-    NRF_LOG_INFO("SD Audio Metadata: ff_result: %d", ff_result);
-    if (ff_result != FR_OK)
-    {
-      NRF_LOG_INFO("SD Audio Metadata: Unable to open or create file: %d", metadata_filename);
-      return -1;
-    }
-    audio_metadata_file_handle.err = 0;
+	sprintf(metadata_filename, "%s.d", filename);
+	ff_result = f_open(&audio_metadata_file_handle, metadata_filename, FA_WRITE | FA_CREATE_ALWAYS);
+	NRF_LOG_INFO("SD Audio Metadata: ff_result: %d", ff_result);
+	if (ff_result != FR_OK)
+	{
+		NRF_LOG_INFO("SD Audio Metadata: Unable to open or create file: %d", metadata_filename);
+		return -1;
+	}
+	audio_metadata_file_handle.err = 0;
 	}
 	if (source == IMU)
 	{
