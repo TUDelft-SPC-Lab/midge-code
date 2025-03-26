@@ -36,8 +36,7 @@ typedef struct {
 } audio_source_info_t;
 
 typedef struct __attribute__((__packed__)) {
-	uint32_t seconds;
-	uint16_t milliseconds;
+	uint64_t timestamp;
 	uint16_t buffer_size;
 	uint8_t is_mono;
 	uint8_t padding;
