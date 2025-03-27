@@ -18,6 +18,7 @@
 #include "storage.h"
 #include "audio_switch.h"
 #include "sampling_lib.h"
+#include "systick_lib.h"
 
 ret_code_t err_code;
 
@@ -29,13 +30,13 @@ nrf_pdm_mode_t local_mode;
 uint32_t local_freq;
 uint8_t local_gain_l;
 uint8_t local_gain_r;
-
+uint64_t timestamp_buffer[PDM_BUF_NUM];
 
 int16_t subsampled[PDM_BUF_SIZE/DECIMATION];
 float filter_weight[DECIMATION];
 
 
-static void process_audio_buffer(void)
+static void process_audio_buffer(uint8_t buffer_index)
 {
 	switch (audio_switch_position)
 	{
@@ -47,6 +48,7 @@ static void process_audio_buffer(void)
 		{
 			data_source_info.data_source = AUDIO;
 			data_source_info.audio_source_info.audio_buffer_length = PDM_BUF_SIZE*2;
+			data_source_info.audio_source_info.buffer_index = buffer_index;
 			err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
 			APP_ERROR_CHECK(err_code);
 		}
@@ -69,6 +71,7 @@ static void process_audio_buffer(void)
 			}
 
 			data_source_info.data_source = AUDIO;
+			data_source_info.audio_source_info.buffer_index = buffer_index;
 			data_source_info.audio_source_info.audio_buffer = subsampled;
 			data_source_info.audio_source_info.audio_buffer_length = (PDM_BUF_SIZE/DECIMATION)*2; //sizeof(subsampled);
 			err_code = app_sched_event_put(&data_source_info, sizeof(data_source_info), sd_write);
@@ -101,8 +104,9 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 			{
 				pdm_buf[l].released = true;
 				data_source_info.audio_source_info.audio_buffer = &pdm_buf[l].mic_buf;
+				timestamp_buffer[l] = systick_get_millis();
 				NRF_LOG_INFO("pdm buf %d", pdm_buf[l].mic_buf[0]);
-				process_audio_buffer();
+				process_audio_buffer(l);
 				break;
 			}
 		}

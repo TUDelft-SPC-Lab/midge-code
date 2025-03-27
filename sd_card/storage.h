@@ -31,6 +31,7 @@ typedef struct {
 } imu_source_info_t;
 
 typedef struct {
+	uint8_t buffer_index;
 	uint16_t audio_buffer_length;
 	const void * audio_buffer;
 } audio_source_info_t;

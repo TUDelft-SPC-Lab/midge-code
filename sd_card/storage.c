@@ -41,18 +41,16 @@ FIL audio_file_handle;
 FIL audio_metadata_file_handle;
 FIL imu_file_handle[MAX_IMU_SOURCES];
 FIL scanner_file_handle;
-
+extern uint64_t timestamp_buffer[PDM_BUF_NUM];
 
 void sd_write(void * p_event_data, uint16_t event_size)
 {
 	static data_source_info_t data_source_info;
 	data_source_info = *(data_source_info_t *)p_event_data;
-	uint64_t timestamp;
 
 	if (data_source_info.data_source == AUDIO && !audio_file_handle.err)
 	{
 		app_timer_start(f_write_timeout_timer, APP_TIMER_TICKS(F_WRITE_TIMEOUT_MS), &data_source_info.data_source);
-		timestamp = systick_get_millis();
 		// size is times two, since this function receives number of bytes, not size of pointer
 		FRESULT ff_result = f_write(&audio_file_handle, data_source_info.audio_source_info.audio_buffer, data_source_info.audio_source_info.audio_buffer_length, NULL);
 		if (ff_result != FR_OK)
@@ -63,7 +61,7 @@ void sd_write(void * p_event_data, uint16_t event_size)
 	if (!audio_metadata_file_handle.err)
 	{
 		audio_metadata_t audio_metadata_record;
-		audio_metadata_record.timestamp = timestamp;
+		audio_metadata_record.timestamp = timestamp_buffer[data_source_info.audio_source_info.buffer_index];
 		audio_metadata_record.buffer_size = data_source_info.audio_source_info.audio_buffer_length;
 		audio_metadata_record.is_mono = (drv_audio_get_mode() == 1);
 
