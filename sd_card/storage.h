@@ -31,9 +31,17 @@ typedef struct {
 } imu_source_info_t;
 
 typedef struct {
+	uint8_t buffer_index;
 	uint16_t audio_buffer_length;
 	const void * audio_buffer;
 } audio_source_info_t;
+
+typedef struct __attribute__((__packed__)) {
+	uint64_t timestamp;
+	uint16_t buffer_size;
+	uint8_t is_mono;
+	uint8_t padding;
+} audio_metadata_t;
 
 typedef struct __attribute__((__packed__)) {
 	data_source_t data_source;
