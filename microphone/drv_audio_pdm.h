@@ -8,7 +8,7 @@
 
 #define PDM_BUF_NUM 	2
 #define PDM_BUF_SIZE 	2048
-#define DECIMATION		8 
+#define DECIMATION		16 // 20KHz/16 = 1.250 KHz sample rate for LO position 
 
 typedef struct {
 	int16_t  mic_buf[PDM_BUF_SIZE];

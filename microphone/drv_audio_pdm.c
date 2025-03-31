@@ -161,8 +161,12 @@ ret_code_t drv_audio_init(nrf_pdm_mode_t mode)
 
 	pdm_cfg.mode        = local_mode;
 
-	// 20kHz
-	pdm_cfg.clock_freq	= 0x08800000;
+	//! Not officially supported value corresponding to PDM_CLK of 
+	//! NRF_PDM_FREQ_1280K, which will result in a 20KHz sample rate for HI
+	//! position. The HW in the uC is designed for this frequency but Nordic 
+	//! does not support it oficially as it's not considered tested enough 
+	//! https://devzone.nordicsemi.com/f/nordic-q-a/15150/single-pdm-microphone-at-higher-pcm-sampling-rate
+	pdm_cfg.clock_freq	= 0x0A000000UL; 
 	local_freq      = pdm_cfg.clock_freq;
 
 	nrfx_pdm_init(&pdm_cfg, drv_audio_pdm_event_handler);
