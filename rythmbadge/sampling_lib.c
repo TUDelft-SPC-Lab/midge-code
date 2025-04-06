@@ -17,6 +17,7 @@
 #include "led.h"
 
 static sampling_configuration_t sampling_configuration;
+extern uint64_t timestamp_buffer[PDM_BUF_NUM];
 
 ret_code_t sampling_init(void)
 {
@@ -104,7 +105,10 @@ ret_code_t sampling_start_microphone(nrf_pdm_mode_t mode)
 	if (audio_switch_get_position()==OFF)
 		return ret;
 
-	ret = drv_audio_init(mode);
+	memset(timestamp_buffer, 0, sizeof timestamp_buffer);
+	uint64_t initial_recording_timestamp = systick_get_millis();
+
+	ret = drv_audio_init(mode, initial_recording_timestamp);
 	if(ret != NRF_SUCCESS) return ret;
 
 	ret = storage_open_file(AUDIO);

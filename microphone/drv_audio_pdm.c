@@ -30,11 +30,11 @@ nrf_pdm_mode_t local_mode;
 uint32_t local_freq;
 uint8_t local_gain_l;
 uint8_t local_gain_r;
-uint64_t timestamp_buffer[PDM_BUF_NUM];
+uint64_t timestamp_buffer[PDM_BUF_NUM] = {0};
 
 int16_t subsampled[PDM_BUF_SIZE/DECIMATION];
 float filter_weight[DECIMATION];
-
+static uint64_t recording_start_timestamp;
 
 static void process_audio_buffer(uint8_t buffer_index)
 {
@@ -104,7 +104,16 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 			{
 				pdm_buf[l].released = true;
 				data_source_info.audio_source_info.audio_buffer = &pdm_buf[l].mic_buf;
-				timestamp_buffer[l] = systick_get_millis();
+				if (l == 0 && timestamp_buffer[l] == 0) {
+					// First buffer, set timestamp to recording start timestamp
+					timestamp_buffer[l] = recording_start_timestamp;
+				} else {
+					// Subsequent buffers
+					// t_rec_i = t_release_i - (PDM_BUF_SIZE / effective_sampling_rate) * 1000
+					uint32_t base_sample_rate = 20000; // 20kHz
+					uint32_t effective_sampling_rate = drv_audio_get_mode() == 0 ? base_sample_rate/2 : base_sample_rate;
+					timestamp_buffer[l] = systick_get_millis() - (PDM_BUF_SIZE / effective_sampling_rate) * 1000;
+				}				
 				NRF_LOG_INFO("pdm buf %d", pdm_buf[l].mic_buf[0]);
 				process_audio_buffer(l);
 				break;
@@ -127,8 +136,10 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 	}
 }
 
-ret_code_t drv_audio_init(nrf_pdm_mode_t mode)
+ret_code_t drv_audio_init(nrf_pdm_mode_t mode, uint64_t timestamp)
 {
+
+	recording_start_timestamp = timestamp;
 
 	switch (mode)
 	{
