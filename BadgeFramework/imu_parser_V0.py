@@ -34,21 +34,12 @@ class IMUParser(object):
                     break
         data_xyz = np.asarray(data)
         timestamps = np.asarray(timestamps)
-        # timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
-        df = pd.DataFrame(timestamps, columns=['time'])
+        timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
+        df = pd.DataFrame(timestamps_dt, columns=['time'])
         df['X'] = data_xyz[:,0]
         df['Y'] = data_xyz[:,1]
         df['Z'] = data_xyz[:,2]
         return df
-
-    @staticmethod
-    def check_ts(nums, thres=1e13):
-        timestamps = [x[0] for x in nums]
-        results = [(i, f"{num:.0f}") for i, num in enumerate(timestamps) if num > thres]
-        timestamp_good = [x for x in timestamps if x < 1e13]
-        good_diff = [timestamp_good[x + 1] - timestamp_good[x] for x in range(len(timestamp_good) - 2)]
-        d = [x for x in good_diff if x > 20 or x < 10]
-        c = 9
 
     def parse_scanner(self):
         data = []
@@ -115,8 +106,8 @@ class IMUParser(object):
                     break
         rotation_xyz = np.asarray(rotation)
         timestamps = np.asarray(timestamps)
-        # timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
-        df = pd.DataFrame(timestamps, columns=['time'])
+        timestamps_dt = [dt.fromtimestamp(float(x)/1000) for x in timestamps]
+        df = pd.DataFrame(timestamps_dt, columns=['time'])
         df['a'] = rotation_xyz[:,0]
         df['b'] = rotation_xyz[:,1]
         df['c'] = rotation_xyz[:,2]
@@ -199,7 +190,6 @@ if __name__ == '__main__':
 
     # Example command
     # python ./imu_parser_V0.py --fn ../midge_0_files/ --scan TRUE --acc TRUE --mag TRUE --rot TRUE --gyr TRUE --rot TRUE --plot True
-
 
 
 

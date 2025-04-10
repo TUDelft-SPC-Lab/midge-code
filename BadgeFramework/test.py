@@ -180,7 +180,7 @@ async def scan_test(badge):
 async def erase_mem(badge):
     erased = await badge.sdc_erase_all()  # clean sd memory
 
-    if erased.done_erase:
+    if erased.done_errase:
         print(" memory cleaned:   PASS            ")
         print("###################################")
     else:
@@ -221,27 +221,27 @@ async def main():
             except:
                 print("mic error")
 
-        # async with OpenBadge(ble_device) as open_badge:
-        #     try:
-        #         await mic_test(open_badge, 1)
-        #     except:
-        #         print("mic error")
-        #
-        # async with OpenBadge(ble_device) as open_badge:
-        #     try:
-        #         await scan_test(open_badge)
-        #     except:
-        #         print("scan error")
-        #
-        # async with OpenBadge(ble_device) as open_badge:
-        #     try:
-        #         await imu_test(open_badge)
-        #     except:
-        #         print("imu error")
-        #     try:
-        #         await erase_mem(open_badge)
-        #     except:
-        #         print("erase memory error")
+        async with OpenBadge(ble_device) as open_badge:
+            try:
+                await mic_test(open_badge, 1)
+            except:
+                print("mic error")
+
+        async with OpenBadge(ble_device) as open_badge:
+            try:
+                await scan_test(open_badge)
+            except:
+                print("scan error")
+
+        async with OpenBadge(ble_device) as open_badge:
+            try:
+                await imu_test(open_badge)
+            except:
+                print("imu error")
+            try:
+                await erase_mem(open_badge)
+            except:
+                print("erase memory error")
 
     except TimeoutError:
         print("failed to connect to device")

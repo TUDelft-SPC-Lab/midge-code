@@ -367,11 +367,11 @@ class OpenBadge(OpenBadgeMeta):
     @request_handler_marker(action_desc='sdc erase all')
     async def sdc_erase_all(self):
         request = bp.Request()
-        request.type.which = bp.Request_sdc_erase_all_request_tag
-        request.type.sdc_erase_all_request = bp.EraseAllRequest()
+        request.type.which = bp.Request_sdc_errase_all_request_tag
+        request.type.sdc_errase_all_request = bp.ErraseAllRequest()
 
         await self.request_response(request)
-        return self.deal_response(response_type=bp.Response_sdc_erase_all_response_tag).type.sdc_erase_all_response
+        return self.deal_response(response_type=bp.Response_sdc_errase_all_response_tag).type.sdc_errase_all_response
 
     @request_handler_marker(action_desc='identify')
     async def identify(self, duration_seconds=10) -> bool:
@@ -437,26 +437,3 @@ class OpenBadge(OpenBadgeMeta):
         print(" help")
         print(" All commands use current system time as transmitted time.")
         sys.stdout.flush()
-
-
-def display_current_time():
-    try:
-        while True:
-            # Get current time with millisecond accuracy
-            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-            # current_time = time.time()
-            print(f"\r{current_time}", end='')  # Use carriage return to overwrite the line
-            time.sleep(0.001)  # Sleep for 1 millisecond
-    except KeyboardInterrupt:
-        print("\nStopped.")
-
-
-def main():
-    display_current_time()
-#     c = 0
-#     # ntp_server_ip = "127.0.0.1"
-#     # get_ntp_time(ntp_server_ip)
-
-
-if __name__ == '__main__':
-    main()
