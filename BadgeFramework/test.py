@@ -214,18 +214,18 @@ async def main():
     try:
         print(" connected                         ")
         print("###################################")
-        # async with OpenBadge(ble_device) as open_badge:
-        #     print(" Midge test                        ")
-        #     try:
-        #         await mic_test(open_badge, 0)
-        #     except:
-        #         print("mic error")
-
         async with OpenBadge(ble_device) as open_badge:
+            print(" Midge test                        ")
             try:
-                await mic_test(open_badge, 1)
+                await mic_test(open_badge, 0)
             except:
                 print("mic error")
+
+        # async with OpenBadge(ble_device) as open_badge:
+        #     try:
+        #         await mic_test(open_badge, 1)
+        #     except:
+        #         print("mic error")
         #
         # async with OpenBadge(ble_device) as open_badge:
         #     try:

@@ -141,15 +141,17 @@ if __name__ == '__main__':
     # parse_folder(fn=args.fn)
 
     # 1587563550840_audio_2, 1587564263795_audio_2, 1587564858250_audio_2
-    old_path = Path("C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\"
-                    "dataset_collection\\sync-experiments\\artefacts\\av_data\\midge\\15\\1587564858250_audio_2")
+    stephanie_path = Path("C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\"
+                          "dataset_collection\\sync-experiments\\artefacts\\av_data\\midge\\15\\1587564858250_audio_2")
+    pilot1_path = Path("C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\"
+                       "dataset_collection\\sync-experiments\\artefacts\\av_data\\midge\\15\\1587564858250_audio_2")
     output_path = Path("C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\"
                        "dataset_collection\\tech_pilot_1\\audio_test")
 
     old_wav_path = Path("C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\"
                         "dataset_collection\\sync-experiments\\artefacts\\av_data\\midge\\15\\1587564858250.wav")
 
-    new_wav_path = output_path / (old_path.stem + "_py.wav")
+    new_wav_path = output_path / (pilot1_path.stem + "_py.wav")
 
-    parse_simple(old_path, new_wav_path)
-    compare_wav_files(old_wav_path, new_wav_path)
+    parse_simple(pilot1_path, new_wav_path)
+    # compare_wav_files(old_wav_path, new_wav_path)
