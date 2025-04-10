@@ -13,7 +13,7 @@ import asyncio
 
 async def mic_test(badge, mode):
     if (mode==0):
-        start_stereo = badge.start_microphone(t=None,mode=0) # start mic in stereo mode
+        start_stereo = await badge.start_microphone(t=None,mode=0) # start mic in stereo mode
         print(" sensor: mic, stereo mode            ")        
         # check if mic was started in stereo mode
         if (start_stereo.mode==0):
@@ -28,14 +28,14 @@ async def mic_test(badge, mode):
             else:
                 print(" mic gain:         FAIL            ")               
         else:
-			print(" mic mode:         FAIL             ")
+            print(" mic mode:         FAIL             ")
 
         time.sleep(10) # reecording time
 
         mic = await badge.get_status()
         # check if mic was enabled 
         if (mic.microphone_status):
-			print(" mic enabled:      PASS            ")
+            print(" mic enabled:      PASS            ")
         else:
             print(" mic enabled:      FAIL            ")
 
@@ -69,14 +69,14 @@ async def mic_test(badge, mode):
                 print(" mic gain:         FAIL            ")                
             
         else:
-			print(" mic mode:         FAIL            ")
+            print(" mic mode:         FAIL            ")
 
         time.sleep(10) # reecording time
 
         mic = await badge.get_status()
         # check if mic was enabled 
         if (mic.microphone_status):
-			print(" mic enabled:      PASS            ")
+            print(" mic enabled:      PASS            ")
         else:
             print(" mic enabled:      FAIL            ")
 
