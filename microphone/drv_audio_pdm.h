@@ -7,7 +7,7 @@
 #include "nrf_pdm.h"
 
 #define PDM_BUF_NUM 	2
-#define PDM_BUF_SIZE 	4096
+#define PDM_BUF_SIZE 	2048
 #define DECIMATION		16
 
 typedef struct {
