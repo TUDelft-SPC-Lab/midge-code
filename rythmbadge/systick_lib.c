@@ -122,7 +122,7 @@ int32_t systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_s
 		ticks_at_offset = ticks_since_start_at_sync;
 		millis_synced = 1;
 		NRF_LOG_INFO("SYSTICK: millis_synced: %d", millis_synced);
-		return;
+		return 0;
 	}
 	
 	

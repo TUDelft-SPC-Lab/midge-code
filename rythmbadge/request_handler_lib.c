@@ -608,8 +608,6 @@ static void status_request_handler(void * p_event_data, uint16_t event_size) {
 		
 		advertiser_set_badge_assignement(badge_assignement);
 	}
-	// Set the timestamp - the first time the new timestamped folder will be opened:
-	Timestamp timestamp = request_event.request.type.status_request.timestamp;
 	int32_t error_millis = systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
 	advertiser_set_status_flag_is_clock_synced(1);
 	
