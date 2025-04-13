@@ -108,6 +108,7 @@ typedef struct {
 	int8_t battery_level;
 	uint32_t pdm_data;
 	uint16_t scan_data;
+	int32_t time_delta;
 	Timestamp timestamp;
 } StatusResponse;
 
