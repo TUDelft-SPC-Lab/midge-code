@@ -11,6 +11,8 @@ $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.out: \
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.out: \
   LINKER_SCRIPT  := spcl.ld
 
+VERSION := $(shell hatch version)
+
 # Source files common to all targets
 SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52.S \
@@ -232,6 +234,7 @@ CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin -fshort-enums
 CFLAGS += -D__HEAP_SIZE=1024
 CFLAGS += -D__STACK_SIZE=4096
+CFLAGS += -DVERSION=\"$(VERSION)\"
 
 # Assembler flags common to all targets
 ASMFLAGS += -g3
