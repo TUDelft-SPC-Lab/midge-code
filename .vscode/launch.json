@@ -2,6 +2,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: test.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/BadgeFramework/test.py",
+            "console": "integratedTerminal",
+            "args": "de:94:80:39:25:be"
+        },
+        {
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
             "executable": "_build/nrf52832_xxaa_debug.out",
@@ -13,16 +21,20 @@
             "configFiles": [
                 "interface/cmsis-dap.cfg",
                 "target/nrf52.cfg"
-            ],   
-            "openOCDLaunchCommands": ["adapter speed 2000"],
+            ],
+            "openOCDLaunchCommands": [
+                "adapter speed 2000"
+            ],
             "interface": "swd",
             "armToolchainPath": "",
             "svdFile": "${workspaceRoot}/nrf52832.svd",
-            "preLaunchCommands":["set remotetimeout 60"],
+            "preLaunchCommands": [
+                "set remotetimeout 60"
+            ],
             "rttConfig": {
                 "enabled": true,
                 "address": "auto",
-                "clearSearch": false,   // OpenOCD users may have to un-comment this
+                "clearSearch": false, // OpenOCD users may have to un-comment this
                 "decoders": [
                     {
                         "port": 0,
