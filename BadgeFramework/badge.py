@@ -6,6 +6,7 @@ import struct
 import queue as Queue
 import utils
 from bleak import BleakClient, BLEDevice, BleakGATTCharacteristic
+from typing import Union
 
 CONNECTION_RETRY_TIMES = 15
 DEFAULT_SCAN_WINDOW = 250
@@ -52,7 +53,7 @@ def timestamps_to_time(timestamp_seconds, timestamp_miliseconds):
 #    The 'connection' should already be connected when it is used to initialize this class.
 # Implements methods that allow for interaction with that badge. 
 class OpenBadge(object):
-    def __init__(self, device: BLEDevice or int, mac_address: str = None):
+    def __init__(self, device: Union[BLEDevice, int], mac_address: str = None):
         # self.connection = connection
         self.status_response_queue = Queue.Queue()
         self.start_microphone_response_queue = Queue.Queue()

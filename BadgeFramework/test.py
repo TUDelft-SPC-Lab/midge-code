@@ -189,12 +189,12 @@ async def errase_mem(badge):
         print(" memory cleaned:   FAIL            ")
         print("###################################")
 
-    # def connect(self):
-    #     connection = BLEBadgeConnection.get_connection_to_badge(self.address)
-    #     connection.connect()
-    #     badge = OpenBadge(self.connection)
-    #     print("Connected!")
-    #     return badge
+    def connect(self):
+        connection = BLEBadgeConnection.get_connection_to_badge(self.address)
+        connection.connect()
+        badge = OpenBadge(self.connection)
+        print("Connected!")
+        return badge
 
 
 async def main():
