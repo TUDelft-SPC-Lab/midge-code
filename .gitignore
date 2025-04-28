@@ -6,10 +6,10 @@ __pycache/
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 .vscode/launch.json
-.vscode
+.vscode/
 **/.DS_Store
 BadgeFramework/rotation/rpi_sync.sh
-.idea
+.idea/
 *.log
 notes.txt
 **/matlab/local

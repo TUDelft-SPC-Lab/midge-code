@@ -10,6 +10,14 @@
             "args": "de:94:80:39:25:be"
         },
         {
+            "name": "Python: badge_gui.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/BadgeFramework/badge_gui.py",
+            "console": "integratedTerminal",
+            // "args": "de:94:80:39:25:be"
+        },
+        {
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
             "executable": "_build/nrf52832_xxaa_debug.out",
