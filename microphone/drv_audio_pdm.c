@@ -202,17 +202,20 @@ int16_t drv_audio_get_pdm_freq(void)
 	switch (local_freq) // Valid freqs
 	{
 	case 0x08000000: //1 MHz
-		freq = 100;
+		freq = 1000;
 		break;
 
 	case 0x08400000: //1.032 MHz
-		freq = 132;
+		freq = 1032;
 		break;	
 	case 0x08800000: //1.067 MHz
-		freq = 167;
+		freq = 1067;
+		break;			
+	case 0x0A000000: //1.280 MHz
+		freq = 1280;
 		break;			
 	default:
-		freq = 132;
+		freq = 0;
 		break;
 	}
 	return freq;
