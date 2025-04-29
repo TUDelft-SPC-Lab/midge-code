@@ -8,6 +8,9 @@ import csv
 from badge_interface import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import asyncio
+from asyncio import get_event_loop_policy
+from dataclasses import dataclass
 
 DEFAULT_RADIUS = 20
 GET_STATUS_MAIN = True
@@ -26,14 +29,23 @@ class Circle(Canvas):
         self.color = calculate_color(self.status)
         self.create_oval(0, 0, 2 * radius, 2 * radius, fill=self.color)  # Draw a circular shape
 
+    def update_status(self, new_status):
+        self.status = new_status
+        self.color = calculate_color(self.status)
+        self.create_oval(0, 0, 2 * self.radius, 2 * self.radius, fill=self.color)
+
 class CustomComponent(tk.Frame):
-    def __init__(self, parent, name, badge, address):
+    def __init__(self, parent, name, badge, address, gui_instance):
         tk.Frame.__init__(self, parent, pady=10) 
+        self.parent = parent
+        self.gui = gui_instance  # Store reference to main GUI
+        self.loop = self.gui.loop  # Get loop from GUI instance
         self.name = name
         self.badge = badge
         self.address = address
-        self.badge_status = badge.get_status()
-        self.free_space = badge.get_free_sdc_space().free_space
+        # Initialize with default values
+        self.badge_status = MockStatusResponse()  # Use the mock status as default
+        self.free_space = 0
         self.new_window = {}
         self.scan_info = {'window': '', 'interval': ''}
         self.mic_info = {'mode': '', 'gain_r': '', 'gain_l': '', 'switch_pos': '', 'pdm_freq': ''}
@@ -45,45 +57,50 @@ class CustomComponent(tk.Frame):
         self.badgeId.grid(row=0, column=0, padx=10, pady=5)
         self.midge = Label(self, text=self.address, font=tkinter.font.Font(size=12))
         self.midge.grid(row=1, column=0, padx=10, pady=5)
-        self.battery = Label(self, text='Battery: {}%'.format(self.badge_status.battery_level), relief="solid")
+        self.battery = Label(self, text='Battery: Connecting...', relief="solid")
         self.battery.grid(row=2, column=0, padx=10, pady=5)
 
         # Status
         self.statusLabel = Label(self, text="Status")
         self.statusLabel.grid(row=0, column=1, padx=10, pady=5)
-        self.statusCircle = Circle(self, status=self.badge_status.clock_status)
+        self.statusCircle = Circle(self, status=False)  # Start with inactive status
         self.statusCircle.grid(row=1, column=1, padx=10, pady=5)
 
         # IMU
         self.IMULabel = Label(self, text="IMU")
         self.IMULabel.grid(row=0, column=2, columnspan=2, padx=10, pady=5)
-        self.IMUCircle = Circle(self, status=self.badge_status.imu_status)
+        self.IMUCircle = Circle(self, status=False)  # Start inactive
         self.IMUCircle.grid(row=1, column=2, columnspan=2, padx=10, pady=5)
-        self.IMUStartButton = Button(self, text="Start", command=self.start_imu)
+        self.IMUStartButton = Button(self, text="Start", command=lambda: self.button_click_handler(self.start_imu))
         self.IMUStartButton.grid(row=2, column=2, padx=10, pady=5)
-        self.IMUStopButton = Button(self, text="Stop", command=self.stop_imu)
+        self.IMUStopButton = Button(self, text="Stop", command=lambda: self.button_click_handler(self.stop_imu))
         self.IMUStopButton.grid(row=2, column=3, padx=10, pady=5)
 
         # Mic
         self.MicLabel = Label(self, text="Microphones")
         self.MicLabel.grid(row=0, column=4, columnspan=2, padx=10, pady=5)
-        self.MicCircle = Circle(self, status=self.badge_status.microphone_status)
+        self.MicCircle = Circle(self, status=False)  # Start inactive
         self.MicCircle.grid(row=1, column=4, columnspan=2, padx=10, pady=5)
-        self.MicStartMonoButton = Button(self, text="Start mono", command=lambda: self.start_microphone(t=None, mode=1))
+        self.MicStartMonoButton = Button(self, text="Start mono", 
+            command=lambda: self.button_click_handler(self.start_microphone, None, 1))
         self.MicStartMonoButton.grid(row=2, column=4, padx=10, pady=5)
-        self.MicStartStereoButton = Button(self, text="Start stereo", command=lambda: self.start_microphone(t=None, mode=0))
+        self.MicStartStereoButton = Button(self, text="Start stereo", 
+            command=lambda: self.button_click_handler(self.start_microphone, None, 0))
         self.MicStartStereoButton.grid(row=2, column=5, padx=10, pady=5)
-        self.MicStopButton = Button(self, text="Stop", command=self.badge.stop_microphone)
+        self.MicStopButton = Button(self, text="Stop", 
+            command=lambda: self.button_click_handler(self.stop_microphone))
         self.MicStopButton.grid(row=3, column=4, columnspan=2, padx=10, pady=5, sticky="nsew")
 
         # Scan
         self.ScanLabel = Label(self, text="Scanner")
         self.ScanLabel.grid(row=0, column=6, columnspan=2, padx=10, pady=5)
-        self.ScanCircle = Circle(self, status=self.badge_status.scan_status)
+        self.ScanCircle = Circle(self, status=False)  # Start inactive
         self.ScanCircle.grid(row=1, column=6, columnspan=2, padx=10, pady=5)
-        self.ScanStartButton = Button(self, text="Start", command=self.start_scan)
+        self.ScanStartButton = Button(self, text="Start", 
+            command=lambda: self.button_click_handler(self.start_scan))
         self.ScanStartButton.grid(row=2, column=6, padx=10, pady=5)
-        self.ScanStopButton = Button(self, text="Stop", command=self.stop_scan)
+        self.ScanStopButton = Button(self, text="Stop", 
+            command=lambda: self.button_click_handler(self.stop_scan))
         self.ScanStopButton.grid(row=2, column=7, padx=10, pady=5)
 
         self.bind("<Button-1>", self.onMouseClick)  # Handle mouse click
@@ -93,24 +110,25 @@ class CustomComponent(tk.Frame):
         self.bind("<Leave>", lambda event: self.config(cursor=""))
 
     def onMouseClick(self, event):
+        pass
         # Handle mouse click event
-        self.new_window = NewWindow(self.badge, self.free_space, name=self.name, scan_info=self.scan_info, mic_info=self.mic_info)
-        self.new_window.mainloop()
+        # self.new_window = NewWindow(self.badge, self.free_space, name=self.name, scan_info=self.scan_info, mic_info=self.mic_info)
+        # self.new_window.mainloop()
 
-    def start_imu(self):
+    async def start_imu(self):
         if self.badge_status.imu_status == 0:
-            self.badge.start_imu()
+            await self.badge.start_imu()
         else:
             print("IMU already started")
     
-    def stop_imu(self):
-        self.badge.stop_imu()
+    async def stop_imu(self):
+        await self.badge.stop_imu()
     
-    def start_microphone(self, t, mode):
+    async def start_microphone(self, t, mode):
         if self.badge_status.microphone_status == 1:
             print("Microphone already started")
             return
-        start_mic_response = self.badge.start_microphone(mode)
+        start_mic_response = await self.badge.start_microphone(mode)
         
         if (start_mic_response.switch_pos == 2): switch_pos = "HIGH"
         elif (start_mic_response.switch_pos == 1): switch_pos = "LOW"
@@ -130,14 +148,14 @@ class CustomComponent(tk.Frame):
         except:
             pass
     
-    def stop_microphone(self):
-        self.badge.stop_microphone()
+    async def stop_microphone(self):
+        await self.badge.stop_microphone()
 
-    def start_scan(self):
+    async def start_scan(self):
         if self.badge_status.scan_status == 1:
             print("Scanner already started")
             return
-        start_scan_response = self.badge.start_scan()
+        start_scan_response = await self.badge.start_scan()
         self.scan_info = {'window': start_scan_response.window, 
                           'interval': start_scan_response.interval}
         try:
@@ -146,9 +164,48 @@ class CustomComponent(tk.Frame):
         except:
             pass
 
-    def stop_scan(self):
-        self.badge.stop_scan()
+    async def stop_scan(self):
+        await self.badge.stop_scan()
     
+    async def async_init(self):
+        try:
+            if self.badge:
+                self.badge_status = await self.badge.get_status()
+                self.free_space = (await self.badge.get_free_sdc_space()).free_space
+            else:
+                # Use mock data if no badge
+                self.badge_status = MockStatusResponse()
+                self.free_space = 0
+        except Exception as e:
+            print(f"Error in async_init: {e}")
+            # Keep using mock data on error
+            self.badge_status = MockStatusResponse()
+            self.free_space = 0
+        finally:
+            # Always update UI
+            self.update_ui_with_status()
+
+    def update_ui_with_status(self):
+        """Update all UI elements with actual values from badge_status"""
+        try:
+            self.battery.config(text='Battery: {}%'.format(self.badge_status.battery_level))
+            self.statusCircle.update_status(self.badge_status.clock_status)
+            self.IMUCircle.update_status(self.badge_status.imu_status)
+            self.MicCircle.update_status(self.badge_status.microphone_status)
+            self.ScanCircle.update_status(getattr(self.badge_status, 'scan_status', False))
+        except Exception as e:
+            print(f"Error updating UI: {e}")
+
+    def button_click_handler(self, async_func, *args):
+        """Wrapper to run async functions from button clicks"""
+        try:
+            if not self.badge:
+                print("No device connected")
+                return
+            self.loop.create_task(async_func(*args))
+        except Exception as e:
+            print(f"Error in button handler: {e}")
+
 class MatplolibFrame(tk.Frame):
     def __init__(self, parent, time, x, y, z):
         tk.Frame.__init__(self, parent, relief=tk.RIDGE)
@@ -399,21 +456,21 @@ class NewWindow(tk.Toplevel):
         self.MicConfig = MicConfig(right_top, data=self.mic_data.queue, info=self.mic_info)
         self.MicConfig.grid(row=4, column=2, columnspan=2, padx=10, pady=5)
 
-    def update_data(self):
+    async def update_data(self):
         self.time = self.time + 1
         try:
-            status = self.badge.get_status()
+            status = await self.badge.get_status()
             time.sleep(0.1)
-            imu_status = self.badge.get_imu_data()
+            imu_status = await self.badge.get_imu_data()
             time.sleep(0.1)
             if (status.microphone_status == 0 and status.scan_status == 0 and status.imu_status == 0):
                 self.battery.text="Available memory: {} MB".format(self.badge.get_free_sdc_space().free_space)
         except:
             print('Error with request')
             self.badge.connect()
-            status = self.badge.get_status()
+            status = await self.badge.get_status()
             time.sleep(0.1)
-            imu_status = self.badge.get_imu_data()
+            imu_status = await self.badge.get_imu_data()
             time.sleep(0.1)
             if (status.microphone_status == 0 and status.scan_status == 0 and status.imu_status == 0):
                 self.battery.text="Available memory: {} MB".format(self.badge.get_free_sdc_space().free_space)
@@ -441,15 +498,23 @@ class NewWindow(tk.Toplevel):
         self.IMUConfig.time.enqueue(self.time)
         self.IMUConfig.initUI()
         # update circles
-        self.MicCircle.create_oval(0, 0, 2 * 10, 2 * 10, fill=calculate_color(status.microphone_status))
-        self.IMUCircle.create_oval(0, 0, 2 * 10, 2 * 10, fill=calculate_color(status.imu_status))
-        self.ScanCircle.create_oval(0, 0, 2 * 10, 2 * 10, fill=calculate_color(status.scan_status))
+        self.MicCircle.update_status(status.microphone_status)
+        self.IMUCircle.update_status(status.imu_status)
+        self.ScanCircle.update_status(status.scan_status)
 
         self.after(5500, self.update_data)
 
+@dataclass
+class MockStatusResponse:
+    battery_level: int = 0
+    clock_status: bool = False
+    imu_status: bool = False
+    microphone_status: bool = False
+    scan_status: bool = False
+
 def get_badges():
     badges = []
-    with open('sample_mapping_file.csv', 'r') as f:
+    with open('BadgeFramework/mappings2.csv', 'r') as f:
         reader = csv.reader(f)
         next(reader)
         for row in reader:
@@ -468,33 +533,45 @@ class MainApp(tk.Tk):
         self.custom_components = []
         self.badges = get_badges()
 
+        # Set up asyncio loop
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        
         for badge in self.badges:
-            custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
+            custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'], gui_instance=self)
             custom_component.pack()
             # Draw a border between custom components
             border = tk.Frame(self.container_frame, bg="gray", height=1)
             border.pack(fill="x")
             self.custom_components.append(custom_component)
+            # self.loop.create_task(custom_component.async_init())
 
-        self.after(1000, self.update_data)
+        # Schedule asyncio loop to run regularly
+        self.after(100, self.run_asyncio_loop)
 
-    def update_data(self):
+    def run_asyncio_loop(self):
+        """Run a single iteration of the asyncio loop"""
+        self.loop.call_soon(self.loop.stop)
+        self.loop.run_forever()
+        self.after(100, self.run_asyncio_loop)
+
+    async def update_data(self):
         for badge, custom_component in zip(self.badges, self.custom_components):
             try:
-                badge_status = badge['badge'].get_status()
+                badge_status = await badge['badge'].get_status()
             except:
                 print('Error with request')
-                try:
-                    badge['badge'].connect()
-                except:
-                    badge['badge'].connect()
-                badge_status = badge['badge'].get_status()
+                # try:
+                #     badge['badge'].connect()
+                # except:
+                #     badge['badge'].connect()
+                # badge_status = badge['badge'].get_status()
             custom_component.badge_status = badge_status
             custom_component.battery['text'] = 'Battery: {}%'.format(badge_status.battery_level)
-            custom_component.statusCircle.create_oval(0, 0, 2 * DEFAULT_RADIUS, 2 * DEFAULT_RADIUS, fill=calculate_color(badge_status.clock_status))
-            custom_component.MicCircle.create_oval(0, 0, 2 * DEFAULT_RADIUS, 2 * DEFAULT_RADIUS, fill=calculate_color(badge_status.microphone_status))
-            custom_component.IMUCircle.create_oval(0, 0, 2 * DEFAULT_RADIUS, 2 * DEFAULT_RADIUS, fill=calculate_color(badge_status.imu_status))
-            custom_component.ScanCircle.create_oval(0, 0, 2 * DEFAULT_RADIUS, 2 * DEFAULT_RADIUS, fill=calculate_color(badge_status.scan_status))
+            custom_component.statusCircle.update_status(badge_status.clock_status)
+            custom_component.MicCircle.update_status(badge_status.microphone_status)
+            custom_component.IMUCircle.update_status(badge_status.imu_status)
+            custom_component.ScanCircle.update_status(badge_status.scan_status)
             if (badge_status.microphone_status == 0):
                 custom_component.MicStartMonoButton['state'] = 'normal'
                 custom_component.MicStartStereoButton['state'] = 'normal'
