@@ -110,9 +110,14 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 				} else {
 					// Subsequent buffers
 					// t_rec_i = t_release_i - (PDM_BUF_SIZE / effective_sampling_rate) * 1000
-					uint32_t base_sample_rate = 20000; // 20kHz
-					uint32_t effective_sampling_rate = drv_audio_get_mode() == 0 ? base_sample_rate/2 : base_sample_rate;
-					timestamp_buffer[l] = systick_get_millis() - (PDM_BUF_SIZE / effective_sampling_rate) * 1000;
+					const uint32_t base_sample_rate = 20000; // 20kHz
+					uint64_t current_time = systick_get_millis();
+					uint32_t buffer_duration = (PDM_BUF_SIZE / base_sample_rate) * 1000;
+					if (current_time >= buffer_duration) {
+						timestamp_buffer[l] = current_time - buffer_duration;
+					} else {
+						timestamp_buffer[l] = current_time;
+					}
 				}				
 				NRF_LOG_INFO("pdm buf %d", pdm_buf[l].mic_buf[0]);
 				process_audio_buffer(l);
