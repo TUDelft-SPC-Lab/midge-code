@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 import utils
 from badge import OpenBadge
-from bleak import BleakScanner
+from bleak import BleakScanner, BleakClient
 import asyncio
 
 
@@ -235,5 +235,31 @@ async def main():
             print("errase memory error")
 
 
+async def test_client():
+    for i in range(10):
+        try:
+            # Measure scanning time
+            scan_start = time.time()
+            device = await BleakScanner.find_device_by_address("de:94:80:39:25:be", timeout=10)
+            scan_time = time.time() - scan_start
+            
+            if device is None:
+                print("Device not found during scan")
+                continue
+                
+            # Measure connection time
+            print(f"Found device in {scan_time:.2f} seconds")
+            connect_start = time.time()
+            async with BleakClient(device, timeout=10) as client:
+                connect_time = time.time() - connect_start
+                print(f"Connected in {connect_time:.2f} seconds!")
+
+                # await client.start_notify(utils.RX_CHAR_UUID, callback=lambda sender, data: print(f"Received data: {data}"), timeout=10)
+        except Exception as e:
+            total_time = time.time() - scan_start
+            print(f"Error after {total_time:.2f} seconds: {str(e)}")
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    # asyncio.run(main())
+    asyncio.run(test_client())

@@ -52,7 +52,7 @@ class BadgeMonitorApp(tk.Tk):
         super().__init__()
 
         self.title("Badge Status Monitor")
-        self.badges = pd.read_csv('mappings2.csv')
+        self.badges = pd.read_csv('BadgeFramework/mappings2.csv')
 
         self.main_frame = ttk.Frame(self)
         self.main_frame.grid(row=0, column=0, sticky="nsew")  # Use grid for main_frame

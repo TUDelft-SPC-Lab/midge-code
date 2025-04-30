@@ -81,7 +81,7 @@ class OpenBadge(object):
                 await self.client.start_notify(utils.RX_CHAR_UUID, self.received_callback)
                 return self
             except Exception as e:
-                pass
+                print(e)
         raise TimeoutError(f'Failed to connect to device after {CONNECTION_RETRY_TIMES} attempts.')
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
