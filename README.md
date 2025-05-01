@@ -223,10 +223,28 @@ bit 3: imu
 
 ### Audio
 
-On "high" audio is stereo, 20kHz, 16bit per channel PCM.
-On "low" it is subsampled by a factor of 32, to 625Hz.
+Audio can be recorded in either stereo o mono. The files saved to the SD cards
+are raw audio files, 16 bit signed PCM. Name of the file indicates the 
+parameters used for recording with the general pattern looking like 
+`[0|1]MIC[HI|LO][audio recording #]`:
 
-It is only timestamped when the file is created (filename is seconds).
+- Name start:
+    - `0`: Stereo
+    - `1`: Mono
+
+- Text after `MIC`:
+    - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (~16KHz)
+    - `LO`: Audio recording where data is decimated to obtain a low-frequency only recording 
+
+> The base platform sample rate is obtained via the calculation: 
+`(PDM_CLK_SOURCE/PDM_CLK_DIVIDER)/PDM_TO_PCM_DIV`. In the current HW, 
+`PDM_CLK_SOURCE` is 32MHz, the `PDM_CLK_DIVIDER` param depends on the microphone
+configuration in firmware, and the `PDM_TO_PCM_DIV` value is 64. The values of
+interest can be found in the nRF5 SDK documentation for the nRF52832 for the 
+PDM peripheral. 
+
+> Decimation factor for low frequency audio is defined in firmware in the 
+`microphone` folder.
 
 ### IMU
 
