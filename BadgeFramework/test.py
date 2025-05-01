@@ -204,10 +204,16 @@ def main():
     connection = BLEBadgeConnection.get_connection_to_badge(device_addr)
     connection.connect()
     badge = OpenBadge(connection)
-    print(" connetced                         ")
-    print("###################################")
-    print(" Midge test                        ")
-
+    print(" connected                         ")
+    print("++++++++++++++++++++++++++++++++++++++++++++++++++")
+    try:
+        print("FW Version: " + badge.get_fw_version().version)
+    except:
+        print("Failed to retrieve FW version, aborting test")
+        exit()
+    print("++++++++++++++++++++++++++++++++++++++++++++++++++")
+    
+    print("=========== Midge test ============")
     try:
         mic_test(badge,0)
     except:
