@@ -245,8 +245,10 @@ For example:
 |---- Timestamp ----|----------  Data  -----------|---------- Padding ----------|
 ```
 
-Timestamp:
+Timestamp
+```
 2dd4 a69d 016d 0000   = 0000016da69d2dd4 = 1570458381780 milliseconds = 07/10/2019 2:26:780
+```
 
 The data is 4 bytes float per axis:
 ```
@@ -259,8 +261,10 @@ The data is 4 bytes float per axis:
  0000 bc48   = -1.0
  2000 3f83   = 0.5
 ```
-padding for data alignment, these bytes are ignored.
+padding for data alignment, these bytes are ignored
+```
 0000 000c 0000 ffce 0000 1064
+```
 
 The samples for the rotation are different, with 8 bytes for the timestamp, 16 bytes of data and 8 of padding.
 The data part represents a quaternion containing 4 floats. 
