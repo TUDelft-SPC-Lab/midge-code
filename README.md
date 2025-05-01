@@ -274,7 +274,7 @@ The first 8 bytes are the timestamp, the next 2 bytes are the ID, the next byte 
 
 16 bytes of data
 ```
- 2dd4 a69d 016d 0000 0000 3b40 0000 bc48
+ 2dd4 a69d 016d 0000 0000 3b40 0000 bc 48
 |---- Timestamp ----|-----  Data  ----|- Padding -|
 ```
 
