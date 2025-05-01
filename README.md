@@ -205,9 +205,9 @@ bit 3: imu
 
 ### Audio
 
-Audio can be recorded in either stereo o mono. The files saved to the SD cards
-are raw audio files, 16 bit signed PCM. Name of the file indicates the 
-parameters used for recording with the general pattern looking like 
+Audio can be recorded in either stereo o mono.
+The files saved to the SD cards are raw audio files, 16 bit signed PCM.
+The name of the file indicates the parameters used for recording with the general pattern looking like 
 `[0|1]MIC[HI|LO][audio recording #]`:
 
 - Name start:
@@ -218,44 +218,65 @@ parameters used for recording with the general pattern looking like
     - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (~16KHz)
     - `LO`: Audio recording where data is decimated to obtain a low-frequency only recording 
 
+To decode the audio files, use the `audio_parser_V0.py` script or decode in Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser_V0.py`.
+
 > The base platform sample rate is obtained via the calculation: 
 `(PDM_CLK_SOURCE/PDM_CLK_DIVIDER)/PDM_TO_PCM_DIV`. In the current HW, 
 `PDM_CLK_SOURCE` is 32MHz, the `PDM_CLK_DIVIDER` param depends on the microphone
 configuration in firmware, and the `PDM_TO_PCM_DIV` value is 64. The values of
 interest can be found in the nRF5 SDK documentation for the nRF52832 for the 
-PDM peripheral. 
+PDM peripheral.
 
 > Decimation factor for low frequency audio is defined in firmware in the 
 `microphone` folder.
 
+> The default values are for 20 kHz for high-frequency and 1.25 kHz for low-frequency.
+
 ### IMU
 
-Filename is again timestamped, but also each sample (32 bytes):
+The IMU data is stored in a binary file.
+The sensors record samples at 50Hz.
+Each sample is 32 bytes long.
+The first 8 bytes contain the timestamp, the next 12 the data and last 12 are padding.
 
-accelerometer, gyro, magnetometer sample example:
-2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
+For example:
+```
+ 2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
+|---- Timestamp ----|----------  Data  -----------|---------- Padding ----------|
+```
 
-First 8 bytes are the timestamp:
+Timestamp:
 2dd4 a69d 016d 0000   = 0000016da69d2dd4 = 1570458381780 milliseconds = 07/10/2019 2:26:780
 
-4 bytes float per axis:
-0000 3b40   0000 bc48   2000 3f83
+The data is 4 bytes float per axis:
+```
+ 0000 3b40   0000 bc48   2000 3f83
+|---- X ---|---- Y ----|--- Z ----|
+```
 
-padding for data alignment
+```
+ 0000 3b40   = 1.0
+ 0000 bc48   = -1.0
+ 2000 3f83   = 0.5
+```
+padding for data alignment, these bytes are ignored.
 0000 000c 0000 ffce 0000 1064
 
-Rotation vector:
-Timestamp is the same 8 bytes, then 4 floats per quaternion, 4 fewer bytes for padding.
+The samples for the rotation are different, with 8 bytes for the timestamp, 16 bytes of data and 8 of padding.
+The data part represents a quaternion containing 4 floats. 
 
 ### Scanner
 
-16 byte length
-Same 8 byte timestamp.
-2 bytes ID
-1 int8_t rssi (signed)
-1 byte group
-4 bytes padding
+The scanner data is also stored in a binary file.
+The sensor records samples at 1Hz.
+Each sample is 16 bytes long.
+The first 8 bytes are the timestamp, the next 2 bytes are the ID, the next byte is the RSSI, and the next byte is the group and the last 4 are for padding.
 
+16 bytes of data
+```
+ 2dd4 a69d 016d 0000 0000 3b40 0000 bc48
+|---- Timestamp ----|-----  Data  ----|- Padding -|
+```
 
 
 
