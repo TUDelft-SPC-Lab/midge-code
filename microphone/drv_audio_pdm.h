@@ -5,10 +5,15 @@
 #include <stdint.h>
 #include "sdk_errors.h"
 #include "nrf_pdm.h"
+#include <assert.h>
 
 #define PDM_BUF_NUM 	2
 #define PDM_BUF_SIZE 	2048
-#define DECIMATION		32
+#define DECIMATION		16 // 20KHz/16 = 1.250 KHz sample rate for LO position 
+
+static_assert((PDM_BUF_SIZE % DECIMATION == 0), "DECIMATION value not allowed,"\
+	" it must be a divisor of PDM_BUF_SIZE");
+
 
 typedef struct {
 	int16_t  mic_buf[PDM_BUF_SIZE];

@@ -19,7 +19,7 @@ def mic_test(badge, mode):
         # check if mic was started in stereo mode
         if (start_stereo.mode==0):
             print(" mic mode:         PASS            ")
-            if (start_stereo.pdm_freq == 1000 or start_stereo.pdm_freq == 1032 or start_stereo.pdm_freq == 1067):
+            if (start_stereo.pdm_freq == 1280):
                 print(" mic freq:         PASS            ")
             else:
                 print(" mic freq:         FAIL            ")
@@ -59,7 +59,7 @@ def mic_test(badge, mode):
 
         if (start_mono.mode==1):
             print(" mic mode:         PASS            ")
-            if (start_mono.pdm_freq == 1000 or start_mono.pdm_freq == 1032 or start_mono.pdm_freq == 1067):
+            if (start_mono.pdm_freq == 1280):
                 print(" mic freq:         PASS            ")
             else:
                 print(" mic freq:         FAIL            ")

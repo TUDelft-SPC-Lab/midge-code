@@ -235,6 +235,7 @@ CFLAGS += -fno-builtin -fshort-enums
 CFLAGS += -D__HEAP_SIZE=1024
 CFLAGS += -D__STACK_SIZE=4096
 CFLAGS += -DVERSION=\"$(VERSION)\"
+CFLAGS += -std=gnu23
 
 # Assembler flags common to all targets
 ASMFLAGS += -g3

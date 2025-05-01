@@ -1090,8 +1090,7 @@ class StartMicrophoneResponse:
 		self.switch_pos= struct.unpack('<b', istream.buf[6])[0]
 
 	def decode_pdm_freq(self, istream):
-		#print("decode_pdm_freq: ", istream.buf)
-		self.pdm_freq= struct.unpack('<B', istream.buf[7])[0]+900
+		self.pdm_freq= struct.unpack('<H', istream.buf[7:9])[0]
 
 
 class StartScanResponse:
