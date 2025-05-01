@@ -2,6 +2,34 @@
 
 ![The MINGLE MIDGE](https://raw.githubusercontent.com/TUDelft-SPC-Lab/spcl_midge_hardware/master/Media/v2.3.jpg)
 
+The Midge is a small, low-power wearable device designed to record audio, orientation, and proximity data.
+It features a Nordic nRF52832 microcontroller, Bluetooth connectivity, dual microphones, an IMU (Inertial Measurement Unit), and a microSD card slot for local data storage.
+
+The IMU combines an accelerometer, gyroscope, and magnetometer to accurately capture and process orientation data.
+Proximity is measured using a Bluetooth scanner capable of detecting nearby devices.
+Audio can be recorded in two modes: low-frequency (1.25 kHz) and high-frequency (20 kHz).
+The low-frequency mode is optimized for privacy-preserving applications; it does not capture intelligible speech but can detect the presence of vocal activity.
+
+This repository contains the firmware for the Midge.
+It also contains the python scripts that are used for controlling the midge, recording and processing the data.
+
+# Data recording workflow
+
+## Requirements
+1. Create a python2 virtual environment and activate it.
+2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn`.
+3. Install [Tkinter](https://wiki.python.org/moin/TkInter).
+
+## Recording data
+1. Turn the midges on
+2. Get their MAC address with the `scan_all.py` script
+3. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
+4. Stop recording
+5. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
+   plug it in the computer) 
+6. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
+
+# Firmware development
 ## Environment Setup:
 
 1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
@@ -26,11 +54,6 @@
       For example `GNU_INSTALL_ROOT ?= /home/user/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/`
     * Modify `~/nRF5_SDK_15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` macro be defined as `2`.
     * For ubuntu if the sdk complains about missing `libncursesw.so.5` install it with `sudo apt install libncursesw5`.  
-
-### Other requirements:
-
-- You will probably have to use `conda` for setting up a python2 env. In that
-  env, you will need to download the `bluepy` module
 
 ### Using Nix:
 This project includes a `flake.nix` file that automatically sets up the development environment with all required dependencies.
@@ -123,50 +146,9 @@ A barebones gdb server that can be executed via Makefile rules or using the VSco
 
 ### Using VSCode with Cortex-debug
 
-Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) and setup the `.vscode/launch.json`.
+Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) and use the `.vscode/launch.json` file in the repo.
 This should enable the "Run and Debug" functionality in VSCode (Left menu, green arrow to launch the application).
 In the C++ extension `ms-vscode.cpptools` set the configuration to `arm-none-eabi` to get include paths for the SDK recognised by intellisense.
-
-Example `launch.json` for using Cortex-Debug for flashing and debugging
-
-```JSON
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Cortex Debug",
-            "cwd": "${workspaceFolder}",
-            "executable": "_build/nrf52832_xxaa_debug.out",
-            "request": "launch",
-            "type": "cortex-debug",
-            "runToEntryPoint": "main",
-            "servertype": "openocd",
-            "device": "nrf52",
-            "configFiles": [
-                "interface/cmsis-dap.cfg",
-                "target/nrf52.cfg"
-            ],
-            "openOCDLaunchCommands": ["adapter speed 2000"],
-            "interface": "swd",
-            "armToolchainPath": "",
-            "svdFile": "${workspaceRoot}/nrf52832.svd",
-            "preLaunchCommands":["set remotetimeout 60"],
-            "rttConfig": {
-                "enabled": true,
-                "address": "auto",
-                "clearSearch": false,
-                "decoders": [
-                    {
-                        "port": 0,
-                        "type": "console"
-                    }
-                ]
-            }
-        }
-    ]
-}
-
-```
 
 ## Flashing the final binary
 
@@ -275,14 +257,6 @@ Same 8 byte timestamp.
 4 bytes padding
 
 
-# Data recording workflow
 
-1. Turn the midges on
-2. Get their MAC address with the `scan_all.py` script
-3. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
-4. Stop recording
-5. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
-   plug it in the computer) 
-6. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
 
 
