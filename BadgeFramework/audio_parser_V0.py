@@ -11,7 +11,7 @@ def main(fn):
         if (path_raw_input.is_file() and path_raw_input.suffix == "" and
             ("MICLO" in path_raw_input.stem or "MICHI" in path_raw_input.stem)):
 
-            print("Raw input file " + str(path_raw_input))
+            print(("Raw input file " + str(path_raw_input)))
 
             path_wav_output = path_raw_input.parent / (path_raw_input.stem + ".wav")
 

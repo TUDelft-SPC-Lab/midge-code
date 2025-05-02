@@ -52,14 +52,14 @@ class IMUParser(object):
                 data_bytes = byte[8 + i:16 + i]
                 if (len(data_bytes)) == 8 and (len(ts_bytes) == 8):
                     ts = struct.unpack('<Q', ts_bytes)
-                    print(struct.unpack('<B', data_bytes[0]))
-                    print(struct.unpack('<B', data_bytes[1]))
-                    print(struct.unpack('<B', data_bytes[2]))
-                    print(struct.unpack('<B', data_bytes[3]))
-                    print(struct.unpack('<B', data_bytes[4]))
-                    print(struct.unpack('<B', data_bytes[5]))
-                    print(struct.unpack('<B', data_bytes[6]))
-                    print(struct.unpack('<B', data_bytes[7]))
+                    print((struct.unpack('<B', data_bytes[0])))
+                    print((struct.unpack('<B', data_bytes[1])))
+                    print((struct.unpack('<B', data_bytes[2])))
+                    print((struct.unpack('<B', data_bytes[3])))
+                    print((struct.unpack('<B', data_bytes[4])))
+                    print((struct.unpack('<B', data_bytes[5])))
+                    print((struct.unpack('<B', data_bytes[6])))
+                    print((struct.unpack('<B', data_bytes[7])))
                     sensor_id = (struct.unpack('<B', data_bytes[5])[0] << 8) + (struct.unpack('<B', data_bytes[4])[0])
                     rssi = struct.unpack('<b', data_bytes[3])[0] #R
                     group = (struct.unpack('<B', data_bytes[7])[0])

@@ -33,7 +33,7 @@ def start_recording_all_devices(df):
         try:
             cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
-            print(str(error) + ', sensors are not started.')
+            print((str(error) + ', sensors are not started.'))
             continue
         try:
             cur_connection.set_id_at_start()
@@ -50,13 +50,13 @@ def stop_recording_all_devices(df):
         try:
             cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
-            print(str(error) + ', sensors are not stopped.')
+            print((str(error) + ', sensors are not stopped.'))
             continue
         try:
             cur_connection.stop_recording_all_sensors()
             cur_connection.disconnect()
         except Exception as error:
-            print(str(error))
+            print((str(error)))
             cur_connection.disconnect()
 
 def synchronise_and_check_all_devices(df):
@@ -66,19 +66,19 @@ def synchronise_and_check_all_devices(df):
         try:
             cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
-            print(str(error) + ', cannot synchronise.')
+            print((str(error) + ', cannot synchronise.'))
             sys.stdout.flush()
             continue
         try:
             out = cur_connection.handle_status_request()
             if out.imu_status == 0:
-                print ('IMU is not recording for participant ' + str(current_participant))
+                print(('IMU is not recording for participant ' + str(current_participant)))
             if out.microphone_status == 0:
-                print ('Mic is not recording for participant ' + str(current_participant))
+                print(('Mic is not recording for participant ' + str(current_participant)))
             if out.scan_status == 0:
-                print ('Scan is not recording for participant ' + str(current_participant))
+                print(('Scan is not recording for participant ' + str(current_participant)))
             if out.clock_status == 0:
-                print ('Cant synch for participant ' + str(current_participant))
+                print(('Cant synch for participant ' + str(current_participant)))
             sys.stdout.flush()
             cur_connection.disconnect()
         except Exception as error:
