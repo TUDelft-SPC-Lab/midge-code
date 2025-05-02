@@ -11,9 +11,39 @@
             "args": ["de:94:80:39:25:be"]
         },
         {
-            "name": "Cortex Debug",
+            "name": "Debug",
             "cwd": "${workspaceFolder}",
             "executable": "_build/nrf52832_xxaa_debug.out",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "servertype": "openocd",
+            "device": "nrf52",
+            "configFiles": [
+                "interface/cmsis-dap.cfg",
+                "target/nrf52.cfg"
+            ],   
+            "openOCDLaunchCommands": ["adapter speed 2000"],
+            "interface": "swd",
+            "armToolchainPath": "",
+            "svdFile": "${workspaceRoot}/nrf52832.svd",
+            "preLaunchCommands":["set remotetimeout 60"],
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "clearSearch": false,   // OpenOCD users may have to un-comment this
+                "decoders": [
+                    {
+                        "port": 0,
+                        "type": "console"
+                    }
+                ]
+            }
+        },
+        {
+            "name": "Release",
+            "cwd": "${workspaceFolder}",
+            "executable": "_build/nrf52832_xxaa_release.out",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",

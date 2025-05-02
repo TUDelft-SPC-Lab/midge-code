@@ -2,6 +2,34 @@
 
 ![The MINGLE MIDGE](https://raw.githubusercontent.com/TUDelft-SPC-Lab/spcl_midge_hardware/master/Media/v2.3.jpg)
 
+The Midge is a small, low-power wearable device designed to record audio, orientation, and proximity data.
+It features a Nordic nRF52832 microcontroller, Bluetooth connectivity, dual microphones, an IMU (Inertial Measurement Unit), and a microSD card slot for local data storage.
+
+The IMU combines an accelerometer, gyroscope, and magnetometer to accurately capture and process orientation data.
+Proximity is measured using a Bluetooth scanner capable of detecting nearby devices.
+Audio can be recorded in two modes: low-frequency (1.25 kHz) and high-frequency (20 kHz).
+The low-frequency mode is optimized for privacy-preserving applications; it does not capture intelligible speech but can detect the presence of vocal activity.
+
+This repository contains the firmware for the Midge.
+It also contains the python scripts that are used for controlling the midge, recording and processing the data.
+
+# Data recording workflow
+
+## Requirements
+1. Create a python2 virtual environment and activate it.
+2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn`.
+3. Install [Tkinter](https://wiki.python.org/moin/TkInter).
+
+## Recording data
+1. Turn the midges on
+2. Get their MAC address with the `scan_all.py` script
+3. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
+4. Stop recording
+5. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
+   plug it in the computer) 
+6. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
+
+# Firmware development
 ## Environment Setup:
 
 1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
@@ -27,10 +55,24 @@
     * Modify `~/nRF5_SDK_15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` macro be defined as `2`.
     * For ubuntu if the sdk complains about missing `libncursesw.so.5` install it with `sudo apt install libncursesw5`.  
 
-### Other requirements:
-
-- You will probably have to use `conda` for setting up a python2 env. In that
-  env, you will need to download the `bluepy` module
+### Using Nix:
+This project includes a `flake.nix` file that automatically sets up the development environment with all required dependencies.
+1. Install Nix package manager by following instructions at nixos.org
+2. Enable flakes by either:
+    * Adding `experimental-features = nix-command flakes` to your `~./config/nix/nix.conf`
+    * Or using the `-E` flash with each nix command
+3. Enter the development shell:
+    ```shell
+    nix develop
+    ```
+    This will setup an environment with:
+        * ARM GCC toolchain (gcc-arm-embedded-13)
+        * socat and picocom for debug logs
+        * Python with required packages
+        * C development tools
+4. Alternatively, you can use direnv to automatically enter the environment:
+    * Install direnv from direnv.net
+    * Run `direnv allow` in the project directory
 
 ## Board options
 
@@ -104,56 +146,32 @@ A barebones gdb server that can be executed via Makefile rules or using the VSco
 
 ### Using VSCode with Cortex-debug
 
-Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) and setup the `.vscode/launch.json`.
+Just download the [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug) and use the `.vscode/launch.json` file in the repo.
 This should enable the "Run and Debug" functionality in VSCode (Left menu, green arrow to launch the application).
 In the C++ extension `ms-vscode.cpptools` set the configuration to `arm-none-eabi` to get include paths for the SDK recognised by intellisense.
 
-Example `launch.json` for using Cortex-Debug for flashing and debugging
-
-```JSON
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Cortex Debug",
-            "cwd": "${workspaceFolder}",
-            "executable": "_build/nrf52832_xxaa_debug.out",
-            "request": "launch",
-            "type": "cortex-debug",
-            "runToEntryPoint": "main",
-            "servertype": "openocd",
-            "device": "nrf52",
-            "configFiles": [
-                "interface/cmsis-dap.cfg",
-                "target/nrf52.cfg"
-            ],
-            "openOCDLaunchCommands": ["adapter speed 2000"],
-            "interface": "swd",
-            "armToolchainPath": "",
-            "svdFile": "${workspaceRoot}/nrf52832.svd",
-            "preLaunchCommands":["set remotetimeout 60"],
-            "rttConfig": {
-                "enabled": true,
-                "address": "auto",
-                "clearSearch": false,
-                "decoders": [
-                    {
-                        "port": 0,
-                        "type": "console"
-                    }
-                ]
-            }
-        }
-    ]
-}
-
-```
-
 ## Flashing the final binary
 
-1. Build with `make nrf52832_xxaa_release`
-2. Start the openocd server with `make openocd`
-3. Flash the binary with `make flash_with_gdb`
+### About the BLE stack AKA softdevice 
+
+A softdevice is basically the stack used for controlling the different radios 
+in a nRF chip. It's a binary that must be flashed before other firmware. It can 
+be downloaded as a standalone binary, altough if you already had the nRF5 SDK 
+downloaded, it's probably already coupled with it. You should be able to find it
+at `$(SDK_ROOT)/components/softdevice/s132/hex/s132_nrf52_6.1.1_softdevice.hex`.
+The standalone files can be downloaded from
+<https://www.nordicsemi.com/Products/Development-software/S132/Download>
+
+### DAPLink
+
+1. Flash the softdevice (only required once): `make daplink_flash_softdevice`
+  - This by itself will call the `daplink_erase_flash` target which erases 
+    contents of code memory and config registers
+2. Build with `make nrf52832_xxaa_<release|debug>`
+3. Flash the binary with `make daplink_flash_<release|debug>`
+
+> Calling the `daplink_erase_flash` target is not a requirement to update 
+  firmware after the softdevice has been flashed
 
 ## Hardware
 
@@ -187,48 +205,83 @@ bit 3: imu
 
 ### Audio
 
-On "high" audio is stereo, 20kHz, 16bit per channel PCM.
-On "low" it is subsampled by a factor of 32, to 625Hz.
+Audio can be recorded in either stereo o mono.
+The files saved to the SD cards are raw audio files, 16 bit signed PCM.
+The name of the file indicates the parameters used for recording with the general pattern looking like 
+`[0|1]MIC[HI|LO][audio recording #]`:
 
-It is only timestamped when the file is created (filename is seconds).
+- Name start:
+    - `0`: Stereo
+    - `1`: Mono
+
+- Text after `MIC`:
+    - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (~16KHz)
+    - `LO`: Audio recording where data is decimated to obtain a low-frequency only recording 
+
+To decode the audio files, use the `audio_parser_V0.py` script or decode in Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser_V0.py`.
+
+> The base platform sample rate is obtained via the calculation: 
+`(PDM_CLK_SOURCE/PDM_CLK_DIVIDER)/PDM_TO_PCM_DIV`. In the current HW, 
+`PDM_CLK_SOURCE` is 32MHz, the `PDM_CLK_DIVIDER` param depends on the microphone
+configuration in firmware, and the `PDM_TO_PCM_DIV` value is 64. The values of
+interest can be found in the nRF5 SDK documentation for the nRF52832 for the 
+PDM peripheral.
+
+> Decimation factor for low frequency audio is defined in firmware in the 
+`microphone` folder.
+
+> The default values are for 20 kHz for high-frequency and 1.25 kHz for low-frequency.
 
 ### IMU
 
-Filename is again timestamped, but also each sample (32 bytes):
+The IMU data is stored in a binary file.
+The sensors record samples at 50Hz.
+Each sample is 32 bytes long.
+The first 8 bytes contain the timestamp, the next 12 the data and last 12 are padding.
 
-accelerometer, gyro, magnetometer sample example:
-2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
+For example:
+```
+ 2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
+|---- Timestamp ----|----------  Data  -----------|---------- Padding ----------|
+```
 
-First 8 bytes are the timestamp:
+Timestamp
+```
 2dd4 a69d 016d 0000   = 0000016da69d2dd4 = 1570458381780 milliseconds = 07/10/2019 2:26:780
+```
 
-4 bytes float per axis:
-0000 3b40   0000 bc48   2000 3f83
+The data is 4 bytes float per axis:
+```
+ 0000 3b40   0000 bc48   2000 3f83
+|---- X ---|---- Y ----|--- Z ----|
+```
 
-padding for data alignment
+```
+ 0000 3b40   = 1.0
+ 0000 bc48   = -1.0
+ 2000 3f83   = 0.5
+```
+padding for data alignment, these bytes are ignored
+```
 0000 000c 0000 ffce 0000 1064
+```
 
-Rotation vector:
-Timestamp is the same 8 bytes, then 4 floats per quaternion, 4 fewer bytes for padding.
+The samples for the rotation are different, with 8 bytes for the timestamp, 16 bytes of data and 8 of padding.
+The data part represents a quaternion containing 4 floats. 
 
 ### Scanner
 
-16 byte length
-Same 8 byte timestamp.
-2 bytes ID
-1 int8_t rssi (signed)
-1 byte group
-4 bytes padding
+The scanner data is also stored in a binary file.
+The sensor records samples at 1Hz.
+Each sample is 16 bytes long.
+The first 8 bytes are the timestamp, the next 2 bytes are the ID, the next byte is the RSSI, and the next byte is the group and the last 4 are for padding.
+
+16 bytes of data
+```
+ 2dd4 a69d 016d 0000 0000 3b40 0000 bc 48
+|---- Timestamp ----|-----  Data  ----|- Padding -|
+```
 
 
-# Data recording workflow
-
-1. Turn the midges on
-2. Get their MAC address with the `scan_all.py` script
-3. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
-4. Stop recording
-5. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
-   plug it in the computer) 
-6. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
 
 

@@ -2,8 +2,20 @@ import numpy as np
 from scipy.io.wavfile import write
 from pathlib import Path
 
-HIGH_SAMPLE_RATE = 8000
-LOW_SAMPLE_RATE = 1250
+PDM_CRYSTAL_CLK = 32e6 # Frequency that feeds the PDM clock generator
+PDM_TO_PCM_DIV = 64 # https://docs.nordicsemi.com/bundle/ps_nrf52832/page/pdm.html#d931e120
+
+#PDM clock variants taken from https://docs.nordicsemi.com/bundle/ps_nrf52832/page/pdm.html#d931e3773
+#PDM_CLK_DIV = 30 # (1.067 MHz CLK variant)
+#PDM_CLK_DIV = 31 # (1.032 MHz CLK variant)
+#PDM_CLK_DIV = 32 # (1 MHz CLK variant)
+PDM_CLK_DIV = 25 # (1.280 MHz CLK variant)
+
+HIGH_SAMPLE_RATE = int((PDM_CRYSTAL_CLK / PDM_CLK_DIV) / PDM_TO_PCM_DIV)
+
+# In LOW mode the midge will store one sample per DECIMATION samples
+DECIMATION = 16
+LOW_SAMPLE_RATE = int(HIGH_SAMPLE_RATE/DECIMATION)
 
 def main(fn):
     data_folder = Path(fn)
@@ -15,12 +27,11 @@ def main(fn):
 
             path_wav_output = path_raw_input.parent / (path_raw_input.stem + ".wav")
 
+            buffer_dtype = np.int16 # 16-bit PCM
             if path_raw_input.stem[4:6] == "LO":
                 sample_rate = LOW_SAMPLE_RATE  # Low frequency sampling
-                buffer_dtype = np.int16 # 16-bit PCM
             elif path_raw_input.stem[4:6] == "HI":
                 sample_rate = HIGH_SAMPLE_RATE  # High frequency sampling
-                buffer_dtype = np.int32 # 32-bit PCM
             else:
                 raise RuntimeError("Unknown number of channels")
 

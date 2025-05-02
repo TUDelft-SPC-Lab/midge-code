@@ -15,6 +15,7 @@
 #define Request_free_sdc_space_request_tag 30
 #define Request_sdc_errase_all_request_tag 31
 #define Request_get_imu_data_request_tag 33
+#define Request_get_fw_version_request_tag 35
 
 #define Response_status_response_tag 1
 #define Response_start_microphone_response_tag 2
@@ -23,6 +24,7 @@
 #define Response_free_sdc_space_response_tag 5
 #define Response_sdc_errase_all_response_tag 32
 #define Response_get_imu_data_response_tag 34
+#define Response_get_fw_version_response_tag 36
 
 typedef struct __attribute__((__packed__)) {
 	uint32_t seconds;
@@ -83,6 +85,10 @@ typedef struct {
 typedef struct {
 } GetIMUDataRequest;
 
+typedef struct{
+} GetFWVersionRequest; 
+
+
 typedef struct __attribute__((__packed__)) {
 	uint8_t which_type;
 	union {
@@ -97,6 +103,7 @@ typedef struct __attribute__((__packed__)) {
 		RestartRequest restart_request;
 		ErraseAllRequest sdc_errase_all_request;
 		GetIMUDataRequest get_imu_data_request;
+		GetFWVersionRequest get_fw_version_request;
 	} type;
 } Request;
 
@@ -117,7 +124,7 @@ typedef struct {
 	int8_t gain_l;
 	int8_t gain_r;
 	int8_t switch_pos; //0: OFF, 1: LOW, 2: HIGH
-	int16_t pdm_freq; //137 = 1037
+	uint16_t pdm_freq; // KHz
 } StartMicrophoneResponse;
 
 typedef struct {
@@ -161,6 +168,11 @@ typedef struct {
 	Timestamp timestamp;
 } GetIMUDataResponse;
 
+#define VERSION_STR_SZ 32
+typedef struct{
+	char version[VERSION_STR_SZ];
+} GetFWVersionResponse; 
+
 //typedef struct __attribute__((__packed__)) {
 typedef struct {
 	uint8_t which_type;
@@ -172,7 +184,9 @@ typedef struct {
 		FreeSDCSpaceResponse free_sdc_space_response;
 		ErraseAllResponse sdc_errase_all_response;
 		GetIMUDataResponse get_imu_data_response;
+		GetFWVersionResponse get_fw_version_response;
 	} type;
 } Response;
+
 
 #endif

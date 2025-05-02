@@ -12,6 +12,7 @@ Request_restart_request_tag = 29
 Request_free_sdc_space_request_tag = 30
 Request_sdc_errase_all_request_tag = 31
 Request_get_imu_data_request_tag = 33
+Request_get_fw_version_request_tag = 35
 
 Response_status_response_tag = 1
 Response_start_microphone_response_tag = 2
@@ -20,6 +21,7 @@ Response_start_imu_response_tag = 4
 Response_free_sdc_space_response_tag = 5
 Response_sdc_errase_all_response_tag = 32
 Response_get_imu_data_response_tag = 34
+Response_get_fw_version_response_tag = 36
 
 class _Ostream:
 	def __init__(self):
@@ -674,6 +676,36 @@ class GetIMUDataRequest:
 		self.reset()
 		pass		
 
+class GetFWVersionRequest:
+
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		pass
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		pass
+
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		pass	
+
 class Request:
 
 	def __init__(self):
@@ -729,6 +761,7 @@ class Request:
 			self.free_sdc_space_request = None
 			self.sdc_errase_all_request = None
 			self.get_imu_data_request = None
+			self.get_fw_version_request = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -746,6 +779,7 @@ class Request:
 				30: self.encode_free_sdc_space_request,
 				31: self.encode_sdc_errase_all_request,
 				33: self.encode_get_imu_data_request,
+				35: self.encode_get_fw_version_request,
 			}
 			options[self.which](ostream)
 			pass
@@ -786,6 +820,9 @@ class Request:
 		def encode_get_imu_data_request(self, ostream):
 			self.get_imu_data_request.encode_internal(ostream)
 
+		def encode_get_fw_version_request(self, ostream):
+			self.get_fw_version_request.encode_internal(ostream)
+
 		def decode_internal(self, istream):
 			self.reset()
 			self.which= struct.unpack('<B', istream.read(1))[0]
@@ -802,6 +839,7 @@ class Request:
 				30: self.decode_free_sdc_space_request,
 				31: self.decode_sdc_errase_all_request,
 				33: self.decode_get_imu_data_request,
+				35: self.decode_get_fw_version_request,
 			}
 			options[self.which](istream)
 			pass
@@ -853,6 +891,10 @@ class Request:
 		def decode_get_imu_data_request(self, istream):
 			self.get_imu_data_request = ErraseAllRequest()
 			self.get_imu_data_request.decode_internal(istream)	
+		
+		def decode_get_fw_version_request(self, istream):
+			self.get_fw_version_request = ErraseAllRequest()
+			self.get_fw_version_request.decode_internal(istream)	
 
 
 class StatusResponse:
@@ -1048,8 +1090,7 @@ class StartMicrophoneResponse:
 		self.switch_pos= struct.unpack('<b', istream.buf[6:7])[0]
 
 	def decode_pdm_freq(self, istream):
-		#print("decode_pdm_freq: ", istream.buf)
-		self.pdm_freq= struct.unpack('<B', istream.buf[7:8])[0]+900
+		self.pdm_freq= struct.unpack('<H', istream.buf[7:9])[0]
 
 
 class StartScanResponse:
@@ -1446,7 +1487,44 @@ class GetIMUDataResponse:
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)	
 
+class GetFWVersionResponse:
 
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.version = None
+		pass
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		self.encode_version(ostream)
+		pass
+
+	def encode_fw_version(self, ostream):
+		ostream.write(struct.pack('<s', self.version))
+
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_fw_version(istream)
+		pass
+
+	def decode_fw_version(self, istream):
+		self.version = str(istream.buf[3:+32])
 
 class Response:
 
@@ -1498,6 +1576,7 @@ class Response:
 			self.free_sdc_space_response = None
 			self.sdc_errase_all_response = None
 			self.get_imu_data_response = None
+			self.get_fw_version_response = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -1510,6 +1589,7 @@ class Response:
 				5: self.encode_free_sdc_space_response,
 				32: self.encode_sdc_errase_all_response,
 				34: self.encode_get_imu_data_response,
+				36: self.encode_get_fw_version_response,
 			}
 			options[self.which](ostream)
 			pass
@@ -1535,6 +1615,9 @@ class Response:
 		def encode_get_imu_data(self, ostream):
 			self.get_imu_data.encode_internal(ostream)	
 
+		def encode_get_fw_version(self, ostream):
+			self.get_fw_version.encode_internal(ostream)	
+
 		def decode_internal(self, istream):
 			self.reset()
 			self.which= struct.unpack('<B', istream.read(1))[0]
@@ -1546,6 +1629,7 @@ class Response:
 				5: self.decode_free_sdc_space_response,
 				32: self.decode_sdc_errase_all_response,
 				34: self.decode_get_imu_data_response,
+				36: self.decode_get_fw_version_response,
 			}
 			options[self.which](istream)
 			pass
@@ -1577,3 +1661,7 @@ class Response:
 		def decode_get_imu_data_response(self, istream):
 			self.get_imu_data_response = GetIMUDataResponse()
 			self.get_imu_data_response.decode_internal(istream)			
+		
+		def decode_get_fw_version_response(self, istream):
+			self.get_fw_version_response = GetFWVersionResponse()
+			self.get_fw_version_response.decode_internal(istream)			
