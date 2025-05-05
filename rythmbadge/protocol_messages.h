@@ -101,6 +101,7 @@ typedef struct __attribute__((__packed__)) {
 		StopImuRequest stop_imu_request;
 		IdentifyRequest identify_request;
 		RestartRequest restart_request;
+		FreeSDCSpaceRequest free_sdc_space_request;
 		ErraseAllRequest sdc_errase_all_request;
 		GetIMUDataRequest get_imu_data_request;
 		GetFWVersionRequest get_fw_version_request;

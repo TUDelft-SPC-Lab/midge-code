@@ -356,7 +356,7 @@ static void process_receive_notification(void * p_event_data, uint16_t event_siz
 	request_event.request_timepoint_ticks = timepoint_ticks;
 
 	
-//	NRF_LOG_INFO("REQUEST_HANDLER: Which request type: %u, Ticks: %u\n", request_event.request.which_type, request_event.request_timepoint_ticks);
+	NRF_LOG_INFO("REQUEST_HANDLER: Which request type: %u, Ticks: %u\n", request_event.request.which_type, request_event.request_timepoint_ticks);
 
 	request_handler_t request_handler = NULL;
 	for(uint8_t i = 0; i < sizeof(request_handlers)/sizeof(request_handler_for_type_t); i++)
@@ -402,7 +402,7 @@ static void send_response(void * p_event_data, uint16_t event_size) {
 	notserialized_buf[0] = (uint8_t)(((uint16_t) len) & 0xFF);
 	ret = sender_transmit(notserialized_buf, len+2, TRANSMIT_DATA_TIMEOUT_MS);
 	
-//	NRF_LOG_INFO("REQUEST_HANDLER: Transmit status %u!\n", ret);
+	NRF_LOG_INFO("REQUEST_HANDLER: Transmit status %u!\n", ret);
 
 	if(ret == NRF_SUCCESS) {
 		
@@ -436,10 +436,13 @@ static void status_response_handler(void * p_event_data, uint16_t event_size)
 		return;
 
 	response_event.response.which_type = Response_status_response_tag;
-	response_event.response.type.status_response.clock_status = response_clock_status;
-	response_event.response.type.status_response.microphone_status = (sampling_get_sampling_configuration() & SAMPLING_MICROPHONE) ? 1 : 0;
-	response_event.response.type.status_response.scan_status = (sampling_get_sampling_configuration() & SAMPLING_SCAN) ? 1 : 0;
-	response_event.response.type.status_response.imu_status = (sampling_get_sampling_configuration() & SAMPLING_IMU) ? 1 : 0;
+	response_event.response.type.status_response.clock_status = advertiser_get_status_flag_is_clock_synced();
+	response_event.response.type.status_response.microphone_status = advertiser_get_status_flag_microphone_enabled();
+	response_event.response.type.status_response.scan_status = advertiser_get_status_flag_scan_enabled();
+	response_event.response.type.status_response.imu_status = advertiser_get_status_flag_imu_enabled();
+	response_event.response.type.status_response.battery_level = get_battery_level();
+	response_event.response.type.status_response.pdm_data = pdm_buf[0].mic_buf[0];
+	response_event.response.type.status_response.scan_data = ble_get_scan_rssi();
 	response_event.response.type.status_response.timestamp = response_timestamp;
 
 	response_event.response_retries = 0;
