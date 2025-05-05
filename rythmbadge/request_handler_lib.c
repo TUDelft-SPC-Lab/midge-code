@@ -230,7 +230,7 @@ static ret_code_t receive_notification_fifo_peek(receive_notification_t* receive
 	}
 	
 	uint8_t tmp[notification_size];
-	memset(tmp, 0, notification_size * sizeof(uint8_t));
+	memset(tmp, 0, sizeof(tmp));
 	for(uint32_t i = 0; i < notification_size; i++) {
 		app_fifo_peek(&receive_notification_fifo, i + index*notification_size, &(tmp[i]));
 	}

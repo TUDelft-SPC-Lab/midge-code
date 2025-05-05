@@ -105,7 +105,7 @@ ret_code_t sampling_start_microphone(nrf_pdm_mode_t mode)
 	if (audio_switch_get_position()==OFF)
 		return ret;
 
-	memset(timestamp_buffer, 0, sizeof timestamp_buffer);
+	memset(timestamp_buffer, 0, sizeof(timestamp_buffer));
 	uint64_t initial_recording_timestamp = systick_get_millis();
 
 	ret = drv_audio_init(mode, initial_recording_timestamp);
