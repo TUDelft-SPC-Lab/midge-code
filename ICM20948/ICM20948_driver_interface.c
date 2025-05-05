@@ -32,7 +32,7 @@ uint8_t local_datarate = 0;
 
 
 //const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "accel_raw", "gyr", "gyr_raw", "mag", "mag_raw", "rotation", "game_rotation", "geom_rotation"};
-const char *imu_sensor_name[MAX_IMU_SOURCES] = {"accel", "gyr", "mag", "rotation"};
+const char *imu_sensor_name[MAX_IMU_SOURCES] = {"acc", "gyr", "mag", "rot"};
 
 static const float cfg_mounting_matrix[9]= {
 	1.f, 0, 0,
