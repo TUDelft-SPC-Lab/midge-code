@@ -468,6 +468,16 @@ class MainApp(tk.Tk):
         self.custom_components = []
         self.badges = get_badges()
 
+        # Add buttons to start and stop all midges
+        self.control_frame = tk.Frame(self)
+        self.control_frame.pack(fill="x", pady=10)
+
+        self.start_all_button = Button(self.control_frame, text="Start All", command=self.start_all_midges)
+        self.start_all_button.pack(side="left", padx=10)
+
+        self.stop_all_button = Button(self.control_frame, text="Stop All", command=self.stop_all_midges)
+        self.stop_all_button.pack(side="left", padx=10)
+
         for badge in self.badges:
             custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
             custom_component.pack()
@@ -477,6 +487,24 @@ class MainApp(tk.Tk):
             self.custom_components.append(custom_component)
 
         self.after(1000, self.update_data)
+
+    def start_all_midges(self):
+        for badge in self.badges:
+            try:
+                badge['badge'].start_imu()
+                badge['badge'].start_microphone(mode=1)  # Start microphone in mono mode
+                badge['badge'].start_scan()
+            except Exception as e:
+                print(f"Error starting badge {badge['name']}: {e}")
+
+    def stop_all_midges(self):
+        for badge in self.badges:
+            try:
+                badge['badge'].stop_imu()
+                badge['badge'].stop_microphone()
+                badge['badge'].stop_scan()
+            except Exception as e:
+                print(f"Error stopping badge {badge['name']}: {e}")
 
     def update_data(self):
         for badge, custom_component in zip(self.badges, self.custom_components):
