@@ -96,8 +96,8 @@ class BLEBadgeConnection(BadgeConnection):
 	def received(self,data):
 		logger.debug("Recieved {}".format(codecs.encode(data, "hex_codec")))
 
-		for b in data:
-			self.rx_queue.put(b)
+		for i in range(len(data)):
+			self.rx_queue.put(data[i:i+1])
 
 
 	# Implements BadgeConnection's connect() spec.
@@ -154,7 +154,7 @@ class BLEBadgeConnection(BadgeConnection):
 		if rx_bytes_expected > 0:
 			while True:
 				while(not self.rx_queue.empty()):
-					rx_message += self.rx_queue.get()
+					rx_message += str(self.rx_queue.get())
 					if(len(rx_message) == rx_bytes_expected):
 						return rx_message
 
