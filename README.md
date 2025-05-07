@@ -17,17 +17,19 @@ It also contains the python scripts that are used for controlling the midge, rec
 
 ## Requirements
 1. Create a python2 virtual environment and activate it.
-2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn`.
+2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn hatch hatch-vcs`.
 3. Install [Tkinter](https://wiki.python.org/moin/TkInter).
 
 ## Recording data
 1. Turn the midges on
-2. Get their MAC address with the `scan_all.py` script
-3. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
-4. Stop recording
-5. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
+2. Get their MAC address with either of these options
+    * With the `scan_all.py` script
+    * Running `bluetoothctl devices | grep HDBDG`on a linux terminal
+4. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
+5. Stop recording
+6. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
    plug it in the computer) 
-6. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
+7. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
 
 # Firmware development
 ## Environment Setup:
@@ -35,7 +37,7 @@ It also contains the python scripts that are used for controlling the midge, rec
 1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
     * To avoid issues it is recommended to have matching `gcc` and `gdb` versions from the toolchain
     * The `gdb-multiarch` package in ubuntu is know to cause debug errors when used with the `arm-none-eabi`'s `gcc`.
-    * Version 13.3 is known to work well
+    * Version 14.1 is known to work well
 2. Install the openocd debugger 
     * For ubuntu `sudo apt install openocd`
     * For a different OS: <https://openocd.org/>
