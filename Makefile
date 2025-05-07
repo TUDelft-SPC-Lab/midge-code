@@ -208,8 +208,8 @@ OPT_DEBUG = -O0 -g3 -Werror #-Os
 # Uncomment the line below to enable link time optimization
 #OPT_DEBUG += -flto
 
-# Optimization flags for the release build
-OPT_RELEASE = -O3 -DNDEBUG
+# Optimization flags for the release build, O2 and O3 cause crashes
+OPT_RELEASE = -O1 -DNDEBUG
 
 # C flags common to all targets
 #CFLAGS += -DDEBUG #removed to allow the error handler to reset the MCU
