@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Python test.py",
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/BadgeFramework",
             "request": "launch",
             "type": "debugpy",
             "program": "${workspaceFolder}/BadgeFramework/test.py",
