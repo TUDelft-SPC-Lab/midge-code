@@ -17,7 +17,7 @@ It also contains the python scripts that are used for controlling the midge, rec
 
 ## Requirements
 1. Create a python2 virtual environment and activate it.
-2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn`.
+2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn hatch hatch-vcs`.
 3. Install [Tkinter](https://wiki.python.org/moin/TkInter).
 
 ## Recording data
@@ -37,7 +37,7 @@ It also contains the python scripts that are used for controlling the midge, rec
 1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
     * To avoid issues it is recommended to have matching `gcc` and `gdb` versions from the toolchain
     * The `gdb-multiarch` package in ubuntu is know to cause debug errors when used with the `arm-none-eabi`'s `gcc`.
-    * Version 13.3 is known to work well
+    * Version 14.1 is known to work well
 2. Install the openocd debugger 
     * For ubuntu `sudo apt install openocd`
     * For a different OS: <https://openocd.org/>
