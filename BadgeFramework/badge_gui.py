@@ -495,7 +495,6 @@ class MainApp(tk.Tk):
             border.pack(fill="x")
             self.custom_components.append(custom_component)
 
-
         separator = tk.Frame(self.container_frame, height=2, bg="black")
         separator.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
 
