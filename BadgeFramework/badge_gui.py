@@ -100,17 +100,22 @@ class CustomComponent(tk.Frame):
         self.new_window.mainloop()
 
     def start_imu(self):
-        if self.badge_status.imu_status == 0:
-            self.badge.start_imu()
-        else:
-            print("IMU already started")
+        if self.badge_status.imu_status == 1:
+            print("Badge {}, IMU already started".format(self.name))
+            return
+    
+        self.badge.start_imu()
     
     def stop_imu(self):
+        if self.badge_status.imu_status == 0:
+            print("Badge {}, IMU already stopped".format(self.name))
+            return
+        
         self.badge.stop_imu()
     
     def start_microphone(self, t, mode):
         if self.badge_status.microphone_status == 1:
-            print("Microphone already started")
+            print("Badge {}, Microphone already started".format(self.name))
             return
         start_mic_response = self.badge.start_microphone(mode)
         
@@ -133,11 +138,15 @@ class CustomComponent(tk.Frame):
             pass
     
     def stop_microphone(self):
+        if self.badge_status.microphone_status == 0:
+            print("Badge {}, Microphone already stopped".format(self.name))
+            return
+        
         self.badge.stop_microphone()
 
     def start_scan(self):
         if self.badge_status.scan_status == 1:
-            print("Scanner already started")
+            print("Badge {}, Scanner already started".format(self.name))
             return
         start_scan_response = self.badge.start_scan()
         self.scan_info = {'window': start_scan_response.window, 
@@ -149,6 +158,10 @@ class CustomComponent(tk.Frame):
             pass
 
     def stop_scan(self):
+        if self.badge_status.scan_status == 0:
+            print("Badge {}, Scanner already stopped".format(self.name))
+            return
+        
         self.badge.stop_scan()
     
 class MatplolibFrame(tk.Frame):
@@ -411,7 +424,7 @@ class NewWindow(tk.Toplevel):
             if (status.microphone_status == 0 and status.scan_status == 0 and status.imu_status == 0):
                 self.battery.text="Available memory: {} MB".format(self.badge.get_free_sdc_space().free_space)
         except:
-            print('Error with request')
+            print('Badge {}, Error with request'.format(self.name))
             self.badge.connect()
             status = self.badge.get_status()
             time.sleep(0.1)
@@ -463,12 +476,15 @@ def get_badges():
 class MainApp(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.title("Lista de dispositivos")
+        self.title("Badge controller")
         self.geometry("1100x700")
         self.container_frame = ttk.Frame(self)
         self.container_frame.pack(expand=True, fill="both")
         self.custom_components = []
         self.badges = get_badges()
+
+        self.control_frame = tk.Frame(self)
+        self.control_frame.pack(fill="x", pady=10)
 
         for badge in self.badges:
             custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
@@ -478,14 +494,68 @@ class MainApp(tk.Tk):
             border.pack(fill="x")
             self.custom_components.append(custom_component)
 
+        # Add buttons to start and stop all midges
+        separator = tk.Frame(self.container_frame, height=2, bg="black")
+        separator.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
+
+        self.all_label = Label(self.control_frame, text="All badges: ", font=tkFont.Font(size=12))
+        self.all_label.pack(side="left", padx=(15, 0))
+
+        self.start_all_button = Button(self.control_frame, text="Start", command=self.start_all_midges)
+        self.start_all_button.pack(side="left", padx=10)
+
+        self.stop_all_button = Button(self.control_frame, text="Stop", command=self.stop_all_midges)
+        self.stop_all_button.pack(side="left", padx=10)
+
+        self.all_sensors_label = Label(self.control_frame, text="Sensors: ", font=tkFont.Font(size=12))
+        self.all_sensors_label.pack(side="left", padx=(15, 0))
+
+        self.imu_checkbox_var = tk.IntVar(value=1)
+        self.imu_checkbox = tk.Checkbutton(self.control_frame, text="IMU", variable=self.imu_checkbox_var)
+        self.imu_checkbox.pack(side="left", padx=5)
+
+        self.microphone_checkbox_var = tk.StringVar(value="stereo")
+        self.microphone_checkbox = tk.OptionMenu(self.control_frame, self.microphone_checkbox_var , "off", "mono", "stereo")
+        self.microphone_checkbox.pack(side="left", padx=5)
+
+        self.scan_checkbox_var = tk.IntVar(value=1)
+        self.scan_checkbox = tk.Checkbutton(self.control_frame, text="Scan", variable=self.scan_checkbox_var)
+        self.scan_checkbox.pack(side="left", padx=5)
+
         self.after(1000, self.update_data)
+
+    def start_all_midges(self):
+        for custom_component in self.custom_components:
+            try:
+                if self.imu_checkbox_var.get() == 1:
+                    custom_component.start_imu()
+                if self.microphone_checkbox_var.get() == "mono":
+                    custom_component.start_microphone(t=None, mode=1)
+                if self.microphone_checkbox_var.get() == "stereo":
+                    custom_component.start_microphone(t=None, mode=0)
+                if self.scan_checkbox_var.get() == 1:
+                    custom_component.start_scan()
+            except Exception as e:
+                print("Error starting badge {}: {}".format(custom_component.name, e))
+
+    def stop_all_midges(self):
+        for custom_component in self.custom_components:
+            try:
+                if self.imu_checkbox_var.get() == 1:
+                    custom_component.stop_imu()
+                if self.microphone_checkbox_var.get() != "off":
+                    custom_component.stop_microphone()
+                if self.scan_checkbox_var.get() == 1:
+                    custom_component.stop_scan()
+            except Exception as e:
+                print("Error stopping badge {}: {}".format(custom_component.name, e))
 
     def update_data(self):
         for badge, custom_component in zip(self.badges, self.custom_components):
             try:
                 badge_status = badge['badge'].get_status()
             except:
-                print('Error with request')
+                print('Badge {}, Error with request'.format(custom_component.name))
                 try:
                     badge['badge'].connect()
                 except:
