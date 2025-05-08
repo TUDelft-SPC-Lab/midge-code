@@ -98,12 +98,17 @@ class CustomComponent(tk.Frame):
         self.new_window.mainloop()
 
     def start_imu(self):
-        if self.badge_status.imu_status == 0:
-            self.badge.start_imu()
-        else:
+        if self.badge_status.imu_status == 1:
             print("IMU already started")
+            return
+    
+        self.badge.start_imu()
     
     def stop_imu(self):
+        if self.badge_status.imu_status == 0:
+            print("IMU already stopped")
+            return
+        
         self.badge.stop_imu()
     
     def start_microphone(self, t, mode):
@@ -131,6 +136,10 @@ class CustomComponent(tk.Frame):
             pass
     
     def stop_microphone(self):
+        if self.badge_status.microphone_status == 0:
+            print("Microphone already stopped")
+            return
+        
         self.badge.stop_microphone()
 
     def start_scan(self):
@@ -147,6 +156,10 @@ class CustomComponent(tk.Frame):
             pass
 
     def stop_scan(self):
+        if self.badge_status.scan_status == 0:
+            print("Scanner already stopped")
+            return
+        
         self.badge.stop_scan()
     
 class MatplolibFrame(tk.Frame):
