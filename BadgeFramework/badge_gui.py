@@ -495,7 +495,7 @@ class MainApp(tk.Tk):
                 badge['badge'].start_microphone(mode=1)  # Start microphone in mono mode
                 badge['badge'].start_scan()
             except Exception as e:
-                print(f"Error starting badge {badge['name']}: {e}")
+                print("Error starting badge {}: {}".format(badge['name'], e))
 
     def stop_all_midges(self):
         for badge in self.badges:
@@ -504,7 +504,7 @@ class MainApp(tk.Tk):
                 badge['badge'].stop_microphone()
                 badge['badge'].stop_scan()
             except Exception as e:
-                print(f"Error stopping badge {badge['name']}: {e}")
+                print("Error stopping badge {}: {}".format(badge['name'], e))
 
     def update_data(self):
         for badge, custom_component in zip(self.badges, self.custom_components):
