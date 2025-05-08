@@ -489,25 +489,25 @@ class MainApp(tk.Tk):
         self.after(1000, self.update_data)
 
     def start_all_midges(self):
-        for badge in self.badges:
+        for custom_component in self.custom_components:
             try:
-                badge['badge'].start_imu()
-                badge['badge'].start_microphone(mode=0)  # Start microphone in mono mode
-                badge['badge'].start_scan()
+                custom_component.start_imu()
+                custom_component.start_microphone(t=None, mode=0)
+                custom_component.start_scan()
             except Exception as e:
-                print("Error starting badge {}: {}".format(badge['name'], e))
+                print("Error starting badge {}: {}".format(custom_component.badge['name'], e))
 
         self.start_all_button.config(state="disabled")
         self.stop_all_button.config(state="normal")
 
     def stop_all_midges(self):
-        for badge in self.badges:
+        for custom_component in self.custom_components:
             try:
-                badge['badge'].stop_imu()
-                badge['badge'].stop_microphone()
-                badge['badge'].stop_scan()
+                custom_component.stop_imu()
+                custom_component.stop_microphone()
+                custom_component.stop_scan()
             except Exception as e:
-                print("Error stopping badge {}: {}".format(badge['name'], e))
+                print("Error stopping badge {}: {}".format(custom_component.badge['name'], e))
 
         self.start_all_button.config(state="normal")
         self.stop_all_button.config(state="disabled")
