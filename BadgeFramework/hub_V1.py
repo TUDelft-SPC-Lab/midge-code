@@ -33,7 +33,7 @@ if __name__ == "__main__":
                     try:
                         cur_connection = Connection(int(command),current_mac_addr)
                     except Exception as error:
-                        print (str(error))
+                        print((str(error)))
                         sys.stdout.flush()
                         continue
                     print ("Connected to the badge. For available commands, please type help.")
@@ -51,7 +51,7 @@ if __name__ == "__main__":
                                 print (out)
                                 sys.stdout.flush()
                         except Exception as error:
-                            print (str(error))
+                            print((str(error)))
                             print(" Command not found!")
                             sys.stdout.flush()
                             cur_connection.print_help()

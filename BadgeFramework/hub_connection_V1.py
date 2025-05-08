@@ -32,7 +32,7 @@ class Connection():
             out = self.badge.get_status()
             return out
         except Exception as err:
-            print (str(err))
+            print((str(err)))
             sys.stdout.flush()
             raise Exception("Could not get status for participant"+ str(self.badge_id))
 
@@ -90,7 +90,7 @@ class Connection():
             out = self.badge.restart()
             return out
         except Exception as err:
-            print (str(err))
+            print((str(err)))
             print ("Please wait at least 10 seconds to connect back to the device.")
             print ("Don't forget to start the recording for the restarted badge.")
             #raise Exception("Could not restart for participant " + str(self.badge_id))

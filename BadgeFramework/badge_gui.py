@@ -1,11 +1,11 @@
-import Tkinter as tk
-import ttk
-from Tkinter import Label, Button, Canvas
-import tkFont
+import tkinter as tk
+import tkinter.ttk
+from tkinter import Label, Button, Canvas
+import tkinter.font
 import random
 import time
 import csv
-from badge_interface import *
+from .badge_interface import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
@@ -43,9 +43,9 @@ class CustomComponent(tk.Frame):
         # Device info
         self.badgeId = Label(self, text="Badge ID: {}".format(self.name))
         self.badgeId.grid(row=0, column=0, padx=10, pady=5)
-        self.midge = Label(self, text=self.address, font=tkFont.Font(size=12))
+        self.midge = Label(self, text=self.address, font=tkinter.font.Font(size=12))
         self.midge.grid(row=1, column=0, padx=10, pady=5)
-        self.midge = Label(self, text="FW: {}".format(self.badge.get_fw_version().version), font=tkFont.Font(size=12))
+        self.midge = Label(self, text="FW: {}".format(self.badge.get_fw_version().version), font=tk.font.Font(size=12))
         self.midge.grid(row=2, column=0, padx=10, pady=5)
         self.battery = Label(self, text='Battery: {}%'.format(self.badge_status.battery_level), relief="solid")
         self.battery.grid(row=3, column=0, padx=10, pady=5)
@@ -222,7 +222,7 @@ class IMUConfig(tk.Frame):
     def initUI(self):
         info = ["acc_fsr (g): 16", "gyr_fsr (dps): 2000", "datarate: 50"]
         
-        title = tk.Label(self.top_frame, text='IMU Data', font=tkFont.Font(size=10, weight="bold"))
+        title = tk.Label(self.top_frame, text='IMU Data', font=tkinter.font.Font(size=10, weight="bold"))
         title.grid(row=0, column=0, columnspan=2, sticky='w')
         # Create information header
         for i, text in enumerate(info):
@@ -278,7 +278,7 @@ class MicConfig(tk.Frame):
         top_frame.grid(row=0, column=0, sticky='nsew')
         table.grid(row=1, column=0, sticky='nsew')
         
-        title = tk.Label(top_frame, text='Microphones Data', font=tkFont.Font(size=10, weight="bold"))
+        title = tk.Label(top_frame, text='Microphones Data', font=tkinter.font.Font(size=10, weight="bold"))
         title.grid(row=0, column=0, columnspan=2, sticky='w')
         # Loop over the dictionary and create labels
         for i, (key, value) in enumerate(self.info.items()):
@@ -311,7 +311,7 @@ class ScanConfig(tk.Frame):
         top_frame.grid(row=0, column=0, sticky='nsew')
         table.grid(row=1, column=0, sticky='nsew')
         
-        title = tk.Label(top_frame, text='Scanner Data', font=tkFont.Font(size=10, weight="bold"))
+        title = tk.Label(top_frame, text='Scanner Data', font=tkinter.font.Font(size=10, weight="bold"))
         title.grid(row=0, column=0, columnspan=2, sticky='w')
         # Loop over the dictionary and create labels
         for i, (key, value) in enumerate(self.info.items()):
@@ -319,7 +319,7 @@ class ScanConfig(tk.Frame):
             label = tk.Label(top_frame, text=label_text)
             label.grid(row=i+1, column=0, columnspan=2, sticky='w')
 
-        table_title = tk.Label(table, text='RSSI', font=tkFont.Font( weight="bold"), relief=tk.RIDGE, width=45)
+        table_title = tk.Label(table, text='RSSI', font=tkinter.font.Font( weight="bold"), relief=tk.RIDGE, width=45)
         table_title.grid(row=0, column=0, sticky="nsew")
         for i, e in enumerate(self.data):
             label = tk.Label(table, text=str(e), relief=tk.RIDGE, width=45)
@@ -381,11 +381,11 @@ class NewWindow(tk.Toplevel):
         right_down.grid(row=1, column=1, sticky='nsew')
         
         # header
-        self.badgeId = Label(left_top, text="Badge Id: {}".format(self.name), font=tkFont.Font(size=10, ))
+        self.badgeId = Label(left_top, text="Badge Id: {}".format(self.name), font=tkinter.font.Font(size=10, ))
         self.badgeId.grid(row=0, column=0, columnspan=2, sticky='w')
-        self.midge = Label(left_top, text="Battery: {}%".format(self.status.battery_level), font=tkFont.Font(size=10)) 
+        self.midge = Label(left_top, text="Battery: {}%".format(self.status.battery_level), font=tkinter.font.Font(size=10)) 
         self.midge.grid(row=1, column=0, columnspan=2, sticky='w')
-        self.battery = Label(left_top, text="Available memory: {}MB".format(self.free_space), font=tkFont.Font(size=10))
+        self.battery = Label(left_top, text="Available memory: {}MB".format(self.free_space), font=tkinter.font.Font(size=10))
         self.battery.grid(row=2, column=0, columnspan=2, sticky='w')
         self.reset_battery = Button(left_top, text='Erase', command=self.badge.sdc_errase_all)
         self.reset_battery.grid(row=2, column=1, columnspan=2, sticky='w')
@@ -480,8 +480,8 @@ class MainApp(tk.Tk):
         self.geometry("1100x700")
         
         self.canvas = tk.Canvas(self)
-        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.container_frame = ttk.Frame(self.canvas)
+        self.scrollbar = tkinter.ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.container_frame = tkinter.ttk.Frame(self.canvas)
 
         self.container_frame.bind(
             "<Configure>",
@@ -504,7 +504,7 @@ class MainApp(tk.Tk):
         separator = tk.Frame(self.canvas, height=2, bg="black")
         separator.pack(side=tk.TOP, fill=tk.X, pady=5)
 
-        self.all_label = Label(self.all_badges_buttons_frame, text="All badges:", font=tkFont.Font(size=12))
+        self.all_label = Label(self.all_badges_buttons_frame, text="All badges:", font=tk.font.Font(size=12))
         self.all_label.pack(side="left", padx=(15, 0))
 
         self.start_all_button = Button(self.all_badges_buttons_frame, text="Start", command=self.start_all_midges)
@@ -513,7 +513,7 @@ class MainApp(tk.Tk):
         self.stop_all_button = Button(self.all_badges_buttons_frame, text="Stop", command=self.stop_all_midges)
         self.stop_all_button.pack(side="left", padx=10)
 
-        self.all_sensors_label = Label(self.all_badges_buttons_frame, text="Sensors:", font=tkFont.Font(size=12))
+        self.all_sensors_label = Label(self.all_badges_buttons_frame, text="Sensors:", font=tk.font.Font(size=12))
         self.all_sensors_label.pack(side="left", padx=(15, 0))
 
         self.imu_checkbox_var = tk.IntVar(value=1)
