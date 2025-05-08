@@ -45,8 +45,10 @@ class CustomComponent(tk.Frame):
         self.badgeId.grid(row=0, column=0, padx=10, pady=5)
         self.midge = Label(self, text=self.address, font=tkFont.Font(size=12))
         self.midge.grid(row=1, column=0, padx=10, pady=5)
+        self.midge = Label(self, text="FW: {}".format(self.badge.get_fw_version().version), font=tkFont.Font(size=12))
+        self.midge.grid(row=2, column=0, padx=10, pady=5)
         self.battery = Label(self, text='Battery: {}%'.format(self.badge_status.battery_level), relief="solid")
-        self.battery.grid(row=2, column=0, padx=10, pady=5)
+        self.battery.grid(row=3, column=0, padx=10, pady=5)
 
         # Status
         self.statusLabel = Label(self, text="Status")
