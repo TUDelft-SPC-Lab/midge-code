@@ -489,7 +489,8 @@ class MainApp(tk.Tk):
             scrollregion=self.canvas.bbox("all")
             )
         )
-
+        self.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(-1 * (e.delta // 120), "units"))
+        
         self.canvas.create_window((0, 0), window=self.container_frame, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
