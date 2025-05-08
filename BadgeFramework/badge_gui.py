@@ -45,7 +45,7 @@ class CustomComponent(tk.Frame):
         self.badgeId.grid(row=0, column=0, padx=10, pady=5)
         self.midge = Label(self, text=self.address, font=tkinter.font.Font(size=12))
         self.midge.grid(row=1, column=0, padx=10, pady=5)
-        self.midge = Label(self, text="FW: {}".format(self.badge.get_fw_version().version), font=tkFont.Font(size=12))
+        self.midge = Label(self, text="FW: {}".format(self.badge.get_fw_version().version), font=tk.font.Font(size=12))
         self.midge.grid(row=2, column=0, padx=10, pady=5)
         self.battery = Label(self, text='Battery: {}%'.format(self.badge_status.battery_level), relief="solid")
         self.battery.grid(row=3, column=0, padx=10, pady=5)
@@ -504,7 +504,7 @@ class MainApp(tk.Tk):
         separator = tk.Frame(self.canvas, height=2, bg="black")
         separator.pack(side=tk.TOP, fill=tk.X, pady=5)
 
-        self.all_label = Label(self.all_badges_buttons_frame, text="All badges:", font=tkFont.Font(size=12))
+        self.all_label = Label(self.all_badges_buttons_frame, text="All badges:", font=tk.font.Font(size=12))
         self.all_label.pack(side="left", padx=(15, 0))
 
         self.start_all_button = Button(self.all_badges_buttons_frame, text="Start", command=self.start_all_midges)
@@ -513,7 +513,7 @@ class MainApp(tk.Tk):
         self.stop_all_button = Button(self.all_badges_buttons_frame, text="Stop", command=self.stop_all_midges)
         self.stop_all_button.pack(side="left", padx=10)
 
-        self.all_sensors_label = Label(self.all_badges_buttons_frame, text="Sensors:", font=tkFont.Font(size=12))
+        self.all_sensors_label = Label(self.all_badges_buttons_frame, text="Sensors:", font=tk.font.Font(size=12))
         self.all_sensors_label.pack(side="left", padx=(15, 0))
 
         self.imu_checkbox_var = tk.IntVar(value=1)
