@@ -12,7 +12,6 @@ from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scan
 from bluepy.btle import BTLEException
 import struct
 import queue
-import codecs
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +93,7 @@ class BLEBadgeConnection(BadgeConnection):
 	# primitives to send data to other threads.
 
 	def received(self,data):
-		logger.debug("Recieved {}".format(codecs.encode(data, "hex_codec")))
+		logger.debug("Recieved {}".format(str(data)))
 
 		for i in range(len(data)):
 			self.rx_queue.put(data[i:i+1])

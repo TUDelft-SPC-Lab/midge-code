@@ -4,7 +4,6 @@ import logging
 import sys
 import struct
 import queue
-import codecs
 
 DEFAULT_SCAN_WINDOW = 250
 DEFAULT_SCAN_INTERVAL = 1000
@@ -89,7 +88,7 @@ class OpenBadge(object):
 
         logger.debug(
             "Sending: {}, Raw: {}".format(
-                request_message, codecs.encode(serialized_request, "hex_codec")
+                request_message, str(serialized_request)
             )
         )
 
