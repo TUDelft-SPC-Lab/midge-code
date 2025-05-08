@@ -493,16 +493,16 @@ class MainApp(tk.Tk):
         self.stop_all_button = Button(self.control_frame, text="Stop All", command=self.stop_all_midges)
         self.stop_all_button.pack(side="left", padx=10)
 
-        self.start_imu_var = tk.IntVar(value=1)
-        self.imu_checkbox = tk.Checkbutton(self.control_frame, text="IMU", variable=self.start_imu_var)
+        self.imu_checkbox_var = tk.IntVar(value=1)
+        self.imu_checkbox = tk.Checkbutton(self.control_frame, text="IMU", variable=self.imu_checkbox_var)
         self.imu_checkbox.pack(side="left", padx=5)
 
-        self.microphone_var = tk.StringVar(value="stereo")
-        self.microphone_checkbox = tk.OptionMenu(self.control_frame, self.microphone_var , "off", "mono", "stereo")
+        self.microphone_checkbox_var = tk.StringVar(value="stereo")
+        self.microphone_checkbox = tk.OptionMenu(self.control_frame, self.microphone_checkbox_var , "off", "mono", "stereo")
         self.microphone_checkbox.pack(side="left", padx=5)
 
-        self.start_scan_var = tk.IntVar(value=1)
-        self.scan_checkbox = tk.Checkbutton(self.control_frame, text="Scan", variable=self.start_scan_var)
+        self.scan_checkbox_var = tk.IntVar(value=1)
+        self.scan_checkbox = tk.Checkbutton(self.control_frame, text="Scan", variable=self.scan_checkbox_var)
         self.scan_checkbox.pack(side="left", padx=5)
 
         for badge in self.badges:
@@ -518,13 +518,13 @@ class MainApp(tk.Tk):
     def start_all_midges(self):
         for custom_component in self.custom_components:
             try:
-                if self.start_imu_var.get() == 1:
+                if self.imu_checkbox_var.get() == 1:
                     custom_component.start_imu()
-                if self.microphone_var.get() == "mono":
+                if self.microphone_checkbox_var.get() == "mono":
                     custom_component.start_microphone(t=None, mode=1)
-                if self.microphone_var.get() == "stereo":
+                if self.microphone_checkbox_var.get() == "stereo":
                     custom_component.start_microphone(t=None, mode=0)
-                if self.start_scan_var.get() == 1:
+                if self.scan_checkbox_var.get() == 1:
                     custom_component.start_scan()
             except Exception as e:
                 print("Error starting badge {}: {}".format(custom_component.name, e))
@@ -532,11 +532,11 @@ class MainApp(tk.Tk):
     def stop_all_midges(self):
         for custom_component in self.custom_components:
             try:
-                if self.start_imu_var.get() == 1:
+                if self.imu_checkbox_var.get() == 1:
                     custom_component.stop_imu()
-                if self.microphone_var.get() != "off":
+                if self.microphone_checkbox_var.get() != "off":
                     custom_component.stop_microphone()
-                if self.start_scan_var.get() == 1:
+                if self.scan_checkbox_var.get() == 1:
                     custom_component.stop_scan()
             except Exception as e:
                 print("Error stopping badge {}: {}".format(custom_component.name, e))
