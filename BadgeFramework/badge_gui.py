@@ -487,11 +487,29 @@ class MainApp(tk.Tk):
         self.control_frame = tk.Frame(self)
         self.control_frame.pack(fill="x", pady=10)
 
-        self.start_all_button = Button(self.control_frame, text="Start All", command=self.start_all_midges)
+        for badge in self.badges:
+            custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
+            custom_component.pack()
+            # Draw a border between custom components
+            border = tk.Frame(self.container_frame, bg="gray", height=1)
+            border.pack(fill="x")
+            self.custom_components.append(custom_component)
+
+
+        separator = tk.Frame(self.container_frame, height=2, bg="black")
+        separator.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
+
+        self.all_label = Label(self.control_frame, text="All badges: ", font=tkFont.Font(size=12))
+        self.all_label.pack(side="left", padx=(15, 0))
+
+        self.start_all_button = Button(self.control_frame, text="Start", command=self.start_all_midges)
         self.start_all_button.pack(side="left", padx=10)
 
-        self.stop_all_button = Button(self.control_frame, text="Stop All", command=self.stop_all_midges)
+        self.stop_all_button = Button(self.control_frame, text="Stop", command=self.stop_all_midges)
         self.stop_all_button.pack(side="left", padx=10)
+
+        self.all_sensors_label = Label(self.control_frame, text="Sensors: ", font=tkFont.Font(size=12))
+        self.all_sensors_label.pack(side="left", padx=(15, 0))
 
         self.imu_checkbox_var = tk.IntVar(value=1)
         self.imu_checkbox = tk.Checkbutton(self.control_frame, text="IMU", variable=self.imu_checkbox_var)
@@ -504,14 +522,6 @@ class MainApp(tk.Tk):
         self.scan_checkbox_var = tk.IntVar(value=1)
         self.scan_checkbox = tk.Checkbutton(self.control_frame, text="Scan", variable=self.scan_checkbox_var)
         self.scan_checkbox.pack(side="left", padx=5)
-
-        for badge in self.badges:
-            custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
-            custom_component.pack()
-            # Draw a border between custom components
-            border = tk.Frame(self.container_frame, bg="gray", height=1)
-            border.pack(fill="x")
-            self.custom_components.append(custom_component)
 
         self.after(1000, self.update_data)
 
