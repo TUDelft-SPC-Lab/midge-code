@@ -491,6 +491,18 @@ class MainApp(tk.Tk):
         self.stop_all_button = Button(self.control_frame, text="Stop All", command=self.stop_all_midges, state="disabled")
         self.stop_all_button.pack(side="left", padx=10)
 
+        self.start_imu_var = tk.IntVar(value=1)
+        self.imu_checkbox = tk.Checkbutton(self.control_frame, text="IMU", variable=self.start_imu_var)
+        self.imu_checkbox.pack(side="left", padx=5)
+
+        self.start_microphone_var = tk.IntVar(value=1)
+        self.microphone_checkbox = tk.Checkbutton(self.control_frame, text="Microphone", variable=self.start_microphone_var)
+        self.microphone_checkbox.pack(side="left", padx=5)
+
+        self.start_scan_var = tk.IntVar(value=1)
+        self.scan_checkbox = tk.Checkbutton(self.control_frame, text="Scan", variable=self.start_scan_var)
+        self.scan_checkbox.pack(side="left", padx=5)
+
         for badge in self.badges:
             custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
             custom_component.pack()
@@ -504,9 +516,12 @@ class MainApp(tk.Tk):
     def start_all_midges(self):
         for custom_component in self.custom_components:
             try:
-                custom_component.start_imu()
-                custom_component.start_microphone(t=None, mode=0)
-                custom_component.start_scan()
+                if self.start_imu_var.get() == 1:
+                    custom_component.start_imu()
+                if self.start_microphone_var.get() == 1:
+                    custom_component.start_microphone(t=None, mode=0)
+                if self.start_scan_var.get() == 1:
+                    custom_component.start_scan()
             except Exception as e:
                 print("Error starting badge {}: {}".format(custom_component.badge['name'], e))
 
@@ -516,9 +531,12 @@ class MainApp(tk.Tk):
     def stop_all_midges(self):
         for custom_component in self.custom_components:
             try:
-                custom_component.stop_imu()
-                custom_component.stop_microphone()
-                custom_component.stop_scan()
+                if self.start_imu_var.get() == 1:
+                    custom_component.stop_imu()
+                if self.start_microphone_var.get() == 1:
+                    custom_component.stop_microphone()
+                if self.start_scan_var.get() == 1:
+                    custom_component.stop_scan()
             except Exception as e:
                 print("Error stopping badge {}: {}".format(custom_component.badge['name'], e))
 
