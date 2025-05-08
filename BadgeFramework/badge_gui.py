@@ -478,13 +478,63 @@ class MainApp(tk.Tk):
         tk.Tk.__init__(self)
         self.title("Badge controller")
         self.geometry("1100x700")
-        self.container_frame = ttk.Frame(self)
-        self.container_frame.pack(expand=True, fill="both")
+        
+        self.canvas = tk.Canvas(self)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.container_frame = ttk.Frame(self.canvas)
+
+        self.container_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+            scrollregion=self.canvas.bbox("all")
+            )
+        )
+
+        self.canvas.create_window((0, 0), window=self.container_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+
+        # Add buttons to start and stop all midges
+        self.all_badges_buttons_frame = tk.Frame(self.container_frame)
+        self.all_badges_buttons_frame.pack(fill="y", pady=20)
+
+        separator = tk.Frame(self.canvas, height=2, bg="black")
+        separator.pack(side=tk.TOP, fill=tk.X, pady=5)
+
+        self.all_label = Label(self.all_badges_buttons_frame, text="All badges:", font=tkFont.Font(size=12))
+        self.all_label.pack(side="left", padx=(15, 0))
+
+        self.start_all_button = Button(self.all_badges_buttons_frame, text="Start", command=self.start_all_midges)
+        self.start_all_button.pack(side="left", padx=10)
+
+        self.stop_all_button = Button(self.all_badges_buttons_frame, text="Stop", command=self.stop_all_midges)
+        self.stop_all_button.pack(side="left", padx=10)
+
+        self.all_sensors_label = Label(self.all_badges_buttons_frame, text="Sensors:", font=tkFont.Font(size=12))
+        self.all_sensors_label.pack(side="left", padx=(15, 0))
+
+        self.imu_checkbox_var = tk.IntVar(value=1)
+        self.imu_checkbox = tk.Checkbutton(self.all_badges_buttons_frame, text="IMU", variable=self.imu_checkbox_var)
+        self.imu_checkbox.pack(side="left", padx=(0, 5))
+
+        self.all_microphones_label = Label(self.all_badges_buttons_frame, text="Microphones: ")
+        self.all_microphones_label.pack(side="left", padx=(10, 0))
+
+        self.microphone_checkbox_var = tk.StringVar(value="stereo")
+        self.microphone_checkbox = tk.OptionMenu(self.all_badges_buttons_frame, self.microphone_checkbox_var , "off", "mono", "stereo")
+        self.microphone_checkbox.pack(side="left", padx=(0, 5))
+
+        self.scan_checkbox_var = tk.IntVar(value=1)
+        self.scan_checkbox = tk.Checkbutton(self.all_badges_buttons_frame, text="Scan", variable=self.scan_checkbox_var)
+        self.scan_checkbox.pack(side="left", padx=5)
+
+        separator = tk.Frame(self.container_frame, height=2, bg="black")
+        separator.pack(side=tk.TOP, fill=tk.X, pady=5)
+
         self.custom_components = []
         self.badges = get_badges()
-
-        self.control_frame = tk.Frame(self)
-        self.control_frame.pack(fill="x", pady=10)
 
         for badge in self.badges:
             custom_component = CustomComponent(self.container_frame, name=badge['name'], badge=badge['badge'], address=badge['address'])
@@ -493,37 +543,6 @@ class MainApp(tk.Tk):
             border = tk.Frame(self.container_frame, bg="gray", height=1)
             border.pack(fill="x")
             self.custom_components.append(custom_component)
-
-        # Add buttons to start and stop all midges
-        separator = tk.Frame(self.container_frame, height=2, bg="black")
-        separator.pack(side=tk.BOTTOM, fill=tk.X, pady=5)
-
-        self.all_label = Label(self.control_frame, text="All badges:", font=tkFont.Font(size=12))
-        self.all_label.pack(side="left", padx=(15, 0))
-
-        self.start_all_button = Button(self.control_frame, text="Start", command=self.start_all_midges)
-        self.start_all_button.pack(side="left", padx=10)
-
-        self.stop_all_button = Button(self.control_frame, text="Stop", command=self.stop_all_midges)
-        self.stop_all_button.pack(side="left", padx=10)
-
-        self.all_sensors_label = Label(self.control_frame, text="Sensors:", font=tkFont.Font(size=12))
-        self.all_sensors_label.pack(side="left", padx=(15, 0))
-
-        self.imu_checkbox_var = tk.IntVar(value=1)
-        self.imu_checkbox = tk.Checkbutton(self.control_frame, text="IMU", variable=self.imu_checkbox_var)
-        self.imu_checkbox.pack(side="left", padx=(0, 5))
-
-        self.all_microphones_label = Label(self.control_frame, text="Microphones: ")
-        self.all_microphones_label.pack(side="left", padx=(10, 0))
-
-        self.microphone_checkbox_var = tk.StringVar(value="stereo")
-        self.microphone_checkbox = tk.OptionMenu(self.control_frame, self.microphone_checkbox_var , "off", "mono", "stereo")
-        self.microphone_checkbox.pack(side="left", padx=(0, 5))
-
-        self.scan_checkbox_var = tk.IntVar(value=1)
-        self.scan_checkbox = tk.Checkbutton(self.control_frame, text="Scan", variable=self.scan_checkbox_var)
-        self.scan_checkbox.pack(side="left", padx=5)
 
         self.after(1000, self.update_data)
 
