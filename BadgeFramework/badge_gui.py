@@ -88,6 +88,12 @@ class CustomComponent(tk.Frame):
         self.ScanStopButton = Button(self, text="Stop", command=self.stop_scan)
         self.ScanStopButton.grid(row=2, column=7, padx=10, pady=5)
 
+        # Erase SD card
+        self.EraseLabel = Label(self, text="Erase SD card")
+        self.EraseLabel.grid(row=0, column=8, padx=10, pady=5)
+        self.EraseButton = Button(self, text="Erase", command=self.erase_sdcard)
+        self.EraseButton.grid(row=1, column=8, padx=10, pady=5)
+
         self.bind("<Button-1>", self.onMouseClick)  # Handle mouse click
 
          # Change the cursor when hovering
@@ -164,6 +170,9 @@ class CustomComponent(tk.Frame):
         
         self.badge.stop_scan()
     
+    def erase_sdcard(self):
+        self.badge.sdc_errase_all()
+
 class MatplolibFrame(tk.Frame):
     def __init__(self, parent, time, x, y, z):
         tk.Frame.__init__(self, parent, relief=tk.RIDGE)
@@ -531,6 +540,12 @@ class MainApp(tk.Tk):
         self.scan_checkbox = tk.Checkbutton(self.all_badges_buttons_frame, text="Scan", variable=self.scan_checkbox_var)
         self.scan_checkbox.pack(side="left", padx=5)
 
+        separator = ttk.Separator(self.all_badges_buttons_frame, orient='vertical')
+        separator.pack(side=tk.LEFT, fill=tk.Y, padx=5)
+
+        self.erase_all_button = Button(self.all_badges_buttons_frame, text="Erase SD Card", command=self.sd_card_erase_all_midges)
+        self.erase_all_button.pack(side="left", padx=10)
+
         separator = tk.Frame(self.container_frame, height=2, bg="black")
         separator.pack(side=tk.TOP, fill=tk.X, pady=5)
 
@@ -572,6 +587,13 @@ class MainApp(tk.Tk):
                     custom_component.stop_scan()
             except Exception as e:
                 print("Error stopping badge {}: {}".format(custom_component.name, e))
+
+    def sd_card_erase_all_midges(self):
+        for custom_component in self.custom_components:
+            try:
+                custom_component.erase_sdcard()
+            except Exception as e:
+                print("Error erasing sd card with badge {}: {}".format(custom_component.name, e))
 
     def update_data(self):
         for badge, custom_component in zip(self.badges, self.custom_components):
