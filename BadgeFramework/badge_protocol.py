@@ -889,11 +889,11 @@ class Request:
 			self.sdc_errase_all_request.decode_internal(istream)			
 
 		def decode_get_imu_data_request(self, istream):
-			self.get_imu_data_request = ErraseAllRequest()
+			self.get_imu_data_request = GetIMUDataRequest()
 			self.get_imu_data_request.decode_internal(istream)	
 		
 		def decode_get_fw_version_request(self, istream):
-			self.get_fw_version_request = ErraseAllRequest()
+			self.get_fw_version_request = GetFWVersionRequest()
 			self.get_fw_version_request.decode_internal(istream)	
 
 
