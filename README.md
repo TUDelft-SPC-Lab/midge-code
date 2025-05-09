@@ -20,11 +20,13 @@ It also contains the python scripts that are used for controlling the midge, rec
 2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn hatch hatch-vcs`.
 3. Install [Tkinter](https://wiki.python.org/moin/TkInter).
 
+Note that the bluepy dependency only works on linux.
+
 ## Recording data
 1. Turn the midges on
 2. Get their MAC address with either of these options
     * With the `scan_all.py` script
-    * Running `bluetoothctl devices | grep HDBDG`on a linux terminal
+    * Running `(echo -e 'power on\nscan on\n'; sleep 5; echo 'scan off') | bluetoothctl > /dev/null 2>&1 && bluetoothctl devices | grep HDBDG` on a linux terminal
 4. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
 5. Stop recording
 6. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
