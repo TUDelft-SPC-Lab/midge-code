@@ -47,8 +47,9 @@ sampling_configuration_t sampling_get_sampling_configuration(void);
 
 /**@brief Function to start the accelerometer
  *
- * @param[in]	full_scale					[2, 4, 8, 16]
- * @param[in]	datrate						[1, 10, 25, 50, 100, 200, 400]
+ * @param[in]	acc_fsr		[2, 4, 8, 16]
+ * @param[in]	gyr_fsr		[]
+ * @param[in]	datrate		[50,100,200]
  *
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
@@ -57,7 +58,6 @@ ret_code_t sampling_start_imu(uint16_t acc_fsr, uint16_t gyr_fsr, uint16_t datar
 
 /**@brief Function to stop the imu
  *
- * @param[in]	streaming					Flag if streaming or data acquisition should be stopped [0 == data-acquisistion, 1 == streaming].
  *
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
@@ -78,7 +78,6 @@ ret_code_t sampling_start_microphone(nrf_pdm_mode_t mode);
 
 /**@brief Function to stop the microphone data recording or streaming.
  *
- * @param[in]	streaming					Flag if streaming or data acquisition should be stopped [0 == data-acquisistion, 1 == streaming].
  *
  * @retval		NRF_SUCCESS 	If everything was ok.
  * @retval						Otherwise an error code is returned.
