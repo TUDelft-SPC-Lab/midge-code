@@ -38,9 +38,6 @@ typedef struct {
 
 typedef struct __attribute__((__packed__)) {
 	uint64_t timestamp;
-	uint16_t buffer_size;
-	uint8_t is_mono;
-	uint8_t padding;
 } audio_metadata_t;
 
 typedef struct __attribute__((__packed__)) {

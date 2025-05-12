@@ -62,8 +62,6 @@ void sd_write(void * p_event_data, uint16_t event_size)
 	{
 		audio_metadata_t audio_metadata_record;
 		audio_metadata_record.timestamp = timestamp_buffer[data_source_info.audio_source_info.buffer_index];
-		audio_metadata_record.buffer_size = data_source_info.audio_source_info.audio_buffer_length;
-		audio_metadata_record.is_mono = (drv_audio_get_mode() == 1);
 
 		ff_result = f_write(&audio_metadata_file_handle, &audio_metadata_record, sizeof(audio_metadata_t), NULL);
 		if (ff_result != FR_OK)

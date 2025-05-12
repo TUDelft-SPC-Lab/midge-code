@@ -113,11 +113,7 @@ static void drv_audio_pdm_event_handler(nrfx_pdm_evt_t const * const p_evt)
 					const uint32_t base_sample_rate = 20000; // 20kHz
 					uint64_t current_time = systick_get_millis();
 					uint32_t buffer_duration = (PDM_BUF_SIZE / base_sample_rate) * 1000;
-					if (current_time >= buffer_duration) {
-						timestamp_buffer[l] = current_time - buffer_duration;
-					} else {
-						timestamp_buffer[l] = current_time;
-					}
+					timestamp_buffer[l] = current_time - buffer_duration;
 				}				
 				NRF_LOG_INFO("pdm buf %d", pdm_buf[l].mic_buf[0]);
 				process_audio_buffer(l);
