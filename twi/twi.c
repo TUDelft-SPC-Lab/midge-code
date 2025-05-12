@@ -100,7 +100,7 @@ ret_code_t twi_init (void)
 			.scl                = TWI_SCL,
 			.sda                = TWI_SDA,
 			.frequency          = NRF_TWIM_FREQ_400K, //0x0C380D40 - this will set it to 800kHz
-			.interrupt_priority = APP_IRQ_PRIORITY_LOW,
+			.interrupt_priority = TWI_DEFAULT_CONFIG_IRQ_PRIORITY,
 			.hold_bus_uninit    = false
 	};
 
