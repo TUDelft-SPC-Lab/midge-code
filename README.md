@@ -28,7 +28,8 @@ Note that the bluepy dependency only works on linux.
     * With the `scan_all.py` script
     * Running the following command in a terminal
         ```bash
-        (echo -e 'power on\nscan on\n'; sleep 5; echo 'scan off') | bluetoothctl > /dev/null 2>&1 && bluetoothctl devices | grep HDBDG
+        (echo -e 'power on\nscan on\n'; sleep 5; echo 'scan off') | \
+        bluetoothctl > /dev/null 2>&1 && bluetoothctl devices | grep HDBDG
         ```
 4. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
 5. Stop recording
