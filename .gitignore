@@ -7,3 +7,4 @@ __pycache/
 .vscode/settings.json
 .devenv/
 .direnv/
+data/

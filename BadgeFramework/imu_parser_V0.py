@@ -73,9 +73,10 @@ class IMUParser(object):
         timestamps = np.asarray(timestamps)
         timestamps_dt = [dt.fromtimestamp(float(x) / 1000) for x in timestamps]
         df = pd.DataFrame(timestamps_dt, columns=['time'])
-        df['SensorID'] = data_xyz[:, 0]
-        df['RSSI'] = data_xyz[:, 1]
-        df['Group'] = data_xyz[:, 2]
+        if data_xyz.size > 0:
+            df['SensorID'] = data_xyz[:, 0]
+            df['RSSI'] = data_xyz[:, 1]
+            df['Group'] = data_xyz[:, 2]
         self.scan_df = df       
 
     def parse_accel(self):

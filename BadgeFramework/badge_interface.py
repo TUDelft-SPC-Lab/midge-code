@@ -44,4 +44,6 @@ class BadgeInterface():
     def sdc_errase_all(self):
         return self.badge.sdc_errase_all()
     
+    def get_fw_version(self):
+        return self.badge.get_fw_version()
     
