@@ -8,3 +8,4 @@ __pycache/
 .devenv/
 .direnv/
 data/
+.idea/
