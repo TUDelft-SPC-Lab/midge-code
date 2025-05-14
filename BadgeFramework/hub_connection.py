@@ -140,6 +140,7 @@ class Connection():
         print(" restart")
         print(" get_free_space")
         print(" get_fw_version")
+        print(" erase_sdc")
         print(" help")
         print(" All commands use current system time as transmitted time.")
         sys.stdout.flush()

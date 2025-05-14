@@ -17,7 +17,7 @@ def choose_function(connection,input):
         "stop_imu": connection.handle_stop_imu_request,
         "identify": connection.handle_identify_request,
         "restart": connection.handle_restart_request,
-        "erase_sdcard": connection.handle_sdc_erase,
+        "erase_sdc": connection.handle_sdc_erase,
         "get_free_space": connection.handle_get_free_space,
         "get_fw_version": connection.handle_fw_version,
     }
