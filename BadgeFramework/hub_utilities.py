@@ -1,6 +1,7 @@
-from hub_connection_V1 import Connection
-import signal,sys,tty,termios
+from hub_connection import Connection
+import sys,tty,termios
 import time
+from tqdm import tqdm
 
 def choose_function(connection,input):
     chooser = {
@@ -16,7 +17,9 @@ def choose_function(connection,input):
         "stop_imu": connection.handle_stop_imu_request,
         "identify": connection.handle_identify_request,
         "restart": connection.handle_restart_request,
+        "erase_sdc": connection.handle_sdc_erase,
         "get_free_space": connection.handle_get_free_space,
+        "get_fw_version": connection.handle_fw_version,
     }
     func = chooser.get(input, lambda: "Invalid command!")
     try:
@@ -27,7 +30,7 @@ def choose_function(connection,input):
         return
 
 def start_recording_all_devices(df):
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc="Starting sensors"):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
         try:
@@ -44,7 +47,7 @@ def start_recording_all_devices(df):
             cur_connection.disconnect()
 
 def stop_recording_all_devices(df):
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Stopping sensors'):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
         try:
@@ -59,12 +62,17 @@ def stop_recording_all_devices(df):
             print(str(error))
             cur_connection.disconnect()
 
-def synchronise_and_check_all_devices(df):
-    for _, row in df.iterrows():
+def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None):
+    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Synchronsing'):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
+
         try:
-            cur_connection=Connection(current_participant,current_mac)
+            if skip_id is not None and current_participant == skip_id:
+                cur_connection = conn_skip_id
+                assert conn_skip_id is not None, "if skip_id is not None and conn_skip_id cannot be None"
+            else:
+                cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
             print(str(error) + ', cannot synchronise.')
             sys.stdout.flush()
@@ -80,11 +88,53 @@ def synchronise_and_check_all_devices(df):
             if out.clock_status == 0:
                 print ('Cant synch for participant ' + str(current_participant))
             sys.stdout.flush()
-            cur_connection.disconnect()
+            if cur_connection != conn_skip_id:
+                cur_connection.disconnect()
         except Exception as error:
             print(error)
             sys.stdout.flush()
+            if cur_connection != conn_skip_id:
+                cur_connection.disconnect()
+
+def erase_sdcard_all_devices(df):
+    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Erasing sdcard'):
+        current_participant = row['Participant Id']
+        current_mac = row['Mac Address']
+        try:
+            cur_connection=Connection(current_participant,current_mac)
+        except Exception as error:
+            print(str(error) + ', sensors are not stopped.')
+            continue
+        try:
+            cur_connection.handle_sdc_erase()
             cur_connection.disconnect()
+        except Exception as error:
+            print(str(error))
+            cur_connection.disconnect()
+
+def _get_fw_version_all(df):
+    fw_versions = []
+
+    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Querying versions'):
+        current_participant = row['Participant Id']
+        current_mac = row['Mac Address']
+        try:
+            cur_connection=Connection(current_participant,current_mac)
+        except Exception as error:
+            print(str(error) + ', sensors are not stopped.')
+            continue
+        try:
+            fw_versions.append(cur_connection.handle_fw_version())
+            cur_connection.disconnect()
+        except Exception as error:
+            print(str(error))
+            cur_connection.disconnect()
+
+    return fw_versions
+
+def print_fw_version_all_devices(df):
+    for (_, row), fw_version in zip(df.iterrows(), _get_fw_version_all(df)):
+        print('\tParticipant: ' + str(row['Participant Id']) + ', fw: ' + fw_version)
 
 class timeout_input(object):
     def __init__(self, poll_period=0.05):
