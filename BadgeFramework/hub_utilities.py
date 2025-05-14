@@ -19,6 +19,7 @@ def choose_function(connection,input):
         "restart": connection.handle_restart_request,
         "erase_sdcard": connection.handle_sdc_erase,
         "get_free_space": connection.handle_get_free_space,
+        "get_fw_version": connection.handle_fw_version,
     }
     func = chooser.get(input, lambda: "Invalid command!")
     try:
@@ -133,6 +134,39 @@ def erase_sdcard_all_devices(df):
             cur_connection.disconnect()
 
     print("Devices are stopped.")
+    sys.stdout.flush()
+
+def _get_fw_version_all(df):
+    fw_versions = []
+
+    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Querying versions'):
+        current_participant = row['Participant Id']
+        current_mac = row['Mac Address']
+        try:
+            cur_connection=Connection(current_participant,current_mac)
+        except Exception as error:
+            print(str(error) + ', sensors are not stopped.')
+            continue
+        try:
+            fw_versions.append(cur_connection.handle_fw_version())
+            cur_connection.disconnect()
+        except Exception as error:
+            print(str(error))
+            cur_connection.disconnect()
+
+    return fw_versions
+
+def print_fw_version_all_devices(df):
+    print("Print fw version of all devices.")
+    sys.stdout.flush()
+
+    fw_versions = _get_fw_version_all(df)
+
+    print("")
+    for (_, row), fw_version in zip(df.iterrows(), fw_versions):
+        print('\tParticipant: ' + str(row['Participant Id']) + ', fw: ' + fw_version)
+
+    print("\nDone printing the fw version.")
     sys.stdout.flush()
 
 class timeout_input(object):
