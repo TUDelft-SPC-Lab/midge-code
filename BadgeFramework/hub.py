@@ -14,7 +14,7 @@ def print_hub_commands():
     print(" start_all: starts recording on all midges with all sensors")
     print(" stop_all: stops the recording on all midges")
     print(" erase_sdc_all: erase the recorded data on all midges")
-    print(" midge: connect to a single midge for individual management and checks")
+    print(" midge: connect to a single midge for individual management")
     print(" exit: stop and exit the hub script")
     print(" help: prints this help message")
     sys.stdout.flush()
