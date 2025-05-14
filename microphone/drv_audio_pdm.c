@@ -181,6 +181,7 @@ ret_code_t drv_audio_init(nrf_pdm_mode_t mode, uint64_t timestamp)
 	//! position. The HW in the uC is designed for this frequency but Nordic 
 	//! does not support it oficially as it's not considered tested enough 
 	//! https://devzone.nordicsemi.com/f/nordic-q-a/15150/single-pdm-microphone-at-higher-pcm-sampling-rate
+	//! NOTE: Change the clock frequency in the `drv_audio_pdm_event_handler` function if this is changed.
 	pdm_cfg.clock_freq	= 0x0A000000UL; 
 	local_freq      = pdm_cfg.clock_freq;
 
