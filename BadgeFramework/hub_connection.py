@@ -112,7 +112,7 @@ class Connection():
         try:
             return self.badge.get_fw_version().version
         except:
-            raise Exception("Could not erase the sdcard for participant " + str(self.badge_id))
+            raise Exception("Could not get the fw version for participant " + str(self.badge_id))
 
     def start_recording_all_sensors(self):
         self.handle_status_request()
