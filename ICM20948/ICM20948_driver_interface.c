@@ -75,17 +75,9 @@ ret_code_t icm20948_enable_sensors(void)
 {
 	ret_code_t err = NRF_SUCCESS;
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ACCELEROMETER, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_ACCELEROMETER, 1);
-
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GYROSCOPE, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_RAW_GYROSCOPE, 1);
-
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED, 1);
-
 	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_ROTATION_VECTOR, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR, 1);
-//	err |= inv_icm20948_enable_sensor(&icm_device, INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR, 1);
 
 	nrfx_gpiote_in_event_enable(INT1_PIN, true);
 
@@ -97,7 +89,7 @@ ret_code_t icm20948_set_datarate(uint8_t datarate)
 	ret_code_t err = NRF_SUCCESS;
 	local_datarate = datarate;
 	for (uint8_t sensor=0; sensor<INV_ICM20948_SENSOR_MAX; sensor++)
-		err |= inv_icm20948_set_sensor_period(&icm_device, sensor, 1000/datarate);
+		err |= inv_icm20948_set_sensor_period(&icm_device, sensor, 1000/datarate); // 1125Hz is the internal clock. gyro ODR is always a fraction of this
 
 	return err;
 }
@@ -114,6 +106,7 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 	imu_sample_t sample;
 
 	switch(sensortype) {
+
 	case INV_ICM20948_SENSOR_ACCELEROMETER:
 
 		sample.timestamp = timestamp;
@@ -150,7 +143,6 @@ void print_sensor_data(void * context, uint8_t sensortype, uint64_t timestamp, c
 		active_buffer[GYRO] = !active_buffer[GYRO];
 		count[GYRO] = 0;
 		break;
-
 
 	case INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD:
 		sample.timestamp = timestamp;
@@ -298,35 +290,7 @@ uint8_t get_datarate(void)
 void icm20948_service_isr(void * p_event_data, uint16_t event_size)
 {
 	inv_icm20948_poll_sensor(&icm_device, (void *)0, print_sensor_data);
-//	nrfx_gpiote_in_event_enable(INT1_PIN, true);
-//	NRF_LOG_INFO("isr");
-
-//	uint8_t buf[3];
-//	twim_read_register(NULL, 0x70, buf, 2); // fifo count
-//	twim_read_register(NULL, 0x1B, &buf[2], 1); // fifo overflow
-//	NRF_LOG_INFO("fifo size: %d, %d", (uint16_t)(buf[0]<<8|buf[1]), buf[2]);
-
-//	app_sched_event_put(NULL, 0, setup_fifo_burst);
 }
-
-
-//void int_pin_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-//{
-//	ret_code_t err_code;
-//	// isr needs to be fast, so we just push this to the scheduler
-////	NRF_LOG_INFO("%d", app_sched_queue_space_get());
-////	if (app_sched_queue_space_get() > 10)
-////	{
-////		nrfx_gpiote_in_event_disable(INT1_PIN);
-////		err_code = app_sched_event_put(NULL, 0, icm20948_service_isr);
-//		err_code = app_sched_event_put(NULL, 0, twi_read_fifo);
-//		APP_ERROR_CHECK(err_code);
-//
-////	}
-////	else {
-////		NRF_LOG_INFO("%d", app_sched_queue_space_get());
-////	}
-//}
 
 static uint32_t icm20948_sensor_setup()
 {
@@ -337,7 +301,7 @@ static uint32_t icm20948_sensor_setup()
 	inv_icm20948_soft_reset(&icm_device);
 	inv_icm20948_sleep_us(500000);
 
-	//	/* Setup accel and gyro mounting matrix and associated angle for TODO:current?? board = wait for feedback*/
+	// Setup accel and gyro mounting matrix and associated angle
 	inv_icm20948_init_matrix(&icm_device);
 
 	icm20948_apply_mounting_matrix();
@@ -499,5 +463,4 @@ uint8_t inv_icm20948_get_self_test_done(void)
 {
 	return icm_device.selftest_done;
 }
-
 

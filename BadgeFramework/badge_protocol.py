@@ -913,6 +913,7 @@ class StatusResponse:
 		self.battery_level = 0
 		self.pdm_data = 0
 		self.scan_data = 0
+		self.time_delta = 0
 		self.timestamp = None
 		pass
 
@@ -930,6 +931,7 @@ class StatusResponse:
 		self.encode_battery_level(ostream)
 		self.encode_pdm_data(ostream)
 		self.encode_scan_data(ostream)
+		self.encode_time_delta(ostream)
 		pass
 
 	def encode_clock_status(self, ostream):
@@ -951,10 +953,14 @@ class StatusResponse:
 		ostream.write(struct.pack('<h', self.pdm_data))
 
 	def encode_scan_data(self, ostream):
-		ostream.write(struct.pack('<b', self.scan_data))		
+		ostream.write(struct.pack('<b', self.scan_data))
+
+	def encode_time_delta(self, ostream):
+		ostream.write(struct.pack('<i', self.time_delta))
 
 	def encode_timestamp(self, ostream):
 		self.timestamp.encode_internal(ostream)
+
 
 
 	@classmethod
@@ -971,6 +977,7 @@ class StatusResponse:
 		self.decode_imu_status(istream)
 		self.decode_battery_level(istream)
 		self.decode_pdm_data(istream)
+		self.decode_time_delta(istream)
 		self.decode_timestamp(istream)
 		self.decode_scan_data(istream)
 		pass
@@ -1002,9 +1009,13 @@ class StatusResponse:
 	def decode_scan_data(self, istream):
 		self.scan_data= (struct.unpack('<b', istream.buf[10])[0] << 8) + struct.unpack('<B', (istream.buf[9]))[0]
 
+	def decode_time_delta(self, istream):
+		self.time_delta= struct.unpack('<i', istream.read(4))[0]
+
 	def decode_timestamp(self, istream):
 		self.timestamp = Timestamp()
 		self.timestamp.decode_internal(istream)
+
 
 
 class StartMicrophoneResponse:
