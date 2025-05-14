@@ -27,9 +27,12 @@ if __name__ == "__main__":
     print("Type help for a list commands")
     sys.stdout.flush()
     ti = timeout_input(poll_period=0.05)
-    while True:
-        command = ti.input(prompt='> ', timeout=sync_frequency,
+
+    def ti_input(prompt):
+        return ti.input(prompt=prompt, timeout=sync_frequency,
                      extend_timeout_with_input=False, require_enter_to_confirm=True)
+    while True:
+        command = ti_input(prompt='> ')
 
         if command == "start_all":
             if do_synchronization is True:
@@ -58,8 +61,7 @@ if __name__ == "__main__":
             sys.stdout.flush()
 
             while True:
-                command = ti.input(prompt='Midge Connection >', timeout=sync_frequency,
-                                   extend_timeout_with_input=False, require_enter_to_confirm=True)
+                command = ti_input(prompt='Midge Connection >')
 
                 if command == "":
                     if do_synchronization is True:
@@ -79,9 +81,8 @@ if __name__ == "__main__":
                         continue
                     print ("Connected to the midge. For available commands, type help.")
                     while True:
-                        command = ti.input(prompt='Midge: ' + str(midge_id) + ' >', timeout=sync_frequency,
-                                   extend_timeout_with_input=False, require_enter_to_confirm=True)
-                        command_args = command.split(" ")
+                        command = ti_input(prompt='Midge: ' + str(midge_id) + ' >')
+                        
                         if command == "exit":
                             cur_connection.disconnect()
                             print("Midge disconnected")
@@ -92,6 +93,7 @@ if __name__ == "__main__":
                                 synchronise_and_check_all_devices(df, skip_id=midge_id, conn_skip_id=cur_connection)
                         elif command != "":
                             try:
+                                command_args = command.split(" ")
                                 out = choose_function(cur_connection, command_args[0])
                                 if out is not None:
                                     print (out)
