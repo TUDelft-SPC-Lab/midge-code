@@ -1,5 +1,5 @@
-from hub_connection_V1 import Connection
-import signal,sys,tty,termios
+from hub_connection import Connection
+import sys,tty,termios
 import time
 from tqdm import tqdm
 

@@ -34,7 +34,7 @@ Note that the bluepy dependency only works on linux.
 4. Start recording 
     * Use `badge_gui.py` if you have 5 or less midges.
     This provides a nice GUI interface to control them.
-    * Use the `hub_V1.py` if you have 6 or more midges.
+    * Use the `hub.py` if you have 6 or more midges.
     This provides a command line script that can control multiple midges at sequentially.
 5. Stop recording
 6. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
