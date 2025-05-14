@@ -28,6 +28,6 @@ int8_t drv_audio_get_gain_l(void);
 int8_t drv_audio_get_gain_r(void);
 int16_t drv_audio_get_pdm_freq(void);
 
-ret_code_t drv_audio_init(nrf_pdm_mode_t mode);
+ret_code_t drv_audio_init(nrf_pdm_mode_t mode, uint64_t timestamp);
 
 #endif /* __DRV_AUDIO_PDM_H__ */
