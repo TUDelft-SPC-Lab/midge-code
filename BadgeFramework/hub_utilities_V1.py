@@ -28,6 +28,9 @@ def choose_function(connection,input):
         return
 
 def start_recording_all_devices(df):
+    print("Start recording of all devices.")
+    sys.stdout.flush()
+
     for _, row in tqdm(df.iterrows(), total=df.shape[0]):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
@@ -44,7 +47,13 @@ def start_recording_all_devices(df):
             print(error)
             cur_connection.disconnect()
 
+    print("Devices are recording.")
+    sys.stdout.flush()
+
 def stop_recording_all_devices(df):
+    print("Stopping the recording of all devices.")
+    sys.stdout.flush()
+
     for _, row in tqdm(df.iterrows(), total=df.shape[0]):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
@@ -60,7 +69,13 @@ def stop_recording_all_devices(df):
             print(str(error))
             cur_connection.disconnect()
 
+    print("Devices are stopped.")
+    sys.stdout.flush()
+
 def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None):
+    print('Synchronisation is starting. Please wait till it ends.')
+    sys.stdout.flush()
+
     for _, row in tqdm(df.iterrows(), total=df.shape[0]):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
@@ -93,6 +108,9 @@ def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None):
             sys.stdout.flush()
             if cur_connection != conn_skip_id:
                 cur_connection.disconnect()
+
+    print('Synchronisation is finished.')
+    sys.stdout.flush()
 
 class timeout_input(object):
     def __init__(self, poll_period=0.05):
