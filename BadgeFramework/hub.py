@@ -14,8 +14,8 @@ from hub_utilities import (
 def print_hub_commands():
     print(" start_all: starts recording on all midges with all sensors")
     print(" stop_all: stops the recording on all midges")
-    print(" erase_sdc_all: erase the recorded data on all midges")
-    print(" get_fw_version_all: show the firmware version of all of the midges")
+    print(" erase_all: erase the recorded data on all midges")
+    print(" fw_all: show the firmware version of all of the midges")
     print(" midge: connect to a single midge for individual management")
     print(" exit: stop and exit the hub script")
     print(" help: prints this help message")
@@ -50,12 +50,12 @@ if __name__ == "__main__":
             else:
                 do_synchronization = False
                 stop_recording_all_devices(df)
-        elif command == "erase_sdc_all":
+        elif command == "erase_all":
             if do_synchronization is True:
                 print("Devices are recording, will not erase.")
             else:
                 erase_sdcard_all_devices(df)
-        elif command == "get_fw_version_all":
+        elif command == "fw_all":
             print_fw_version_all_devices(df)
         elif command == "help":
             print_hub_commands()
