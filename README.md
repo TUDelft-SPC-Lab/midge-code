@@ -32,14 +32,14 @@ Note that the bluepy dependency only works on linux.
         bluetoothctl > /dev/null 2>&1 && bluetoothctl devices | grep HDBDG
         ```
 4. Start recording 
-    * Use `badge_gui.py` if you have 5 or less midges.
+    * Use `badge_gui.py` if you have 5 or fewer midges.
     This provides a nice GUI interface to control them.
     * Use the `hub.py` if you have 6 or more midges.
     This provides a command line script that can control multiple midges at sequentially.
 5. Stop recording
 6. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
    plug it in the computer) 
-7. Run processing data scripts to transform the raw data into common file formats: `imu_parser_V0.py` and `audio_parser_V0.py`
+7. Run processing data scripts to transform the raw data into common file formats: `imu_parser.py` and `audio_parser.py`
 
 # Firmware development
 ## Environment Setup:
@@ -230,7 +230,7 @@ The name of the file indicates the parameters used for recording with the genera
     - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (~16KHz)
     - `LO`: Audio recording where data is decimated to obtain a low-frequency only recording 
 
-To decode the audio files, use the `audio_parser_V0.py` script or decode in Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser_V0.py`.
+To decode the audio files, use the `audio_parser.py` script or decode in Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser.py`.
 
 > The base platform sample rate is obtained via the calculation: 
 `(PDM_CLK_SOURCE/PDM_CLK_DIVIDER)/PDM_TO_PCM_DIV`. In the current HW, 
