@@ -5,6 +5,7 @@ _build/*
 __pycache/
 .vscode/c_cpp_properties.json
 .vscode/settings.json
+.idea/
 .devenv/
 .direnv/
 data/

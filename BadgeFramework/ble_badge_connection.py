@@ -11,7 +11,7 @@ from bluepy import btle
 from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
 from bluepy.btle import BTLEException
 import struct
-import Queue
+import queue
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class BLEBadgeConnection(BadgeConnection):
 
 
 		# Contains the bytes recieved from the device. Held here until an entire message is recieved.
-		self.rx_queue = Queue.Queue()
+		self.rx_queue = queue.Queue()
 
 
 		BadgeConnection.__init__(self)
@@ -93,10 +93,10 @@ class BLEBadgeConnection(BadgeConnection):
 	# primitives to send data to other threads.
 
 	def received(self,data):
-		logger.debug("Recieved {}".format(data.encode("hex")))
+		logger.debug("Recieved {}".format(str(data)))
 
-		for b in data:
-			self.rx_queue.put(b)
+		for i in range(len(data)):
+			self.rx_queue.put(data[i:i+1])
 
 
 	# Implements BadgeConnection's connect() spec.
@@ -153,7 +153,7 @@ class BLEBadgeConnection(BadgeConnection):
 		if rx_bytes_expected > 0:
 			while True:
 				while(not self.rx_queue.empty()):
-					rx_message += self.rx_queue.get()
+					rx_message += str(self.rx_queue.get())
 					if(len(rx_message) == rx_bytes_expected):
 						return rx_message
 

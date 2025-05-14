@@ -21,4 +21,4 @@ for dev in devices:
             midges.append(dev)
 
 for midge in midges:
-    print "Device %s, RSSI=%d dB" % (midge.addr, midge.rssi)
+    print("Device %s, RSSI=%d dB" % (midge.addr, midge.rssi))
