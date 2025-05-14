@@ -104,8 +104,13 @@ class Connection():
 
     def handle_sdc_erase(self):
         try:
-            out = (self.badge.sdc_errase_all())
-            return out
+            return self.badge.sdc_errase_all()
+        except:
+            raise Exception("Could not erase the sdcard for participant " + str(self.badge_id))
+
+    def handle_fw_version(self):
+        try:
+            return self.badge.get_fw_version().version
         except:
             raise Exception("Could not erase the sdcard for participant " + str(self.badge_id))
 
@@ -134,6 +139,7 @@ class Connection():
         print(" identify")
         print(" restart")
         print(" get_free_space")
+        print(" get_fw_version")
         print(" help")
         print(" All commands use current system time as transmitted time.")
         sys.stdout.flush()
