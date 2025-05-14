@@ -102,6 +102,13 @@ class Connection():
         except:
             raise Exception("Could not get free space for participant " + str(self.badge_id))
 
+    def handle_sdc_erase(self):
+        try:
+            out = (self.badge.sdc_errase_all())
+            return out
+        except:
+            raise Exception("Could not erase the sdcard for participant " + str(self.badge_id))
+
     def start_recording_all_sensors(self):
         self.handle_status_request()
         self.handle_start_scan_request()
