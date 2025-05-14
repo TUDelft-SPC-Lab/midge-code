@@ -17,6 +17,7 @@ def choose_function(connection,input):
         "stop_imu": connection.handle_stop_imu_request,
         "identify": connection.handle_identify_request,
         "restart": connection.handle_restart_request,
+        "erase_sdcard": connection.handle_sdc_erase,
         "get_free_space": connection.handle_get_free_space,
     }
     func = chooser.get(input, lambda: "Invalid command!")
@@ -110,6 +111,28 @@ def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None):
                 cur_connection.disconnect()
 
     print('Synchronisation is finished.')
+    sys.stdout.flush()
+
+def erase_sdcard_all_devices(df):
+    print("Erase sdcard of all devices.")
+    sys.stdout.flush()
+
+    for _, row in tqdm(df.iterrows(), total=df.shape[0]):
+        current_participant = row['Participant Id']
+        current_mac = row['Mac Address']
+        try:
+            cur_connection=Connection(current_participant,current_mac)
+        except Exception as error:
+            print(str(error) + ', sensors are not stopped.')
+            continue
+        try:
+            cur_connection.handle_sdc_erase()
+            cur_connection.disconnect()
+        except Exception as error:
+            print(str(error))
+            cur_connection.disconnect()
+
+    print("Devices are stopped.")
     sys.stdout.flush()
 
 class timeout_input(object):
