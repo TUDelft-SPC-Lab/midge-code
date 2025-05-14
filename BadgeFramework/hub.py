@@ -1,6 +1,6 @@
 import pandas as pd
 import sys
-from hub_utilities_V1 import (
+from hub_utilities import (
     timeout_input,
     start_recording_all_devices,
     stop_recording_all_devices,
