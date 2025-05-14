@@ -31,7 +31,11 @@ Note that the bluepy dependency only works on linux.
         (echo -e 'power on\nscan on\n'; sleep 5; echo 'scan off') | \
         bluetoothctl > /dev/null 2>&1 && bluetoothctl devices | grep HDBDG
         ```
-4. Start recording via `hub_V1.py` or the `badge_gui.py` scripts using the previous MAC addresses
+4. Start recording 
+    * Use `badge_gui.py` if you have 5 or less midges.
+    This provides a nice GUI interface to control them.
+    * Use the `hub_V1.py` if you have 6 or more midges.
+    This provides a command line script that can control multiple midges at sequentially.
 5. Stop recording
 6. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
    plug it in the computer) 
