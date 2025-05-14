@@ -54,11 +54,11 @@ if __name__ == "__main__":
             print_hub_commands()
             sys.stdout.flush()
         elif command == "midge":
-            print('Please type the id of the Midge you want to connect or exit.')
+            print('Type the id of the Midge you want to connect or exit.')
             sys.stdout.flush()
 
             while True:
-                command = ti.input(prompt=' >', timeout=sync_frequency,
+                command = ti.input(prompt='Midge Connection >', timeout=sync_frequency,
                                    extend_timeout_with_input=False, require_enter_to_confirm=True)
 
                 if command == "":
@@ -77,9 +77,9 @@ if __name__ == "__main__":
                         print (str(error))
                         sys.stdout.flush()
                         continue
-                    print ("Connected to the badge. For available commands, please type help.")
+                    print ("Connected to the midge. For available commands, type help.")
                     while True:
-                        command = ti.input(prompt=' >', timeout=sync_frequency,
+                        command = ti.input(prompt='Midge: ' + str(midge_id) + ' >', timeout=sync_frequency,
                                    extend_timeout_with_input=False, require_enter_to_confirm=True)
                         command_args = command.split(" ")
                         if command == "exit":
@@ -88,7 +88,6 @@ if __name__ == "__main__":
                             sys.stdout.flush()
                             break
                         elif command == "":
-                            print("Sync in single midge connected")
                             if do_synchronization is True:
                                 synchronise_and_check_all_devices(df, skip_id=midge_id, conn_skip_id=cur_connection)
                         elif command != "":
@@ -114,5 +113,5 @@ if __name__ == "__main__":
             if do_synchronization is True:
                 synchronise_and_check_all_devices(df)
         else:
-            print('Unknown command.')
+            print('Unknown command. Type help for a list of valid commands.')
             sys.stdout.flush()
