@@ -143,7 +143,6 @@ ret_code_t drv_audio_init(nrf_pdm_mode_t mode)
 	{
 		pdm_buf[l].released = true;
 	}
-	data_source_info.data_source = AUDIO;
 
 	nrfx_pdm_config_t pdm_cfg = NRFX_PDM_DEFAULT_CONFIG(MIC_CLK, MIC_DOUT);
 

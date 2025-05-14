@@ -611,8 +611,10 @@ static void status_request_handler(void * p_event_data, uint16_t event_size) {
 		
 		advertiser_set_badge_assignement(badge_assignement);
 	}
+	int32_t error_millis = systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
+	advertiser_set_status_flag_is_clock_synced(1);
 	
-	app_sched_event_put(NULL, 0, status_response_handler);
+	app_sched_event_put(&error_millis, sizeof(error_millis), status_response_handler);
 }
 
 
@@ -685,7 +687,6 @@ static void start_imu_request_handler(void * p_event_data, uint16_t event_size)
 	NRF_LOG_INFO("REQUEST_HANDLER: Start imu with acc_fsr: %d, gyr_fsr: %d, datarate: %d", acc_fsr, gyr_fsr, datarate);
 	
 	ret_code_t ret = sampling_start_imu(acc_fsr, gyr_fsr, datarate);
-	NRF_LOG_INFO("REQUEST_HANDLER: Ret sampling_start_imu: %d", ret);
 
 	if(ret == NRF_SUCCESS) {
 		app_sched_event_put(NULL, 0, start_imu_response_handler);
