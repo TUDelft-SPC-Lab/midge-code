@@ -17,7 +17,7 @@ It also contains the python scripts that are used for controlling the midge, rec
 
 ## Requirements
 1. Create a python2 virtual environment and activate it.
-2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn hatch hatch-vcs`.
+2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn hatch hatch-vcs tqdm`.
 3. Install [Tkinter](https://wiki.python.org/moin/TkInter).
 
 Note that the bluepy dependency only works on linux.

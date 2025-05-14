@@ -2,70 +2,124 @@ import pandas as pd
 import sys
 from hub_utilities_V1 import *
 
+def print_hub_commands():
+    print(" start_all: starts recording on all midges with all sensors")
+    print(" stop_all: stops the recording on all midges")
+    print(" midge: connect to a single midge for individual management and checks")
+    print(" exit: stop and exit the hub script")
+    print(" help: prints this help message")
+    sys.stdout.flush()
+
 if __name__ == "__main__":
+    sync_frequency = 10.0 # How frequent the synchronisation is triggered, defaults to every 10 seconds
+
     df = pd.read_csv('sample_mapping_file.csv')
+    do_synchronization = False
+    print("Type help for a list commands")
+    sys.stdout.flush()
+    ti = timeout_input(poll_period=0.05)
     while True:
-        print("Type start to start data collection or stop to finish data collection.")
-        sys.stdout.write("> ")
-        sys.stdout.flush()
-        command = sys.stdin.readline()[:-1]
-        if command == "start":
-            start_recording_all_devices(df)
+        command = ti.input(prompt='> ', timeout=sync_frequency,
+                     extend_timeout_with_input=False, require_enter_to_confirm=True)
+
+        if command == "start_all":
+            if do_synchronization is True:
+                print("Devices are already recording.")
+                sys.stdout.flush()
+            else:
+                print("Start recording of all devices.")
+                sys.stdout.flush()
+                start_recording_all_devices(df)
+                do_synchronization = True
+                print("Devices are recording.")
+                sys.stdout.flush()
+        elif command == "stop_all":
+            if do_synchronization is False:
+                print("Devices are not recording.")
+                sys.stdout.flush()
+            else:
+                print("Stopping the recording of all devices.")
+                sys.stdout.flush()
+                do_synchronization = False
+                stop_recording_all_devices(df)
+                print("Devices are stopped.")
+                sys.stdout.flush()
+        elif command == "help":
+            print_hub_commands()
+            sys.stdout.flush()
+        elif command == "midge":
+            print('Please type the id of the Midge you want to connect or exit.')
+            sys.stdout.flush()
+
             while True:
-                ti = timeout_input(poll_period=0.05)
-                s = ti.input(prompt='Type int if you would like to enter interactive shell.\n'+'>', timeout=10.0,
-                            extend_timeout_with_input=False, require_enter_to_confirm=True)
-                if s == "int":
-                    print("Welcome to the interactive shell. Please type the id of the Midge you want to connect.")
-                    print("Type exit if you would like to stop recording for all devices.")
-                    sys.stdout.write("> ")
+                command = ti.input(prompt=' >', timeout=sync_frequency,
+                                   extend_timeout_with_input=False, require_enter_to_confirm=True)
+
+                if command == "":
+                    print("Sync in single midge selection")
+                    if do_synchronization is True:
+                        print('Synchronisation is starting. Please wait until it ends.')
+                        synchronise_and_check_all_devices(df)
+                        print('Synchronisation is finished.')
+                        sys.stdout.flush()
+                elif command == "exit":
+                    print("Exited single midge management")
                     sys.stdout.flush()
-                    command = sys.stdin.readline()[:-1]
-                    if command == "exit":
-                        print("Stopping the recording of all devices.")
-                        sys.stdout.flush()
-                        stop_recording_all_devices(df)
-                        print("Devices are stopped.")
-                        sys.stdout.flush()
-                        break
-                    command_args = command.split(" ")
-                    current_mac_addr= (df.loc[df['Participant Id'] == int(command)]['Mac Address']).values[0]
+                    break
+                else:
                     try:
-                        cur_connection = Connection(int(command),current_mac_addr)
+                        midge_id = int(command)
+                        current_mac_addr = (df.loc[df['Participant Id'] == midge_id]['Mac Address']).values[0]
+                        cur_connection = Connection(midge_id, current_mac_addr)
                     except Exception as error:
                         print (str(error))
                         sys.stdout.flush()
                         continue
                     print ("Connected to the badge. For available commands, please type help.")
-                    sys.stdout.flush()
                     while True:
-                        sys.stdout.write("> ")
-                        command = sys.stdin.readline()[:-1]
+                        command = ti.input(prompt=' >', timeout=sync_frequency,
+                                   extend_timeout_with_input=False, require_enter_to_confirm=True)
                         command_args = command.split(" ")
                         if command == "exit":
                             cur_connection.disconnect()
-                            break
-                        try:
-                            out = choose_function(cur_connection,command_args[0])
-                            if out != None:
-                                print (out)
-                                sys.stdout.flush()
-                        except Exception as error:
-                            print (str(error))
-                            print(" Command not found!")
+                            print(" Midge disconnected")
                             sys.stdout.flush()
-                            cur_connection.print_help()
-                            continue
-                else:
-                    print('Synchronisation is starting. Please wait till it ends.')
-                    synchronise_and_check_all_devices(df)
-                    print('Synchronisation is finished.')
-                    sys.stdout.flush()
-        elif command == "stop":
-            print("Stopping data collection.")
+                            break
+                        if command != "":
+                            try:
+                                out = choose_function(cur_connection, command_args[0])
+                                if out != None:
+                                    print (out)
+                                    sys.stdout.flush()
+                            except Exception as error:
+                                print (str(error))
+                                print(" Command not found!")
+                                sys.stdout.flush()
+                                cur_connection.print_help()
+                                continue
+                        elif command == "":
+                            print("Sync in single midge connected")
+                            if do_synchronization is True:
+                                print('Synchronisation is starting. Please wait till it ends.')
+                                synchronise_and_check_all_devices(df, skip_id=midge_id, conn_skip_id=cur_connection)
+                                print('Synchronisation is finished.')
+                                sys.stdout.flush()
+        elif command == "":
+            if do_synchronization is True:
+                print('Synchronisation is starting. Please wait till it ends.')
+                synchronise_and_check_all_devices(df)
+                print('Synchronisation is finished.')
+                sys.stdout.flush()
+        elif command == "exit":
+            print("Exit hub script.")
             sys.stdout.flush()
+            if do_synchronization:
+                print("Stopping the recording of all devices.")
+                sys.stdout.flush()
+                do_synchronization = False
+                stop_recording_all_devices(df)
+                print("Devices are stopped.")
             quit(0)
         else:
-            print("Command not found, please type start or stop to start or stop data collection.")
+            print('Unknown command.')
             sys.stdout.flush()
-
