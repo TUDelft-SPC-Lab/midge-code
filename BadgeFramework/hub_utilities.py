@@ -62,7 +62,8 @@ def stop_recording_all_devices(df):
             print(str(error))
             cur_connection.disconnect()
 
-def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None):
+def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, show_status = True):
+    status_all = []
     for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Synchronsing'):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
@@ -86,15 +87,22 @@ def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None):
             if out.scan_status == 0:
                 print ('Scan is not recording for participant ' + str(current_participant))
             if out.clock_status == 0:
-                print ('Cant synch for participant ' + str(current_participant))
+                print ('Cant sync for participant ' + str(current_participant))
             sys.stdout.flush()
             if cur_connection != conn_skip_id:
                 cur_connection.disconnect()
+
+            status_all.append(out)
         except Exception as error:
             print(error)
             sys.stdout.flush()
             if cur_connection != conn_skip_id:
                 cur_connection.disconnect()
+            status_all.append("Error")
+
+    if show_status:
+        for out, (_, row) in zip(status_all, df.iterrows()):
+            print('\t Midge: ' + str(row['Participant Id']) + " -- " + str(out))
 
 def erase_sdcard_all_devices(df):
     for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Erasing sdcard'):
