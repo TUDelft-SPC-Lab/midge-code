@@ -17,12 +17,14 @@ def print_hub_commands():
     print(" erase_all: erase the recorded data on all midges")
     print(" fw_all: show the firmware version of all of the midges")
     print(" midge: connect to a single midge for individual management")
+    print(" toggle_show_status: toggle whether to show the status of the midges after synchronisation")
     print(" exit: stop and exit the hub script")
     print(" help: prints this help message")
     sys.stdout.flush()
 
 if __name__ == "__main__":
     sync_frequency = 10.0 # How frequent the synchronisation is triggered, defaults to every 10 seconds
+    show_status_on_sync = True # Show the status of the midge after synchronisation
 
     df = pd.read_csv('sample_mapping_file.csv')
     do_synchronization = False
@@ -69,7 +71,7 @@ if __name__ == "__main__":
 
                 if command == "":
                     if do_synchronization is True:
-                        synchronise_and_check_all_devices(df)
+                        synchronise_and_check_all_devices(df, show_status=show_status_on_sync)
                 elif command == "exit":
                     print("Exited single midge management")
                     sys.stdout.flush()
@@ -94,7 +96,10 @@ if __name__ == "__main__":
                             break
                         elif command == "":
                             if do_synchronization is True:
-                                synchronise_and_check_all_devices(df, skip_id=midge_id, conn_skip_id=cur_connection)
+                                synchronise_and_check_all_devices(df,
+                                                                  skip_id=midge_id,
+                                                                  conn_skip_id=cur_connection,
+                                                                  show_status=show_status_on_sync)
                         elif command != "":
                             try:
                                 command_args = command.split(" ")
@@ -108,6 +113,10 @@ if __name__ == "__main__":
                                 sys.stdout.flush()
                                 cur_connection.print_help()
                                 continue
+        elif command == "toggle_show_status":
+            show_status_on_sync = not show_status_on_sync
+            print("Show status on synchronisation: " + str(show_status_on_sync))
+            sys.stdout.flush()
         elif command == "exit":
             print("Exit hub script.")
             sys.stdout.flush()
@@ -117,7 +126,7 @@ if __name__ == "__main__":
             quit(0)
         elif command == "":
             if do_synchronization is True:
-                synchronise_and_check_all_devices(df)
+                synchronise_and_check_all_devices(df, show_status=show_status_on_sync)
         else:
             print('Unknown command. Type help for a list of valid commands.')
             sys.stdout.flush()
