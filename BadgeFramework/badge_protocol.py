@@ -13,6 +13,7 @@ Request_free_sdc_space_request_tag = 30
 Request_sdc_errase_all_request_tag = 31
 Request_get_imu_data_request_tag = 33
 Request_get_fw_version_request_tag = 35
+Request_list_files_request_tag = 37
 
 Response_status_response_tag = 1
 Response_start_microphone_response_tag = 2
@@ -22,6 +23,9 @@ Response_free_sdc_space_response_tag = 5
 Response_sdc_errase_all_response_tag = 32
 Response_get_imu_data_response_tag = 34
 Response_get_fw_version_response_tag = 36
+Response_list_files_response_tag = 38
+
+MAX_FILENAME_LENGTH = 32
 
 class _Ostream:
 	def __init__(self):
@@ -706,6 +710,50 @@ class GetFWVersionRequest:
 		self.reset()
 		pass	
 
+class ListFilesRequest:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.start_index = 0
+		self.max_files = 3
+	
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+	
+	def encode_internal(self, ostream):
+		self.encode_start_index(ostream)
+		self.encode_max_files(ostream)
+
+	def encode_start_index(self, ostream):
+		ostream.write(struct.pack('<B', self.start_index))
+	
+	def encode_max_files(self, ostream):
+		ostream.write(struct.pack('<B', self.max_files))
+	
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+	
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_start_index(istream)
+		self.decode_max_files(istream)
+
+	def decode_start_index(self, istream):
+		self.start_index = struct.unpack('<B', istream.read(1))[0]
+
+	def decode_max_files(self, istream):
+		self.max_files = struct.unpack('<B', istream.read(1))[0]
+		
+
 class Request:
 
 	def __init__(self):
@@ -762,6 +810,7 @@ class Request:
 			self.sdc_errase_all_request = None
 			self.get_imu_data_request = None
 			self.get_fw_version_request = None
+			self.list_files_request = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -780,6 +829,7 @@ class Request:
 				31: self.encode_sdc_errase_all_request,
 				33: self.encode_get_imu_data_request,
 				35: self.encode_get_fw_version_request,
+				37: self.encode_list_files_request,
 			}
 			options[self.which](ostream)
 			pass
@@ -823,6 +873,9 @@ class Request:
 		def encode_get_fw_version_request(self, ostream):
 			self.get_fw_version_request.encode_internal(ostream)
 
+		def encode_list_files_request(self, ostream):
+			self.list_files_request.encode_internal(ostream)
+
 		def decode_internal(self, istream):
 			self.reset()
 			self.which= struct.unpack('<B', istream.read(1))[0]
@@ -840,6 +893,7 @@ class Request:
 				31: self.decode_sdc_errase_all_request,
 				33: self.decode_get_imu_data_request,
 				35: self.decode_get_fw_version_request,
+				37: self.decode_list_files_request,
 			}
 			options[self.which](istream)
 			pass
@@ -895,6 +949,10 @@ class Request:
 		def decode_get_fw_version_request(self, istream):
 			self.get_fw_version_request = GetFWVersionRequest()
 			self.get_fw_version_request.decode_internal(istream)	
+		
+		def decode_list_files_request(self, istream):
+			self.list_files_request = ListFilesRequest()
+			self.list_files_request.decode_internal(istream)
 
 
 class StatusResponse:
@@ -1537,6 +1595,75 @@ class GetFWVersionResponse:
 	def decode_fw_version(self, istream):
 		self.version = str(istream.buf[3:+32])
 
+class FileInfo:
+	def __init__(self):
+		self.filename = ""
+		self.file_size = 0
+		self.timestamp = None
+
+class ListFilesResponse:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.header = type('obj', (object,), {
+			'file_count': 0,
+			'total_files': 0,
+			'start_index': 0,
+		})()
+		self.files = []
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+	
+	def encode_internal(self, ostream):
+		self.encode_header(ostream)
+		self.encode_files(ostream)
+
+	def encode_header(self, ostream):
+		ostream.write(struct.pack('<B', self.header.file_count))
+		ostream.write(struct.pack('<B', self.header.total_files))
+		ostream.write(struct.pack('<B', self.header.start_index))
+
+	def encode_files(self, ostream):
+		for i in range(self.header.file_count):
+			file_info = self.files[i] if i < len(self.files) else FileInfo()
+			filename_bytes = file_info.filename.encode('utf-8')[:MAX_FILENAME_LENGTH-1]
+			filename_bytes += b'\x00' * (MAX_FILENAME_LENGTH - len(filename_bytes))
+			ostream.write(filename_bytes)
+			ostream.write(struct.pack('<I', file_info.file_size))
+			ostream.write(struct.pack('<I', file_info.timestamp))
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+	
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_header(istream)
+		self.decode_files(istream)
+
+	def decode_header(self, istream):
+		self.header.file_count = struct.unpack('<B', istream.read(1))[0]
+		self.header.total_files = struct.unpack('<B', istream.read(1))[0]
+		self.header.start_index = struct.unpack('<B', istream.read(1))[0]
+
+	def decode_files(self, istream):
+		for i in range(self.header.file_count):
+			file_info = FileInfo()
+			filename_bytes = istream.read(MAX_FILENAME_LENGTH)
+			file_info.filename = filename_bytes.rstrip(b'\x00').decode('utf-8')
+			file_info.file_size = struct.unpack('<I', istream.read(4))[0]
+			file_info.timestamp = struct.unpack('<I', istream.read(4))[0]
+			self.files.append(file_info)
+
 class Response:
 
 	def __init__(self):
@@ -1588,6 +1715,7 @@ class Response:
 			self.sdc_errase_all_response = None
 			self.get_imu_data_response = None
 			self.get_fw_version_response = None
+			self.list_files_response = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -1601,6 +1729,7 @@ class Response:
 				32: self.encode_sdc_errase_all_response,
 				34: self.encode_get_imu_data_response,
 				36: self.encode_get_fw_version_response,
+				38: self.encode_list_files_response,
 			}
 			options[self.which](ostream)
 			pass
@@ -1629,6 +1758,9 @@ class Response:
 		def encode_get_fw_version(self, ostream):
 			self.get_fw_version.encode_internal(ostream)	
 
+		def encode_list_files_response(self, ostream):
+			self.list_files_response.encode_internal(ostream)
+
 		def decode_internal(self, istream):
 			self.reset()
 			self.which= struct.unpack('<B', istream.read(1))[0]
@@ -1641,6 +1773,7 @@ class Response:
 				32: self.decode_sdc_errase_all_response,
 				34: self.decode_get_imu_data_response,
 				36: self.decode_get_fw_version_response,
+				38: self.decode_list_files_response,
 			}
 			options[self.which](istream)
 			pass
@@ -1676,3 +1809,7 @@ class Response:
 		def decode_get_fw_version_response(self, istream):
 			self.get_fw_version_response = GetFWVersionResponse()
 			self.get_fw_version_response.decode_internal(istream)			
+
+		def decode_list_files_response(self, istream):
+			self.list_files_response = ListFilesResponse()
+			self.list_files_response.decode_internal(istream)

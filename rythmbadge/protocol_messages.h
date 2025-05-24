@@ -16,6 +16,7 @@
 #define Request_sdc_errase_all_request_tag 31
 #define Request_get_imu_data_request_tag 33
 #define Request_get_fw_version_request_tag 35
+#define Request_list_files_request_tag 37
 
 #define Response_status_response_tag 1
 #define Response_start_microphone_response_tag 2
@@ -25,6 +26,9 @@
 #define Response_sdc_errase_all_response_tag 32
 #define Response_get_imu_data_response_tag 34
 #define Response_get_fw_version_response_tag 36
+#define Response_list_files_response_tag 38
+
+#define MAX_FILENAME_LENGTH 32
 
 typedef struct __attribute__((__packed__)) {
 	uint32_t seconds;
@@ -88,6 +92,11 @@ typedef struct {
 typedef struct{
 } GetFWVersionRequest; 
 
+typedef struct {
+	uint8_t start_index; // pagination
+	uint8_t max_files; 
+} ListFilesRequest;
+
 
 typedef struct __attribute__((__packed__)) {
 	uint8_t which_type;
@@ -105,6 +114,7 @@ typedef struct __attribute__((__packed__)) {
 		ErraseAllRequest sdc_errase_all_request;
 		GetIMUDataRequest get_imu_data_request;
 		GetFWVersionRequest get_fw_version_request;
+		ListFilesRequest list_files_request;
 	} type;
 } Request;
 
@@ -175,6 +185,23 @@ typedef struct{
 	char version[VERSION_STR_SZ];
 } GetFWVersionResponse; 
 
+typedef struct {
+	uint8_t file_count;
+	uint8_t total_files;
+	uint8_t start_index;
+} ListFilesResponseHeader;
+
+typedef struct {
+	char filename[MAX_FILENAME_LENGTH];
+	uint32_t file_size;
+	uint32_t timestamp;
+} FileInfo;
+
+typedef struct {
+	ListFilesResponseHeader header;
+	FileInfo files[3]; // TODO: Adjust based on packet size contraints
+} ListFilesResponse;
+
 //typedef struct __attribute__((__packed__)) {
 typedef struct {
 	uint8_t which_type;
@@ -187,6 +214,7 @@ typedef struct {
 		ErraseAllResponse sdc_errase_all_response;
 		GetIMUDataResponse get_imu_data_response;
 		GetFWVersionResponse get_fw_version_response;
+		ListFilesResponse list_files_response;
 	} type;
 } Response;
 

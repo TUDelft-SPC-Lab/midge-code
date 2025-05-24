@@ -54,6 +54,7 @@ class OpenBadge(object):
         self.sdc_errase_all_response_queue = Queue.Queue()
         self.get_imu_data_response_queue = Queue.Queue()
         self.get_fw_version_response_queue = Queue.Queue()
+        self.list_files_response_queue = Queue.Queue()
         
 
     # Helper function to send a BadgeMessage `command_message` to a device, expecting a response
@@ -372,4 +373,41 @@ class OpenBadge(object):
         version_response = self.get_fw_version_response_queue.get()
         version_response.version = version_response.version.replace("\x00", "")
         return version_response
+        return self.get_fw_version_response_queue.get()
+    
+    def list_files(self, start_index=0):
+
+        files = []
+        current_start = start_index
+
+        while True:
+            request = Request()
+            request.type.which = Request_list_files_request_tag
+            request.type.list_files_request = ListFilesRequest()
+            request.type.list_files_request.max_files = 3
+
+            self.send_request(request)
+
+            with self.list_files_response_queue.mutex:
+                self.list_files_response_queue.queue.clear()
+
+            while self.list_files_response_queue.empty():
+                self.receive_response()
+
+            response = self.list_files_response_queue.get()
+
+            for i in range(response.header.file_count):
+                files.append({
+                    'filename': response.files[i].filename,
+                    'size': response.files[i].file_size,
+                    'timestamp': response.files[i].timestamp
+                })
+            
+            if (current_start + response.header.file_count) >= response.header.total_files:
+                break
+
+            current_start += response.header.file_count
+
+
+        return files
 

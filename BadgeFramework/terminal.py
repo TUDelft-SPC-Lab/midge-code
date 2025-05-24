@@ -50,6 +50,7 @@ def main():
 		print("  get_free_space")
 		print("  sdc_errase_all")
 		print("  get_imu_data")
+		print("  list_files")
 		print("  help")
 		print("All commands use current system time as transmitted time.")
 		print("Default arguments used where not specified.")
@@ -111,6 +112,33 @@ def main():
 	def handle_get_imu_data(args):
 		print(badge.get_imu_data())		
 
+	def handle_list_files(args):
+		try:
+			print("Listing files on badge...")
+			files = badge.list_files()
+			
+			if not files:
+				print("No files found on badge")
+				return
+			
+			total_size = sum(f['size'] for f in files)
+			print("\nFound {} files, total size: {:.1f} KB".format(len(files), total_size / 1024.0))
+			print("-" * 60)
+			print("{:<25} {:<15} {:<15}".format('Filename', 'Size (KB)', 'Timestamp'))
+			print("-" * 60)
+			
+			for file_info in files:
+				size_kb = file_info['size'] / 1024.0
+				timestamp = file_info.get('timestamp', 'N/A')
+				print("{:<25} {:<15.1f} {:<15}".format(file_info['filename'], size_kb, timestamp))
+			
+			print("-" * 60)
+			print("Total: {} files, {:.1f} KB".format(len(files), total_size / 1024.0))
+			
+		except Exception as e:
+			print("Error listing files: {}".format(e))
+
+
 
 	command_handlers = {
 		"help": print_help,
@@ -126,6 +154,7 @@ def main():
 		"get_free_space": handle_get_free_space,
 		"sdc_errase_all": handle_sdc_errase_all,
 		"get_imu_data": handle_get_imu_data,
+		"list_files": handle_list_files,
 	}
 
 	while True:
