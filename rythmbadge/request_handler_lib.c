@@ -16,6 +16,7 @@
 #include "nrf_log.h"
 #include "boards.h"
 #include "ble_lib.h"
+#include "file_download_lib.h"
 
 #define RECEIVE_NOTIFICATION_FIFO_SIZE					256		/**< Buffer size for the receive-notification FIFO. Has to be a power of two */
 #define AWAIT_DATA_TIMEOUT_MS							1000
@@ -74,6 +75,7 @@ static void sdc_errase_all_request_handler(void * p_event_data, uint16_t event_s
 
 static void get_imu_data_request_handler(void * p_event_data, uint16_t event_size);
 static void get_fw_version_request_handler(void * p_event_data, uint16_t evem_size);
+static void list_files_request_handler(void * p_event_data, uint16_t event_size);
 
 static void status_response_handler(void * p_event_data, uint16_t event_size);
 static void start_microphone_response_handler(void * p_event_data, uint16_t event_size);
@@ -82,6 +84,7 @@ static void start_imu_response_handler(void * p_event_data, uint16_t event_size)
 static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_size);
 static void sdc_errase_all_response_handler(void * p_event_data, uint16_t event_size);
 static void get_imu_data_response_handler(void * p_event_data, uint16_t event_size);
+static void list_files_response_handler(void * p_event_data, uint16_t event_size);
 
 static request_handler_for_type_t request_handlers[] = {
         {
@@ -135,7 +138,11 @@ static request_handler_for_type_t request_handlers[] = {
 		{
                 .type = Request_get_fw_version_request_tag,
                 .handler = get_fw_version_request_handler,
-        }
+        },
+		{
+				.type = Request_list_files_request_tag,
+				.handler = list_files_request_handler,
+		}
 };
 
 
@@ -595,6 +602,29 @@ static void get_fw_version_response_handler(void * p_event_data, uint16_t event_
 }
 
 
+static void list_files_response_handler(void * p_event_data, uint16_t event_size)
+{
+	if (start_response(list_files_response_handler) != NRF_SUCCESS)
+		return;
+
+	response_event.response.which_type = Response_list_files_response_tag;
+	response_event.response_retries = 0;
+
+	ListFilesRequest list_request = {
+		.start_index = request_event.request.type.list_files_request.start_index,
+		.max_files = request_event.request.type.list_files_request.max_files,
+	};
+
+	ret_code_t ret = list_files_handler(&list_request, &response_event.response.type.list_files_response);
+
+	if (ret != NRF_SUCCESS) {
+		NRF_LOG_WARNING("REQUEST_HANDLER: Error while listing files: %d\n", ret);
+		memset(&response_event.response.type.list_files_response, 0, sizeof(response_event.response.type.list_files_response));
+	}
+
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
 
 /**< These are the request handlers that actually call the response-handlers via the scheduler */
 
@@ -752,4 +782,14 @@ static void get_fw_version_request_handler(void * p_event_data, uint16_t event_s
 	NRF_LOG_INFO("REQUEST_HANDLER: get_fw_version\n");
 
 	app_sched_event_put(NULL, 0, get_fw_version_response_handler);
+}
+
+static void list_files_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: list_files\n");
+
+	if (sampling_get_sampling_configuration() != 0) {
+	}
+
+	app_sched_event_put(NULL, 0, list_files_response_handler);
 }
