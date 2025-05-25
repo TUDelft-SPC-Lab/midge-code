@@ -396,6 +396,7 @@ class OpenBadge(object):
             request.type.which = Request_list_files_request_tag
             request.type.list_files_request = ListFilesRequest()
             request.type.list_files_request.max_files = 3
+            request.type.list_files_request.start_index = current_start
 
             self.send_request(request)
 
@@ -548,7 +549,7 @@ class OpenBadge(object):
             return
 
         import os
-        os.makedirs(output_dir, exist_ok=True)
+        os.makedirs(output_dir)
         
         total_size = sum(f['size'] for f in files)
         print("Found {} files, total size: {:.1f} KB".format(len(files), total_size / 1024.0))
