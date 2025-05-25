@@ -76,6 +76,9 @@ static void sdc_errase_all_request_handler(void * p_event_data, uint16_t event_s
 static void get_imu_data_request_handler(void * p_event_data, uint16_t event_size);
 static void get_fw_version_request_handler(void * p_event_data, uint16_t evem_size);
 static void list_files_request_handler(void * p_event_data, uint16_t event_size);
+static void start_download_request_handler(void * p_event_data, uint16_t event_size);
+static void download_chunk_request_handler(void * p_event_data, uint16_t event_size);
+static void get_file_checksum_request_handler(void * p_event_data, uint16_t event_size);
 
 static void status_response_handler(void * p_event_data, uint16_t event_size);
 static void start_microphone_response_handler(void * p_event_data, uint16_t event_size);
@@ -85,6 +88,9 @@ static void free_sdc_space_response_handler(void * p_event_data, uint16_t event_
 static void sdc_errase_all_response_handler(void * p_event_data, uint16_t event_size);
 static void get_imu_data_response_handler(void * p_event_data, uint16_t event_size);
 static void list_files_response_handler(void * p_event_data, uint16_t event_size);
+static void start_download_response_handler(void * p_event_data, uint16_t event_size);
+static void download_chunk_response_handler(void * p_event_data, uint16_t event_size);
+static void get_file_checksum_response_handler(void * p_event_data, uint16_t event_size);
 
 static request_handler_for_type_t request_handlers[] = {
         {
@@ -142,6 +148,18 @@ static request_handler_for_type_t request_handlers[] = {
 		{
 				.type = Request_list_files_request_tag,
 				.handler = list_files_request_handler,
+		},
+		{
+				.type = Request_start_download_request_tag,
+				.handler = start_download_request_handler,
+		},
+		{
+				.type = Request_download_chunk_request_tag,
+				.handler = download_chunk_request_handler,
+		},
+		{
+				.type = Request_get_file_checksum_request_tag,
+				.handler = get_file_checksum_request_handler,
 		}
 };
 
@@ -626,6 +644,77 @@ static void list_files_response_handler(void * p_event_data, uint16_t event_size
 	send_response(NULL, 0);
 }
 
+static void start_download_response_handler(void * p_event_data, uint16_t event_size)
+{
+	if (start_response(start_download_response_handler) != NRF_SUCCESS)
+		return;
+
+	response_event.response.which_type = Response_start_download_response_tag;
+	response_event.response_retries = 0;
+
+	StartDownloadRequest download_request; 
+	strncpy(download_request.filename, 
+			request_event.request.type.start_download_request.filename, MAX_FILENAME_LENGTH);
+	download_request.filename[MAX_FILENAME_LENGTH - 1] = '\0'; // Ensure null-termination
+	
+	ret_code_t ret = start_download_handler(&download_request, &response_event.response.type.start_download_response);
+
+	if (ret != NRF_SUCCESS) {
+		response_event.response.type.start_download_response.success = 0;
+		NRF_LOG_WARNING("REQUEST_HANDLER: Error while starting download: %d\n", ret);
+	}
+
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
+
+static void download_chunk_response_handler(void * p_event_data, uint16_t event_size)
+{
+	if (start_response(download_chunk_response_handler) != NRF_SUCCESS)
+		return;
+
+	response_event.response.which_type = Response_download_chunk_response_tag;
+	response_event.response_retries = 0;
+
+	DownloadChunkRequest chunk_request = {
+		.chunk_index = request_event.request.type.download_chunk_request.chunk_index,
+	};
+
+	ret_code_t ret = download_chunk_handler(&chunk_request, &response_event.response.type.download_chunk_response);
+
+	if (ret != NRF_SUCCESS) {
+		response_event.response.type.download_chunk_response.chunk_size = 0;
+		NRF_LOG_WARNING("REQUEST_HANDLER: Error while downloading chunk: %d\n", ret);
+	}
+
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
+
+static void get_file_checksum_response_handler(void * p_event_data, uint16_t event_size)
+{
+	if (start_response(get_file_checksum_response_handler) != NRF_SUCCESS)
+		return;
+
+	response_event.response.which_type = Response_get_file_checksum_response_tag;
+	response_event.response_retries = 0;
+
+	GetFileChecksumRequest checksum_request; 
+	strncpy(checksum_request.filename, 
+			request_event.request.type.get_file_checksum_request.filename, MAX_FILENAME_LENGTH);
+	checksum_request.filename[MAX_FILENAME_LENGTH - 1] = '\0'; // Ensure null-termination
+	
+	ret_code_t ret = get_file_checksum_handler(&checksum_request, &response_event.response.type.get_file_checksum_response);
+
+	if (ret != NRF_SUCCESS) {
+		response_event.response.type.get_file_checksum_response.success = 0;
+		NRF_LOG_WARNING("REQUEST_HANDLER: Error while getting file checksum: %d\n", ret);
+	}
+
+	finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification.
+	send_response(NULL, 0);
+}
+
 /**< These are the request handlers that actually call the response-handlers via the scheduler */
 
 static void status_request_handler(void * p_event_data, uint16_t event_size) {
@@ -792,4 +881,46 @@ static void list_files_request_handler(void * p_event_data, uint16_t event_size)
 	}
 
 	app_sched_event_put(NULL, 0, list_files_response_handler);
+}
+
+static void start_download_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: start_download\n");
+
+	if (sampling_get_sampling_configuration() != 0) {
+		response_event.response.which_type = Response_start_download_response_tag;
+		response_event.response.type.start_download_response.success = 0;
+		response_event.response.type.start_download_response.file_size = 0;
+		response_event.response.type.start_download_response.total_chunks = 0;
+		response_event.response_retries = 0;
+		finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
+		send_response(NULL, 0);
+		return;
+	}
+
+	app_sched_event_put(NULL, 0, start_download_response_handler);
+}
+
+static void download_chunk_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: download_chunk\n");
+
+	app_sched_event_put(NULL, 0, download_chunk_response_handler);
+}
+
+static void get_file_checksum_request_handler(void * p_event_data, uint16_t event_size)
+{
+	NRF_LOG_INFO("REQUEST_HANDLER: get_file_checksum\n");
+
+	if (sampling_get_sampling_configuration() != 0) {
+		response_event.response.which_type = Response_get_file_checksum_response_tag;
+		response_event.response.type.get_file_checksum_response.success = 0;
+		response_event.response.type.get_file_checksum_response.checksum = 0;
+		response_event.response_retries = 0;
+		finish_and_reschedule_receive_notification();	// Now we are done with processing the request --> we can now advance to the next receive-notification
+		send_response(NULL, 0);
+		return;
+	}
+
+	app_sched_event_put(NULL, 0, get_file_checksum_response_handler);
 }

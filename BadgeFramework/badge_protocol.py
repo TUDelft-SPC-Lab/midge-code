@@ -14,6 +14,9 @@ Request_sdc_errase_all_request_tag = 31
 Request_get_imu_data_request_tag = 33
 Request_get_fw_version_request_tag = 35
 Request_list_files_request_tag = 37
+Request_start_download_request_tag = 39
+Request_download_chunk_request_tag = 40
+Request_get_file_checksum_request_tag = 41
 
 Response_status_response_tag = 1
 Response_start_microphone_response_tag = 2
@@ -24,8 +27,12 @@ Response_sdc_errase_all_response_tag = 32
 Response_get_imu_data_response_tag = 34
 Response_get_fw_version_response_tag = 36
 Response_list_files_response_tag = 38
+Response_start_download_response_tag = 42
+Response_download_chunk_response_tag = 43
+Response_get_file_checksum_response_tag = 44
 
 MAX_FILENAME_LENGTH = 32
+DOWNLOAD_CHUNK_SIZE = 16
 
 class _Ostream:
 	def __init__(self):
@@ -752,7 +759,114 @@ class ListFilesRequest:
 
 	def decode_max_files(self, istream):
 		self.max_files = struct.unpack('<B', istream.read(1))[0]
-		
+
+class StartDownloadRequest:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.filename = ""
+	
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+	
+	def encode_internal(self, ostream):
+		self.encode_filename(ostream)
+
+	def encode_filename(self, ostream):
+		filename_bytes = self.filename.encode('utf-8')[:MAX_FILENAME_LENGTH-1]
+		filename_bytes += b'\x00' * (MAX_FILENAME_LENGTH - len(filename_bytes))
+		ostream.write(filename_bytes)
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+	
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_filename(istream)
+
+	def decode_filename(self, istream):
+		filename_bytes = istream.read(MAX_FILENAME_LENGTH)
+		self.filename = filename_bytes.rstrip(b'\x00').decode('utf-8')
+
+class DownloadChunkRequest:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.chunk_index = 0
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		self.encode_chunk_index(ostream)
+
+	def encode_chunk_index(self, ostream):
+		ostream.write(struct.pack('<I', self.chunk_index))
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_chunk_index(istream)
+
+	def decode_chunk_index(self, istream):
+		self.chunk_index = struct.unpack('<I', istream.read(4))[0]
+
+class GetFileChecksumRequest:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.filename = ""
+
+	def encode(self):
+		ostream = _Ostream()
+		self.encode_internal(ostream)
+		return ostream.buf
+
+	def encode_internal(self, ostream):
+		self.encode_filename(ostream)
+
+	def encode_filename(self, ostream):
+		filename_bytes = self.filename.encode('utf-8')[:MAX_FILENAME_LENGTH-1]
+		filename_bytes += b'\x00' * (MAX_FILENAME_LENGTH - len(filename_bytes))
+		ostream.write(filename_bytes)
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+
+	def decode_internal(self, istream):
+		self.reset()
+		self.decode_filename(istream)
+
+	def decode_filename(self, istream):
+		filename_bytes = istream.read(MAX_FILENAME_LENGTH)
+		self.filename = filename_bytes.rstrip(b'\x00').decode('utf-8')		
 
 class Request:
 
@@ -811,6 +925,9 @@ class Request:
 			self.get_imu_data_request = None
 			self.get_fw_version_request = None
 			self.list_files_request = None
+			self.start_download_request = None
+			self.download_chunk_request = None
+			self.get_file_checksum_request = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -830,6 +947,9 @@ class Request:
 				33: self.encode_get_imu_data_request,
 				35: self.encode_get_fw_version_request,
 				37: self.encode_list_files_request,
+				39: self.encode_start_download_request,
+				40: self.encode_download_chunk_request,
+				41: self.encode_get_file_checksum_request,
 			}
 			options[self.which](ostream)
 			pass
@@ -876,6 +996,15 @@ class Request:
 		def encode_list_files_request(self, ostream):
 			self.list_files_request.encode_internal(ostream)
 
+		def encode_start_download_request(self, ostream):
+			self.start_download_request.encode_internal(ostream)
+
+		def encode_download_chunk_request(self, ostream):
+			self.download_chunk_request.encode_internal(ostream)
+
+		def encode_get_file_checksum_request(self, ostream):
+			self.get_file_checksum_request.encode_internal(ostream)
+
 		def decode_internal(self, istream):
 			self.reset()
 			self.which= struct.unpack('<B', istream.read(1))[0]
@@ -894,6 +1023,9 @@ class Request:
 				33: self.decode_get_imu_data_request,
 				35: self.decode_get_fw_version_request,
 				37: self.decode_list_files_request,
+				39: self.decode_start_download_request,
+				40: self.decode_download_chunk_request,
+				41: self.decode_get_file_checksum_request,
 			}
 			options[self.which](istream)
 			pass
@@ -1664,6 +1796,84 @@ class ListFilesResponse:
 			file_info.timestamp = struct.unpack('<I', istream.read(4))[0]
 			self.files.append(file_info)
 
+class StartDownloadResponse:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.file_size = 0
+		self.total_chunks = 0
+		self.success = 0
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+	
+	def decode_internal(self, istream):
+		self.reset()
+		self.file_size = struct.unpack('<I', istream.read(4))[0]
+		self.total_chunks = struct.unpack('<I', istream.read(4))[0]
+		self.success = struct.unpack('<B', istream.read(1))[0]
+
+class DownloadChunkResponse:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.chunk_index = 0
+		self.chunk_size = 0
+		self.data = [0] * DOWNLOAD_CHUNK_SIZE
+		self.is_last_chunk = 0
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+	
+	def decode_internal(self, istream):
+		self.reset()
+		self.chunk_index = struct.unpack('<I', istream.read(4))[0]
+		self.chunk_size = struct.unpack('<H', istream.read(2))[0]
+
+		for i in range(DOWNLOAD_CHUNK_SIZE):
+			if i < self.chunk_size:
+				self.data[i] = struct.unpack('<B', istream.read(1))[0]
+			else:
+				istream.read(1)  # Skip unused bytes
+		
+		self.is_last_chunk = struct.unpack('<B', istream.read(1))[0]
+
+class GetFileChecksumResponse:
+	def __init__(self):
+		self.reset()
+
+	def __repr__(self):
+		return str(self.__dict__)
+
+	def reset(self):
+		self.checksum = 0
+		self.success = 0
+
+	@classmethod
+	def decode(cls, buf):
+		obj = cls()
+		obj.decode_internal(_Istream(buf))
+		return obj
+	
+	def decode_internal(self, istream):
+		self.reset()
+		self.checksum = struct.unpack('<I', istream.read(4))[0]
+		self.success = struct.unpack('<B', istream.read(1))[0]
+
 class Response:
 
 	def __init__(self):
@@ -1716,6 +1926,9 @@ class Response:
 			self.get_imu_data_response = None
 			self.get_fw_version_response = None
 			self.list_files_response = None
+			self.start_download_response = None
+			self.download_chunk_response = None
+			self.get_file_checksum_response = None
 			pass
 
 		def encode_internal(self, ostream):
@@ -1730,6 +1943,9 @@ class Response:
 				34: self.encode_get_imu_data_response,
 				36: self.encode_get_fw_version_response,
 				38: self.encode_list_files_response,
+				42: self.encode_start_download_response,
+				43: self.encode_download_chunk_response,
+				44: self.encode_get_file_checksum_response,
 			}
 			options[self.which](ostream)
 			pass
@@ -1761,6 +1977,15 @@ class Response:
 		def encode_list_files_response(self, ostream):
 			self.list_files_response.encode_internal(ostream)
 
+		def encode_start_download_response(self, ostream):
+			self.start_download_response.encode_internal(ostream)
+
+		def encode_download_chunk_response(self, ostream):
+			self.download_chunk_response.encode_internal(ostream)
+
+		def encode_get_file_checksum_response(self, ostream):
+			self.get_file_checksum_response.encode_internal(ostream)
+
 		def decode_internal(self, istream):
 			self.reset()
 			self.which= struct.unpack('<B', istream.read(1))[0]
@@ -1774,6 +1999,9 @@ class Response:
 				34: self.decode_get_imu_data_response,
 				36: self.decode_get_fw_version_response,
 				38: self.decode_list_files_response,
+				42: self.decode_start_download_response,
+				43: self.decode_download_chunk_response,
+				44: self.decode_get_file_checksum_response,
 			}
 			options[self.which](istream)
 			pass
@@ -1813,3 +2041,15 @@ class Response:
 		def decode_list_files_response(self, istream):
 			self.list_files_response = ListFilesResponse()
 			self.list_files_response.decode_internal(istream)
+
+		def decode_start_download_response(self, istream):
+			self.start_download_response = StartDownloadResponse()
+			self.start_download_response.decode_internal(istream)
+
+		def decode_download_chunk_response(self, istream):
+			self.download_chunk_response = DownloadChunkResponse()
+			self.download_chunk_response.decode_internal(istream)
+
+		def decode_get_file_checksum_response(self, istream):
+			self.get_file_checksum_response = GetFileChecksumResponse()
+			self.get_file_checksum_response.decode_internal(istream)

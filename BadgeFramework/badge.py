@@ -55,6 +55,9 @@ class OpenBadge(object):
         self.get_imu_data_response_queue = Queue.Queue()
         self.get_fw_version_response_queue = Queue.Queue()
         self.list_files_response_queue = Queue.Queue()
+        self.start_download_response_queue = Queue.Queue()
+        self.download_chunk_response_queue = Queue.Queue()
+        self.get_file_checksum_response_queue = Queue.Queue()
         
 
     # Helper function to send a BadgeMessage `command_message` to a device, expecting a response
@@ -111,6 +114,10 @@ class OpenBadge(object):
             Response_sdc_errase_all_response_tag: self.sdc_errase_all_response_queue,
             Response_get_imu_data_response_tag: self.get_imu_data_response_queue,
             Response_get_fw_version_response_tag: self.get_fw_version_response_queue,
+            Response_list_files_response_tag: self.list_files_response_queue,
+            Response_start_download_response_tag: self.start_download_response_queue,
+            Response_download_chunk_response_tag: self.download_chunk_response_queue,
+            Response_get_file_checksum_response_tag: self.get_file_checksum_response_queue
         }
         response_options = {
             Response_status_response_tag: response_message.type.status_response,
@@ -120,7 +127,11 @@ class OpenBadge(object):
             Response_free_sdc_space_response_tag: response_message.type.free_sdc_space_response,
             Response_sdc_errase_all_response_tag: response_message.type.sdc_errase_all_response,
             Response_get_imu_data_response_tag: response_message.type.get_imu_data_response,
-            Response_get_fw_version_response_tag: response_message.type.get_fw_version_response
+            Response_get_fw_version_response_tag: response_message.type.get_fw_version_response,
+            Response_list_files_response_tag: response_message.type.list_files_response,
+            Response_start_download_response_tag: response_message.type.start_download_response,
+            Response_download_chunk_response_tag: response_message.type.download_chunk_response,
+            Response_get_file_checksum_response_tag: response_message.type.get_file_checksum_response
         }
         queue_options[response_message.type.which].put(
             response_options[response_message.type.which]
@@ -410,4 +421,148 @@ class OpenBadge(object):
 
 
         return files
+    
+    def download_file(self, filename, local_path=None, verify_checksum=True, show_progress=True):
+        if local_path is None:
+            local_path = filename
 
+        request = Request()
+        request.type.which = Request_start_download_request_tag
+        request.type.start_download_request = StartDownloadRequest()
+        request.type.start_download_request.filename = filename
+
+        self.send_request(request)
+
+        with self.start_download_response_queue.mutex:
+            self.start_download_response_queue.queue.clear()
+
+        while self.start_download_response_queue.empty():
+            self.receive_response()
+
+        start_response = self.start_download_response_queue.get()
+        if not start_response.success:
+            raise Exception("Failed to start download: {}".format(start_response.error_message))
+        
+        file_size = start_response.file_size
+        total_chunks = start_response.total_chunks
+
+        if show_progress:
+            print("Downloading {} ({} chunks) to {}".format(filename, total_chunks, local_path))
+
+        downloaded_data = bytearray()
+
+        progress_bar = None
+        if show_progress:
+            try:
+                from tqdm import tqdm
+                progress_bar = tqdm(total=total_chunks, desc="Downloading {}".format(filename), unit="chunk")
+            except ImportError:
+                print("tqdm not available, showing basic progress.")
+
+        try:
+            for chunk_index in range(total_chunks):
+                chunk_request = Request()
+                chunk_request.type.which = Request_download_chunk_request_tag
+                chunk_request.type.download_chunk_request = DownloadChunkRequest()
+                chunk_request.type.download_chunk_request.chunk_index = chunk_index
+
+                self.send_request(chunk_request)
+
+                with self.download_chunk_response_queue.mutex:
+                    self.download_chunk_response_queue.queue.clear()
+                while self.download_chunk_response_queue.empty():
+                    self.receive_response()
+
+                chunk_response = self.download_chunk_response_queue.get()
+
+                if chunk_response.chunk_size == 0:
+                    raise Exception("Received empty chunk for index {}".format(chunk_index))
+                
+                chunk_data = bytes(chunk_response.data[:chunk_response.chunk_size])
+                downloaded_data.extend(chunk_data)
+
+                if progress_bar:
+                    progress_bar.update(1)
+                
+                if chunk_response.is_last_chunk:
+                    break
+
+        finally:
+            if progress_bar:
+                progress_bar.close()
+
+        if len(downloaded_data) != file_size:
+            raise Exception("Downloaded data size {} does not match expected size {}".format(len(downloaded_data), file_size))
+        
+        with open(local_path, 'wb') as f:
+            f.write(downloaded_data)
+
+        if verify_checksum:
+            if show_progress:
+                print("Verifying checksum...")
+            if self._verify_file_checksum(filename, local_path):
+                if show_progress:
+                    print("Checksum verified")
+            else:
+                if show_progress:
+                    print("Checksum verification failed")
+                return False
+
+        if show_progress:
+            print("Successfully downloaded {} to {}".format(filename, local_path))
+        return True
+
+    def _verify_file_checksum(self, filename, local_path):
+        request = Request()
+        request.type.which = Request_get_file_checksum_request_tag
+        request.type.get_file_checksum_request = GetFileChecksumRequest()
+        request.type.get_file_checksum_request.filename = filename
+
+        self.send_request(request)
+
+        with self.get_file_checksum_response_queue.mutex:
+            self.get_file_checksum_response_queue.queue.clear()
+
+        while self.get_file_checksum_response_queue.empty():
+            self.receive_response()
+
+        response = self.get_file_checksum_response_queue.get()
+
+        if not response.success:
+            print("Failed to get checksum for {}: {}".format(filename, response.error_message))
+            return False
+
+        expected_checksum = response.checksum
+
+        with open(local_path, 'rb') as f:
+            file_data = f.read()
+            actual_checksum = sum(file_data) % (1 << 32)
+
+        return actual_checksum == expected_checksum
+    
+    def download_all_files(self, output_dir="downloaded_data"):
+        files = self.list_files()
+
+        if not files:
+            print("No files to download.")
+            return
+
+        import os
+        os.makedirs(output_dir, exist_ok=True)
+        
+        total_size = sum(f['size'] for f in files)
+        print("Found {} files, total size: {:.1f} KB".format(len(files), total_size / 1024.0))
+
+        success_count = 0
+        for file_info in files:
+            filename = file_info['filename']
+            local_path = os.path.join(output_dir, filename)
+
+            try:
+                if self.download_file(filename, local_path, show_progress=True):
+                    success_count += 1
+            except Exception as e:
+                print("Failed to download {}: {}".format(filename, e))
+
+        print("Downloaded {}/{} files successfully.".format(success_count, len(files)))
+        return success_count == len(files)
