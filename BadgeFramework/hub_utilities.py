@@ -64,6 +64,7 @@ def stop_recording_all_devices(df):
 
 def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, show_status = True):
     status_all = []
+    errors_all = []
     for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Synchronsing'):
         current_participant = row['Participant Id']
         current_mac = row['Mac Address']
@@ -75,32 +76,36 @@ def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, s
             else:
                 cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
-            print(str(error) + ', cannot synchronise.')
-            sys.stdout.flush()
+            errors_all.append(str(error) + ', cannot synchronise.')
             continue
         try:
             out = cur_connection.handle_status_request()
             if out.imu_status == 0:
-                print ('IMU is not recording for participant ' + str(current_participant))
+                errors_all.append('IMU is not recording for participant ' + str(current_participant))
             if out.microphone_status == 0:
-                print ('Mic is not recording for participant ' + str(current_participant))
+                errors_all.append('Mic is not recording for participant ' + str(current_participant))
             if out.scan_status == 0:
-                print ('Scan is not recording for participant ' + str(current_participant))
+                errors_all.append('Scan is not recording for participant ' + str(current_participant))
             if out.clock_status == 0:
-                print ('Cant sync for participant ' + str(current_participant))
-            sys.stdout.flush()
+                errors_all.append('Cant sync for participant ' + str(current_participant))
+            if out.battery_level < 10:
+                errors_all.append('Battery level for participant {:d} is {:d}%'.format(current_participant, out.battery_level))
             if cur_connection != conn_skip_id:
                 cur_connection.disconnect()
 
             status_all.append(out)
         except Exception as error:
-            print(error)
-            sys.stdout.flush()
+            errors_all.append(error)
             if cur_connection != conn_skip_id:
                 cur_connection.disconnect()
             status_all.append("Error")
 
+    for error in errors_all:
+        print(error)
+    sys.stdout.flush()
+
     if show_status:
+        print("Status of all devices:")
         for out, (_, row) in zip(status_all, df.iterrows()):
             print('\t Midge: ' + str(row['Participant Id']) + " -- " + str(out))
 
