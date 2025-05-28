@@ -247,7 +247,7 @@ PDM peripheral.
 ### IMU
 
 The IMU data is stored in a binary file.
-The sensors record samples at 50Hz.
+The sensors record samples at a best effort of 60Hz, i.e. often there are fewer samples.
 Each sample is 32 bytes long.
 The first 8 bytes contain the timestamp, the next 12 the data and last 12 are padding.
 
