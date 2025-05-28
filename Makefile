@@ -13,6 +13,14 @@ $(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.out: \
 
 VERSION := $(shell hatch version)
 
+ifndef VERSION
+$(error VERSION is not set, is hatch installed?)
+endif
+
+ifeq ($(strip $(VERSION)),)
+$(error VERSION is empty, is hatch installed?)
+endif
+
 # Source files common to all targets
 SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52.S \
@@ -336,7 +344,7 @@ daplink_flash_softdevice: daplink_erase_flash
   -c "reset" -c "exit"
 
 daplink_flash_debug: nrf52832_xxaa_debug
-	@echo Flashing Debug Firmware
+	@echo Flashing Debug Firmware, version: $(VERSION)
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
   -c "init" -c "reset init" \
   -c "program $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.hex" \
@@ -344,7 +352,7 @@ daplink_flash_debug: nrf52832_xxaa_debug
 
 
 daplink_flash_release: nrf52832_xxaa_release 
-	@echo Flashing Debug Firmware
+	@echo Flashing Debug Firmware, version: $(VERSION)
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
   -c "init" -c "reset init" \
   -c "program $(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.hex" \
