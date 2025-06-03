@@ -44,7 +44,7 @@ class IMUParser(object):
                     x,y,z = struct.unpack('<fff', data_bytes)
                     data.append([x,y,z])
                     timestamps.append(ts)
-                    i = i + 32
+                    i = i + 24 # 8 timestamp + 12 data + 4 padding
                 else:
                     break
         data_xyz = np.asarray(data)
@@ -117,7 +117,7 @@ class IMUParser(object):
                     q1,q2,q3,q4 = struct.unpack('<ffff', rot_bytes)
                     rotation.append([q1,q2,q3,q4])
                     timestamps.append(ts)
-                    i = i + 32
+                    i = i + 24
                 else:
                     break
         rotation_xyz = np.asarray(rotation)
