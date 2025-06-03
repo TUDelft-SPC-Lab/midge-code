@@ -2,7 +2,7 @@ define run_with_rtt
     run 
     next
     next
-    monitor rtt setup 0x200033f8 1280 "SEGGER RTT"
+    monitor rtt setup $SEGGER_RTT_ADDRESS 1280 "SEGGER RTT"
     monitor rtt start 
 end 
 

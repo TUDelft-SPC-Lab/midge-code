@@ -155,9 +155,6 @@ A barebones gdb server that can be executed via Makefile rules or using the VSco
 2. Start the openocd server with `make openocd`
 3. Start the gdb session and load the binary with `make load_gdb`
 4. Start the RTT console to see log messages with `make logs`
-    * If you see no logs, check that the address of the RTT control block is good.
-    The address can be found with this command:
-    `arm-none-eabi-nm ./_build/nrf52832_xxaa_debug.out | grep _SEGGER_RTT`
 
 ### Using VSCode with Cortex-debug
 
