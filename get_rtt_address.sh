@@ -12,4 +12,3 @@ else
     echo "Could not find _SEGGER_RTT address." >&2
     exit 1
 fi
-   
