@@ -250,14 +250,14 @@ PDM peripheral.
 ### IMU
 
 The IMU data is stored in a binary file.
-The sensors record samples at 50Hz.
-Each sample is 32 bytes long.
-The first 8 bytes contain the timestamp, the next 12 the data and last 12 are padding.
+The sensors record samples at a best effort of 60Hz, i.e. often there are fewer samples.
+Each sample is 24 bytes long.
+The first 8 bytes contain the timestamp, the next 12 the data and last 4 bytes are padding.
 
 For example:
 ```
- 2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 000c 0000 ffce 0000 1064
-|---- Timestamp ----|----------  Data  -----------|---------- Padding ----------|
+ 2dd4 a69d 016d 0000 0000 3b40 0000 bc48 2000 3f83 0000 0000
+|---- Timestamp ----|----------  Data  -----------|-- Padding --|
 ```
 
 Timestamp
@@ -278,10 +278,10 @@ The data is 4 bytes float per axis:
 ```
 padding for data alignment, these bytes are ignored
 ```
-0000 000c 0000 ffce 0000 1064
+0000 0000
 ```
 
-The samples for the rotation are different, with 8 bytes for the timestamp, 16 bytes of data and 8 of padding.
+The samples for the rotation are different: 8 bytes for the timestamp and 16 bytes of data.
 The data part represents a quaternion containing 4 floats. 
 
 ### Scanner
