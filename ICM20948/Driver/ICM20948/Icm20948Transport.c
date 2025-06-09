@@ -45,7 +45,7 @@ void inv_icm20948_sleep_100us(unsigned long nHowMany100MicroSecondsToSleep)  // 
 
 long inv_icm20948_get_tick_count(void)
 {
-	return (long)inv_icm20948_get_time_us();
+	return (long)inv_icm20948_get_time_ms();
 }
 
 /* driver transport function */
