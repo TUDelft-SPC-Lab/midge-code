@@ -326,7 +326,7 @@ load_gdb:
 		echo "Error: Could not find the _SEGGER_RTT address"; \
 		exit 1; \
 	fi; \
-	env SEGGER_RTT_ADDRESS=$$RTT_ADDR arm-none-eabi-gdb -se _build/nrf52832_xxaa_debug.out -x debug.gdb
+  arm-none-eabi-gdb -se _build/nrf52832_xxaa_debug.out -x _debug.gdb
 logs: SHELL:=$(shell which bash)   # Use the bash shell for the logs target, as sh does not have the disown command
 logs:
 	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
