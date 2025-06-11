@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pandas as pd
 import sys
 from hub_utilities import (
