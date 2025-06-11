@@ -449,7 +449,7 @@ ret_code_t icm20948_init(void)
 	 return NRF_SUCCESS;
 }
 
-uint64_t inv_icm20948_get_time_us(void)
+uint64_t inv_icm20948_get_time_ms(void)
 {
 	return systick_get_millis();
 }

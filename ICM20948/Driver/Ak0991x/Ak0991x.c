@@ -2,7 +2,7 @@
  * ________________________________________________________________________________________________________
  * Copyright (c) 2015-2015 InvenSense Inc. All rights reserved.
  *
- * This software, related documentation and any modifications thereto (collectively “Software”) is subject
+ * This software, related documentation and any modifications thereto (collectively ï¿½Softwareï¿½) is subject
  * to InvenSense and its licensors' intellectual property rights under U.S. and international copyright
  * and other intellectual property rights laws.
  *
@@ -72,14 +72,14 @@
 #define AK09912_ODR_MIN_DELAY              10000		/* minimum delay of AK09912 (us) */
 #define AK09915_ODR_MIN_DELAY               5000		/* minimum delay of AK09915 (us) */
 
-static void wait_us(uint32_t us)
+static void wait_ms(uint32_t ms)
 {
 	uint64_t tt1, tt2;
 
-	tt1 = inv_ak0991x_get_time_us();
+	tt1 = inv_ak0991x_get_time_ms();
 	while (1) {
-		tt2 = inv_ak0991x_get_time_us();
-		if (tt2 > (tt1 + us))
+		tt2 = inv_ak0991x_get_time_ms();
+		if (tt2 > (tt1 + ms))
 			break;
 	}
 }
@@ -159,7 +159,7 @@ int inv_ak0991x_run_selftest(struct inv_ak0991x * s)
 	counter = 10;
 
 	while (counter > 0) {
-		wait_us(15 * 1000);
+		wait_ms(15);
 		result = inv_ak0991x_serif_read_reg(&s->serif, AK0991x_REG_ST1, data, 1);
 		if (result)
 			goto AKM_fail;
