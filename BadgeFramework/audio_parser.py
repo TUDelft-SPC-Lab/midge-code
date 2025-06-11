@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 from scipy.io.wavfile import write
 from pathlib import Path
