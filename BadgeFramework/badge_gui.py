@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import Tkinter as tk
 import ttk
 from Tkinter import Label, Button, Canvas

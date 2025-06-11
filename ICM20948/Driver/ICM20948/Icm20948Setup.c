@@ -433,7 +433,7 @@ int inv_icm20948_set_sensor_period(struct inv_icm20948 * s, enum inv_icm20948_se
 
 	// reset timestamp value and save current odr
 	s->timestamp[sensor] = 0;
-	s->sensorlist[sensor].odr_us = period * 1000;
+	s->sensorlist[sensor].odr_ms = period;
 	return 0;
 }
 
@@ -479,9 +479,9 @@ static int inv_icm20948_is_streamed_sensor(uint8_t id)
 /** @brief Preprocess all timestamps so that they either contain very last time at which MEMS IRQ was fired
 * or last time sent for the sensor + ODR */
 static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in_fifo,
-	unsigned short * total_sample_cnt, uint64_t * lastIrqTimeUs)
+	unsigned short * total_sample_cnt, uint64_t * lastIrqTimeMs)
 {
-	/** @brief Very last time in us at which IRQ was fired since flushing FIFO process was started */
+	/** @brief Very last time in ms at which IRQ was fired since flushing FIFO process was started */
 	unsigned short sample_cnt_array[GENERAL_SENSORS_MAX] = {0};
 	uint8_t i;
 
@@ -489,7 +489,7 @@ static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in
 	if (inv_icm20948_fifo_swmirror(s, data_left_in_fifo, total_sample_cnt, sample_cnt_array)) {
 		for(i = 0; i< GENERAL_SENSORS_MAX; i++) {
 			if (inv_icm20948_is_streamed_sensor(i)) {
-				s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] = *lastIrqTimeUs;
+				s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] = *lastIrqTimeMs;
 			}
 		}
 		return -1;
@@ -504,8 +504,8 @@ static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in
 				/** In case of first batch we have less than the expected number of samples in the batch */
 				/** To avoid a bad timestamping we recompute the startup time based on the theorical ODR and the number of samples */
 				if (s->sFirstBatch[inv_icm20948_sensor_android_2_sensor_type(i)]) {
-					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] += *lastIrqTimeUs-s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)]
-					- fifo_sample_cnt*s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_us;
+					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] += *lastIrqTimeMs-s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)]
+					- fifo_sample_cnt*s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms;
 					s->sFirstBatch[inv_icm20948_sensor_android_2_sensor_type(i)] = 0;
 				}
 
@@ -517,17 +517,17 @@ static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in
 				- N is number of samples */
 
 				if(s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] == 0) {
-					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] = *lastIrqTimeUs;
-					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] -= s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_us*(fifo_sample_cnt);
-					s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_us = s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_us;
+					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] = *lastIrqTimeMs;
+					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] -= s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms*(fifo_sample_cnt);
+					s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_ms = s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms;
 				}
 				else {
-					s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_us = (*lastIrqTimeUs-s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)])/fifo_sample_cnt;
+					s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_ms = (*lastIrqTimeMs-s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)])/fifo_sample_cnt;
 				}
 			}
 		} else {
 			/** update timestamp for all event sensors with time at which MEMS IRQ was fired */
-			s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] = *lastIrqTimeUs;
+			s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] = *lastIrqTimeMs;
 		}
 	}
 
@@ -559,17 +559,17 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 	float rv_float[4];
 	float gmrv_float[4];
 	uint16_t pickup_state = 0;
-	uint64_t lastIrqTimeUs;
+	uint64_t lastIrqTimeMs;
 
 	inv_icm20948_identify_interrupt(s, &int_read_back);
 
 	if (int_read_back & (BIT_MSG_DMP_INT | BIT_MSG_DMP_INT_0)) {
-		lastIrqTimeUs = inv_icm20948_get_time_us();
+		lastIrqTimeMs = inv_icm20948_get_time_ms();
 		do {
 			unsigned short total_sample_cnt = 0;
 
 			/* Mirror FIFO contents and stop processing FIFO if an error was detected*/
-			if(inv_icm20948_updateTs(s, &data_left_in_fifo, &total_sample_cnt, &lastIrqTimeUs))
+			if(inv_icm20948_updateTs(s, &data_left_in_fifo, &total_sample_cnt, &lastIrqTimeMs))
 				break;
 			NRF_LOG_INFO("%d", total_sample_cnt);
 //			NRF_LOG_HEXDUMP_INFO(&total_sample_cnt, 2);
@@ -595,7 +595,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 					if(inv_icm20948_ctrl_androidSensor_enabled(s, ANDROID_SENSOR_RAW_GYROSCOPE) && !skip_sensor(s, ANDROID_SENSOR_RAW_GYROSCOPE)) {
 						long out[3];
 						inv_icm20948_convert_quat_rotate_fxp(s->s_quat_chip_to_body, lRawGyroQ15, out);
-						s->timestamp[INV_ICM20948_SENSOR_RAW_GYROSCOPE] += s->sensorlist[INV_ICM20948_SENSOR_RAW_GYROSCOPE].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_RAW_GYROSCOPE] += s->sensorlist[INV_ICM20948_SENSOR_RAW_GYROSCOPE].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_RAW_GYROSCOPE, s->timestamp[INV_ICM20948_SENSOR_RAW_GYROSCOPE], out, &dummy_accuracy);
 					}
 
@@ -627,7 +627,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						/* Compute calibrated gyro data based on raw and bias gyro data and convert it from Q20 raw data format to radian per seconds in Android format */
 						inv_icm20948_dmp_get_calibrated_gyro(long_data, lRawGyroQ15, lBiasGyroQ20);
 						inv_icm20948_convert_dmp3_to_body(s, long_data, lScaleDeg_bias/(1L<<20), gyro_float);
-						s->timestamp[INV_ICM20948_SENSOR_GYROSCOPE] += s->sensorlist[INV_ICM20948_SENSOR_GYROSCOPE].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_GYROSCOPE] += s->sensorlist[INV_ICM20948_SENSOR_GYROSCOPE].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_GYROSCOPE, s->timestamp[INV_ICM20948_SENSOR_GYROSCOPE], gyro_float, &s->new_accuracy);
 					}
 					if(inv_icm20948_ctrl_androidSensor_enabled(s, ANDROID_SENSOR_GYROSCOPE_UNCALIBRATED)  && !skip_sensor(s, ANDROID_SENSOR_GYROSCOPE_UNCALIBRATED)) {
@@ -638,7 +638,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						raw_bias_gyr[3] = gyro_bias_float[0];
 						raw_bias_gyr[4] = gyro_bias_float[1];
 						raw_bias_gyr[5] = gyro_bias_float[2];
-						s->timestamp[INV_ICM20948_SENSOR_GYROSCOPE_UNCALIBRATED] += s->sensorlist[INV_ICM20948_SENSOR_GYROSCOPE_UNCALIBRATED].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_GYROSCOPE_UNCALIBRATED] += s->sensorlist[INV_ICM20948_SENSOR_GYROSCOPE_UNCALIBRATED].odr_applied_ms;
 						/* send raw float and bias for uncal gyr*/
 						handler(context, INV_ICM20948_SENSOR_GYROSCOPE_UNCALIBRATED, s->timestamp[INV_ICM20948_SENSOR_GYROSCOPE_UNCALIBRATED], raw_bias_gyr, &s->new_accuracy);
 					}
@@ -658,7 +658,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						out[0] = out[0] >> 15;
 						out[1] = out[1] >> 15;
 						out[2] = out[2] >> 15;
-						s->timestamp[INV_ICM20948_SENSOR_RAW_ACCELEROMETER] += s->sensorlist[INV_ICM20948_SENSOR_RAW_ACCELEROMETER].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_RAW_ACCELEROMETER] += s->sensorlist[INV_ICM20948_SENSOR_RAW_ACCELEROMETER].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_RAW_ACCELEROMETER, s->timestamp[INV_ICM20948_SENSOR_RAW_ACCELEROMETER], out, &dummy_accuracy);
 					}
 					if((inv_icm20948_ctrl_androidSensor_enabled(s, ANDROID_SENSOR_ACCELEROMETER) && !skip_sensor(s, ANDROID_SENSOR_ACCELEROMETER)) ||
@@ -669,7 +669,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 							inv_icm20948_convert_dmp3_to_body(s, long_data, scale, accel_float);
 
 							if(inv_icm20948_ctrl_androidSensor_enabled(s, ANDROID_SENSOR_ACCELEROMETER)) {
-								s->timestamp[INV_ICM20948_SENSOR_ACCELEROMETER] += s->sensorlist[INV_ICM20948_SENSOR_ACCELEROMETER].odr_applied_us;
+								s->timestamp[INV_ICM20948_SENSOR_ACCELEROMETER] += s->sensorlist[INV_ICM20948_SENSOR_ACCELEROMETER].odr_applied_ms;
 								handler(context, INV_ICM20948_SENSOR_ACCELEROMETER, s->timestamp[INV_ICM20948_SENSOR_ACCELEROMETER], accel_float, &accel_accuracy);
 							}
 					}
@@ -685,7 +685,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 					scale = DMP_UNIT_TO_FLOAT_COMPASS_CONVERSION;
 					inv_icm20948_convert_dmp3_to_body(s, long_data, scale, compass_float);
 					if(inv_icm20948_ctrl_androidSensor_enabled(s, ANDROID_SENSOR_GEOMAGNETIC_FIELD) && !skip_sensor(s, ANDROID_SENSOR_GEOMAGNETIC_FIELD)) {
-						s->timestamp[INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD] += s->sensorlist[INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD] += s->sensorlist[INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD, s->timestamp[INV_ICM20948_SENSOR_GEOMAGNETIC_FIELD], compass_float, &compass_accuracy);
 					}
 				}
@@ -711,7 +711,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						raw_bias_mag[5] = mag_bias[2] * DMP_UNIT_TO_FLOAT_COMPASS_CONVERSION;
 
 						compass_accuracy = inv_icm20948_get_mag_accuracy();
-						s->timestamp[INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED] += s->sensorlist[INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED] += s->sensorlist[INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED].odr_applied_ms;
 						/* send raw float and bias for uncal mag*/
 						handler(context, INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED, s->timestamp[INV_ICM20948_SENSOR_MAGNETIC_FIELD_UNCALIBRATED],
 							raw_bias_mag, &compass_accuracy);
@@ -730,7 +730,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						ref_quat[1] = grv_float[0];
 						ref_quat[2] = grv_float[1];
 						ref_quat[3] = grv_float[2];
-						s->timestamp[INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR] += s->sensorlist[INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR] += s->sensorlist[INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR, s->timestamp[INV_ICM20948_SENSOR_GAME_ROTATION_VECTOR], ref_quat, 0);
 					}
 
@@ -742,7 +742,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						gravity_float[0] = INVN_FXP_TO_FLT(gravityQ16[0], 16);
 						gravity_float[1] = INVN_FXP_TO_FLT(gravityQ16[1], 16);
 						gravity_float[2] = INVN_FXP_TO_FLT(gravityQ16[2], 16);
-						s->timestamp[INV_ICM20948_SENSOR_GRAVITY] += s->sensorlist[INV_ICM20948_SENSOR_GRAVITY].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_GRAVITY] += s->sensorlist[INV_ICM20948_SENSOR_GRAVITY].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_GRAVITY, s->timestamp[INV_ICM20948_SENSOR_GRAVITY], gravity_float, &accel_accuracy);
 					}
 
@@ -760,7 +760,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						linacc_float[0] = INVN_FXP_TO_FLT(linAccQ16[0], 16);
 						linacc_float[1] = INVN_FXP_TO_FLT(linAccQ16[1], 16);
 						linacc_float[2] = INVN_FXP_TO_FLT(linAccQ16[2], 16);
-						s->timestamp[INV_ICM20948_SENSOR_LINEAR_ACCELERATION] += s->sensorlist[INV_ICM20948_SENSOR_LINEAR_ACCELERATION].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_LINEAR_ACCELERATION] += s->sensorlist[INV_ICM20948_SENSOR_LINEAR_ACCELERATION].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_LINEAR_ACCELERATION, s->timestamp[INV_ICM20948_SENSOR_LINEAR_ACCELERATION], linacc_float, &accel_accuracy);
 					}
 				}
@@ -781,7 +781,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						ref_quat[1] = rv_float[0];
 						ref_quat[2] = rv_float[1];
 						ref_quat[3] = rv_float[2];
-						s->timestamp[INV_ICM20948_SENSOR_ROTATION_VECTOR] += s->sensorlist[INV_ICM20948_SENSOR_ROTATION_VECTOR].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_ROTATION_VECTOR] += s->sensorlist[INV_ICM20948_SENSOR_ROTATION_VECTOR].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_ROTATION_VECTOR, s->timestamp[INV_ICM20948_SENSOR_ROTATION_VECTOR], ref_quat, &rv_accuracy);
 					}
 
@@ -793,7 +793,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						orientation_float[0] = INVN_FXP_TO_FLT(orientationQ16[0], 16);
 						orientation_float[1] = INVN_FXP_TO_FLT(orientationQ16[1], 16);
 						orientation_float[2] = INVN_FXP_TO_FLT(orientationQ16[2], 16);
-						s->timestamp[INV_ICM20948_SENSOR_ORIENTATION] += s->sensorlist[INV_ICM20948_SENSOR_ORIENTATION].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_ORIENTATION] += s->sensorlist[INV_ICM20948_SENSOR_ORIENTATION].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_ORIENTATION, s->timestamp[INV_ICM20948_SENSOR_ORIENTATION], orientation_float, 0);
 					}
 				}
@@ -813,7 +813,7 @@ int inv_icm20948_poll_sensor(struct inv_icm20948 * s, void * context,
 						ref_quat[1] = gmrv_float[0];
 						ref_quat[2] = gmrv_float[1];
 						ref_quat[3] = gmrv_float[2];
-						s->timestamp[INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR] += s->sensorlist[INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR].odr_applied_us;
+						s->timestamp[INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR] += s->sensorlist[INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR].odr_applied_ms;
 						handler(context, INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR, s->timestamp[INV_ICM20948_SENSOR_GEOMAGNETIC_ROTATION_VECTOR],
 							ref_quat, &gmrv_accuracy);
 					}

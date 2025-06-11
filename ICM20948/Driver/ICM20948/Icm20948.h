@@ -58,8 +58,8 @@ typedef enum inv_icm20948_compass_state
 /** @brief ICM20948 driver states definition
  */
 typedef struct sensor_type_icm20948{
-	uint64_t odr_applied_us;
-	uint64_t odr_us;
+	uint64_t odr_applied_ms;
+	uint64_t odr_ms;
 }sensor_type_icm20948_t;
 
 typedef enum {
@@ -194,14 +194,14 @@ typedef struct inv_icm20948 {
 extern struct inv_icm20948 * icm20948_instance;
 
 /** @brief Hook for low-level system sleep() function to be implemented by upper layer
- *  @param[in] ms number of millisecond the calling thread should sleep
+ *  @param[in] us number of millisecond the calling thread should sleep
  */
 extern void inv_icm20948_sleep_us(int us);
 
 /** @brief Hook for low-level system time() function to be implemented by upper layer
- *  @return monotonic timestamp in us
+ *  @return monotonic timestamp in ms
  */
-extern uint64_t inv_icm20948_get_time_us(void);
+extern uint64_t inv_icm20948_get_time_ms(void);
 
 /** @brief Reset and initialize driver states
  *  @param[in] s             handle to driver states structure

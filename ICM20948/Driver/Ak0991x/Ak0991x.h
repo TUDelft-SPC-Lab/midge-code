@@ -2,7 +2,7 @@
  * ________________________________________________________________________________________________________
  * Copyright (c) 2015-2015 InvenSense Inc. All rights reserved.
  *
- * This software, related documentation and any modifications thereto (collectively “Software”) is subject
+ * This software, related documentation and any modifications thereto (collectively ï¿½Softwareï¿½) is subject
  * to InvenSense and its licensors' intellectual property rights under U.S. and international copyright
  * and other intellectual property rights laws.
  *
@@ -66,28 +66,28 @@ typedef struct inv_ak0991x {
 } inv_ak0991x_t;
 
 /** @brief Hook for low-level system time() function to be implemented by upper layer
- *  @return monotonic timestamp in us
+ *  @return monotonic timestamp in ms
  *  @details
  *  When running self-tests, this function is used to measure a duration.
  *  It can also be used as a way of getting the current time.
  */
-extern uint64_t inv_ak0991x_get_time_us(void);
+extern uint64_t inv_ak0991x_get_time_ms(void);
 
 /** @brief Hook used for accurate timestamping, called by low-level driver after acquisition is complete
  *  @return timestamp to be reported with the last data
  *  @details
- *  The @see inv_ak0991x_get_time_us function is used to obtain the current time, this
+ *  The @see inv_ak0991x_get_time_ms function is used to obtain the current time, this
  *  function has the slightly different purpose of marking the end of the sampling very
  *  accurately (relying on timers to achieve this). Host implementation will do the same
- *  as @see inv_ak0991x_get_time_us.
+ *  as @see inv_ak0991x_get_time_ms.
  */
-extern uint64_t inv_ak0991x_get_dataready_interrupt_time_us(void);
+extern uint64_t inv_ak0991x_get_dataready_interrupt_time_ms(void);
 
 /** @brief Hook called when magnetometer is started, implemented by upper layer which knows about timers
- *  @param[in] period sensor period in micro-second
+ *  @param[in] period sensor period in milli-second
  *  @return 0 on success, -1 on failure
  */
-extern int inv_ak0991x_start_timer_us(uint32_t period);
+extern int inv_ak0991x_start_timer_ms(uint32_t period);
 
 /** @brief Hook called when magnetometer is stopped, implemented by upper layer which knows about timers
  *  @return 0 on success, -1 on failure
@@ -95,10 +95,10 @@ extern int inv_ak0991x_start_timer_us(uint32_t period);
 extern int inv_ak0991x_stop_timer(void);
 
 /** @brief Hook called when magnetometer odr is updated, implemented by upper layer which knows about timers
- *  @param[in] period sensor period in micro-second
+ *  @param[in] period sensor period in milli-second
  *  @return 0 on success, -1 on failure
  */
-extern int inv_ak0991x_reconfigure_timer_us(uint32_t period);
+extern int inv_ak0991x_reconfigure_timer_ms(uint32_t period);
 
 /** @brief Reset and initialize driver states
  *  @param[in] s handle to driver states structure
