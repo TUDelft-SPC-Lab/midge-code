@@ -320,7 +320,7 @@ sdk_config:
 
 openocd:
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg
-load_gdb:
+load_gdb: nrf52832_xxaa_debug
 	@RTT_ADDR=$$(./get_rtt_address.sh); \
 	if [ "$$RTT_ADDR" = "" ]; then \
 		echo "Error: Could not find the _SEGGER_RTT address"; \
@@ -347,18 +347,22 @@ daplink_flash_softdevice: daplink_erase_flash
   -c "program $(SDK_ROOT)/components/softdevice/s132/hex/s132_nrf52_6.1.1_softdevice.hex" \
   -c "reset" -c "exit"
 
-daplink_flash_debug: nrf52832_xxaa_debug
+daplink_flash_debug_without_building:
 	@echo Flashing Debug Firmware, version: $(VERSION)
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
   -c "init" -c "reset init" \
   -c "program $(OUTPUT_DIRECTORY)/nrf52832_xxaa_debug.hex" \
   -c "reset" -c "exit"
 
+daplink_flash_debug: nrf52832_xxaa_debug
+	$(MAKE) daplink_flash_debug_without_building
 
-daplink_flash_release: nrf52832_xxaa_release 
+daplink_flash_release_without_building: 
 	@echo Flashing Debug Firmware, version: $(VERSION)
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg \
   -c "init" -c "reset init" \
   -c "program $(OUTPUT_DIRECTORY)/nrf52832_xxaa_release.hex" \
   -c "reset" -c "exit"
 
+daplink_flash_release: nrf52832_xxaa_release 
+	$(MAKE) daplink_flash_release_without_building

@@ -44,7 +44,7 @@ Note that the bluepy dependency only works on linux.
 # Firmware development
 ## Environment Setup:
 
-1. Install the `arm-none-eabi` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
+1. Install the `AArch32 bare-metal target (arm-none-eabi)` toolchain (compiler and binutils) for your distro <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>
     * To avoid issues it is recommended to have matching `gcc` and `gdb` versions from the toolchain
     * The `gdb-multiarch` package in ubuntu is know to cause debug errors when used with the `arm-none-eabi`'s `gcc`.
     * Version 14.1 is known to work well
@@ -63,7 +63,7 @@ Note that the bluepy dependency only works on linux.
     * Extract the SDK zip in the folder created in the previous step
     * Modify `~/nRF5_SDK_15.3.0/components/toolchain/gcc/Makefile.posix` so `GNU_INSTALL_ROOT` points to your `arm-none-eabi` toolchain.
       If the binary is already in your `PATH`, so just set `GNU_INSTALL_ROOT :=`.
-      For example `GNU_INSTALL_ROOT ?= /home/user/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/`
+      For example `GNU_INSTALL_ROOT ?= /home/user/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin/`
     * Modify `~/nRF5_SDK_15.3.0/external/fatfs/src/ffconf.h` to make the `_FS_RPATH` macro be defined as `2`.
     * For ubuntu if the sdk complains about missing `libncursesw.so.5` install it with `sudo apt install libncursesw5`.  
 
@@ -151,10 +151,10 @@ A barebones gdb server that can be executed via Makefile rules or using the VSco
 
 ### Using Makefile rules
 
-1. Build with `make nrf52832_xxaa_debug`
-2. Start the openocd server with `make openocd`
-3. Start the gdb session and load the binary with `make load_gdb`
-4. Start the RTT console to see log messages with `make logs`
+1. Start the openocd server with `make openocd`
+2. Start the gdb session and load the binary with `make load_gdb`
+    * This will build the debug binary if it was not built before.
+3. Start the RTT console to see log messages with `make logs`
 
 ### Using VSCode with Cortex-debug
 
@@ -179,8 +179,13 @@ The standalone files can be downloaded from
 1. Flash the softdevice (only required once): `make daplink_flash_softdevice`
   - This by itself will call the `daplink_erase_flash` target which erases 
     contents of code memory and config registers
-2. Build with `make nrf52832_xxaa_<release|debug>`
-3. Flash the binary with `make daplink_flash_<release|debug>`
+3. Flash the firmware with either of these options:
+    * Build the binary yourself
+        * Build and flash the binary with `make daplink_flash_<release|debug>`
+    * Use the already compiled binary
+        * Download the binary from the latest release https://github.com/TUDelft-SPC-Lab/midge-code/releases
+        * Place the files in the `_build` folder
+        * Flash it with `make daplink_flash_<release|debug>_without_building`
 
 > Calling the `daplink_erase_flash` target is not a requirement to update 
   firmware after the softdevice has been flashed
