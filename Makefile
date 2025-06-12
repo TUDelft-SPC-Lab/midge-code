@@ -312,7 +312,6 @@ flash_softdevice:
 
 erase:
 	nrfjprog -f nrf52 --eraseall
-	
 
 SDK_CONFIG_FILE := config/sdk_config.h
 CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
@@ -322,7 +321,12 @@ sdk_config:
 openocd:
 	openocd -f interface/cmsis-dap.cfg -f target/nrf52.cfg
 load_gdb:
-	arm-none-eabi-gdb -se _build/nrf52832_xxaa_debug.out -x debug.gdb
+	@RTT_ADDR=$$(./get_rtt_address.sh); \
+	if [ "$$RTT_ADDR" = "" ]; then \
+		echo "Error: Could not find the _SEGGER_RTT address"; \
+		exit 1; \
+	fi; \
+  arm-none-eabi-gdb -se _build/nrf52832_xxaa_debug.out -x _build/debug.gdb
 logs: SHELL:=$(shell which bash)   # Use the bash shell for the logs target, as sh does not have the disown command
 logs:
 	socat pty,link=/tmp/ttyvnrf,waitslave tcp:127.0.0.1:8000 & disown
