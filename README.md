@@ -183,7 +183,7 @@ The standalone files can be downloaded from
     * Build the binary yourself
         * Build and flash the binary with `make daplink_flash_<release|debug>`
     * Use the already compiled binary
-        * Download the `<debug|release>` from the latest release https://github.com/TUDelft-SPC-Lab/midge-code/releases
+        * Download the `<debug|release>` files from the latest release https://github.com/TUDelft-SPC-Lab/midge-code/releases
         * Place the files in the `_build` folder
         * Flash it with `make daplink_flash_<release|debug>_without_building`
 
