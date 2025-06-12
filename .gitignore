@@ -1,6 +1,5 @@
 _build/*
 *.hex
-_debug.gdb
 *.zip
 *.pyc
 __pycache/

@@ -13,4 +13,5 @@ else
     exit 1
 fi
 
-envsubst < debug.gdb > _debug.gdb
+# The .gdb env does not support variable expansion directly, so we use envsubst to replace the variable in the file.
+envsubst < debug.gdb > _build/debug.gdb
