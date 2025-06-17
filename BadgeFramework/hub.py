@@ -25,7 +25,7 @@ def print_hub_commands():
     sys.stdout.flush()
 
 if __name__ == "__main__":
-    sync_frequency = 5*60 # How frequent the synchronisation is triggered, defaults to every 10 seconds
+    sync_frequency = 5*60 # How frequent the synchronisation is triggered, defaults to every 5 minutes
     show_status_on_sync = False # Show the status of the midge after synchronisation
 
     df = pd.read_csv('sample_mapping_file.csv')
