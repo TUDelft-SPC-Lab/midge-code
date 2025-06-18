@@ -1,7 +1,8 @@
 from hub_connection import Connection
-import sys,tty,termios
-import time
+import sys
 from tqdm import tqdm
+import select
+from termios import TCIFLUSH, tcflush
 
 def choose_function(connection,input):
     chooser = {
@@ -149,49 +150,22 @@ def print_fw_version_all_devices(df):
     for (_, row), fw_version in zip(df.iterrows(), _get_fw_version_all(df)):
         print('\tParticipant: ' + str(row['Participant Id']) + ', fw: ' + fw_version)
 
-class timeout_input(object):
-    def __init__(self, poll_period=0.05):
-        self.poll_period = poll_period
+def timeout_input(timeout, prompt = ''):
+    sys.stdout.write(prompt)
+    sys.stdout.flush()
 
-    def _getch_nix(self):
-        from select import select
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            [i, _, _] = select([sys.stdin.fileno()], [], [], self.poll_period)
-            if i:
-                ch = sys.stdin.read(1)
-            else:
-                ch = ''
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
+    rlist, _, _ = select.select([sys.stdin], [], [], timeout)
 
-    def input(self, prompt=None, timeout=None,
-              extend_timeout_with_input=True, require_enter_to_confirm=True):
-        prompt = prompt or ''
-        sys.stdout.write(prompt)
-        sys.stdout.flush()
-        input_chars = []
-        start_time = time.time()
-        received_enter = False
-        while (time.time() - start_time) < timeout:
-            c = self._getch_nix()
-            if c in ('\n', '\r'):
-                received_enter = True
-                break
-            elif c:
-                input_chars.append(c)
-                sys.stdout.write(c)
-                sys.stdout.flush()
-                if extend_timeout_with_input:
-                    start_time = time.time()
-        sys.stdout.write('\n')
-        sys.stdout.flush()
-        captured_string = ''.join(input_chars)
-        if require_enter_to_confirm:
-            return_string = captured_string if received_enter else ''
-        else:
-            return_string = captured_string
-        return return_string
+    if rlist:
+        line = sys.stdin.readline().strip()
+        return line
+    else:
+        return ""
+
+def clear_input_line():
+    # Delete the content in the terminal
+    sys.stdout.write('\r\033[K')  # move to start of line and clear
+    sys.stdout.flush()
+
+    # Delete the content in the stdin buffer
+    tcflush(sys.stdin.fileno(), TCIFLUSH)
