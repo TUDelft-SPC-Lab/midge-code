@@ -369,5 +369,7 @@ class OpenBadge(object):
         while self.get_fw_version_response_queue.empty():
             self.receive_response()
 
-        return self.get_fw_version_response_queue.get()
+        version_response = self.get_fw_version_response_queue.get()
+        version_response.version = version_response.version.replace("\x00", "")
+        return version_response
 
