@@ -11,6 +11,7 @@ from hub_utilities import (
     print_fw_version_all_devices,
     choose_function,
     Connection,
+    clear_input_line,
 )
 
 def print_hub_commands():
@@ -32,11 +33,11 @@ if __name__ == "__main__":
     do_synchronization = False
     print("Type help for a list commands")
     sys.stdout.flush()
-    ti = timeout_input(poll_period=0.05)
 
-    def ti_input(prompt):
-        return ti.input(prompt=prompt, timeout=sync_frequency,
-                     extend_timeout_with_input=False, require_enter_to_confirm=True)
+    def ti_input(prompt=''):
+        clear_input_line()
+        return timeout_input(timeout=sync_frequency, prompt=prompt)
+
     while True:
         command = ti_input(prompt='> ')
 
@@ -63,13 +64,12 @@ if __name__ == "__main__":
             print_fw_version_all_devices(df)
         elif command == "help":
             print_hub_commands()
-            sys.stdout.flush()
         elif command == "midge":
             print('Type the id of the Midge you want to connect or exit.')
             sys.stdout.flush()
 
             while True:
-                command = ti_input(prompt='Midge Connection >')
+                command = ti_input(prompt='Midge Connection > ')
 
                 if command == "":
                     if do_synchronization is True:
@@ -89,7 +89,7 @@ if __name__ == "__main__":
                         continue
                     print ("Connected to the midge. For available commands, type help.")
                     while True:
-                        command = ti_input(prompt='Midge: ' + str(midge_id) + ' >')
+                        command = ti_input(prompt='Midge: ' + str(midge_id) + ' > ')
                         
                         if command == "exit":
                             cur_connection.disconnect()
@@ -130,5 +130,5 @@ if __name__ == "__main__":
             if do_synchronization is True:
                 synchronise_and_check_all_devices(df, show_status=show_status_on_sync)
         else:
-            print('Unknown command. Type help for a list of valid commands.')
+            print('Unknown command \'%s\'. Type help for a list of valid commands.' % command)
             sys.stdout.flush()
