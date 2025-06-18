@@ -13,11 +13,17 @@ from bluepy import btle
 from bluepy.btle import UUID, Peripheral, DefaultDelegate, AssignedNumbers ,Scanner
 from bluepy.btle import BTLEException
 
+def check_mic_switch_position(start_response):
+    if (start_response.switch_pos != 2):
+        raise RuntimeError("Mic switch should be on HI, aborting test")
 
 def mic_test(badge, mode):
     if (mode==0):
         start_stereo = badge.start_microphone(t=None,mode=0) # start mic in stereo mode
-        print(" sensor: mic, stereo mode            ")        
+        print(" sensor: mic, stereo mode            ")
+
+        check_mic_switch_position(start_stereo)
+
         # check if mic was started in stereo mode
         if (start_stereo.mode==0):
             print(" mic mode:         PASS            ")
@@ -55,9 +61,10 @@ def mic_test(badge, mode):
     else:
         print("###################################")
         print(" sensor: mic, mono mode            ")
-        #print("-----------------------------------")
 
         start_mono = badge.start_microphone(t=None,mode=1)
+
+        check_mic_switch_position(start_mono)
 
         if (start_mono.mode==1):
             print(" mic mode:         PASS            ")
@@ -182,22 +189,18 @@ def scan_test(badge):
     else:
         print(" scan disabled:    FAIL            ")
     
-def errase_mem(badge):
-    errased = badge.sdc_errase_all() # clean sd memory
+def erase_sdcard(badge):
+    print("###################################")
+    print(" sensor: sdcard                        ")
 
-    if (errased.done_errase):
-        print(" memory cleaned:   PASS            ")
+    erased = badge.sdc_errase_all() # clean sd memory
+
+    if (erased.done_errase):
+        print(" sdcard erased:    PASS            ")
         print("###################################")
     else:
-        print(" memory cleaned:   FAIL            ")
+        print(" sdcard erased:    FAIL            ")
         print("###################################")
-
-    def connect(self):
-        connection = BLEBadgeConnection.get_connection_to_badge(self.address)
-        connection.connect()
-        badge = OpenBadge(self.connection)
-        print("Connected!")
-        return badge
 
 
 def main():
@@ -210,36 +213,36 @@ def main():
     print("++++++++++++++++++++++++++++++++++++++++++++++++++")
     try:
         print("FW Version: " + badge.get_fw_version().version)
-    except:
-        print("Failed to retrieve FW version, aborting test")
-        exit()
+    except Exception as e:
+        print("Failed to retrieve FW version: " + str(e))
+        exit(1)
     print("++++++++++++++++++++++++++++++++++++++++++++++++++")
     
     print("=========== Midge test ============")
     try:
         mic_test(badge,0)
-    except:
-        print("mic error")
+    except Exception as e:
+        print(" mic error: " + str(e))
 
     try:
         mic_test(badge,1)
-    except:
-        print("mic error")
+    except Exception as e:
+        print(" mic error: " + str(e))
 
     try:
         scan_test(badge)
-    except:
-        print("scan error")
+    except Exception as e:
+        print("scan error: " + str(e))
 
     try:
         imu_test(badge)
-    except:
-        print("imu error")
+    except Exception as e:
+        print("imu error: " + str(e))
     
     try:
-        errase_mem(badge)
-    except:
-        print("errase memory error")
+        erase_sdcard(badge)
+    except Exception as e:
+        print("erase sdcard error: " + str(e))
     
     connection.disconnect()
 
