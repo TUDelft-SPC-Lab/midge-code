@@ -3,6 +3,7 @@ import sys
 from tqdm import tqdm
 import select
 from termios import TCIFLUSH, tcflush
+import threading
 
 def choose_function(connection,input):
     chooser = {
@@ -30,6 +31,20 @@ def choose_function(connection,input):
         print(error)
         return
 
+def threaded(fn):
+    num_threads = 2
+    def wrapper(df, *args, **kwargs):
+        thread_list = []
+        for i in range(num_threads):
+            t = threading.Thread(target=fn, args=((df[i::num_threads],) + args), kwargs=kwargs)
+            t.start()
+            thread_list.append(t)
+
+        for t in thread_list:
+            t.join()
+    return wrapper
+
+@threaded
 def start_recording_all_devices(df):
     for _, row in tqdm(df.iterrows(), total=df.shape[0], desc="Starting sensors"):
         current_participant = row['Participant Id']
@@ -47,6 +62,7 @@ def start_recording_all_devices(df):
             print(error)
             cur_connection.disconnect()
 
+@threaded
 def stop_recording_all_devices(df):
     for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Stopping sensors'):
         current_participant = row['Participant Id']
@@ -63,6 +79,7 @@ def stop_recording_all_devices(df):
             print(str(error))
             cur_connection.disconnect()
 
+@threaded
 def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, show_status = True):
     status_all = []
     errors_all = []
@@ -110,6 +127,7 @@ def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, s
         for out, (_, row) in zip(status_all, df.iterrows()):
             print('\t Midge: ' + str(row['Participant Id']) + " -- " + str(out))
 
+@threaded
 def erase_sdcard_all_devices(df):
     for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Erasing sdcard'):
         current_participant = row['Participant Id']
@@ -146,6 +164,7 @@ def _get_fw_version_all(df):
 
     return fw_versions
 
+@threaded
 def print_fw_version_all_devices(df):
     for (_, row), fw_version in zip(df.iterrows(), _get_fw_version_all(df)):
         print('\tParticipant: ' + str(row['Participant Id']) + ', fw: ' + fw_version)
