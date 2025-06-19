@@ -2,16 +2,24 @@
 
 ![The MINGLE MIDGE](https://raw.githubusercontent.com/TUDelft-SPC-Lab/spcl_midge_hardware/master/Media/v2.3.jpg)
 
-The Midge is a small, low-power wearable device designed to record audio, orientation, and proximity data.
+The Midge is a small, low-power wearable device designed to record audio, orientation and proximity data.
 It features a Nordic nRF52832 microcontroller, Bluetooth connectivity, dual microphones, an IMU (Inertial Measurement Unit), and a microSD card slot for local data storage.
 
-The IMU combines an accelerometer, gyroscope, and magnetometer to accurately capture and process orientation data.
-Proximity is measured using a Bluetooth scanner capable of detecting nearby devices.
-Audio can be recorded in two modes: low-frequency (1.25 kHz) and high-frequency (20 kHz).
-The low-frequency mode is optimized for privacy-preserving applications; it does not capture intelligible speech but can detect the presence of vocal activity.
-
 This repository contains the firmware for the Midge.
-It also contains the python scripts that are used for controlling the midge, recording and processing the data.
+It also contains the software that is used for monitoring and controlling the midge, recording and processing the data.
+
+The **IMU** combines an accelerometer, gyroscope, and magnetometer to accurately capture and process orientation data.
+The samples are stored in a binary file, with each sample containing a timestamp and the sensor data.
+The samples are recorded at a best effort of 60 Hz, meaning that the actual sample rate varies slightly depending on the device's processing load.
+
+**Proximity** is measured using a Bluetooth scanner capable of detecting nearby devices.
+Each midge send Bluetooth broadcasts packages at 1 Hz.
+The scanner records the ID, RSSI (Received Signal Strength Indicator), and group for each detected package.
+These samples are also stored in a binary file.
+
+**Audio** can be recorded in two modes: low-frequency (1.25 kHz) and high-frequency (20 kHz).
+The low-frequency mode is optimized for privacy-preserving applications; it does not capture intelligible speech but can detect the presence of vocal activity.
+Two files are created per session, a binary file containing the raw audio data, and another binary file containing the timestamps for each audio sample. 
 
 # Data recording workflow
 
@@ -232,7 +240,7 @@ The name of the file indicates the parameters used for recording with the genera
     - `1`: Mono
 
 - Text after `MIC`:
-    - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (~16KHz)
+    - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (20 KHz)
     - `LO`: Audio recording where data is decimated to obtain a low-frequency only recording 
 
 To decode the audio files, use the `audio_parser.py` script or decode in Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser.py`.
@@ -252,7 +260,7 @@ PDM peripheral.
 ### IMU
 
 The IMU data is stored in a binary file.
-The sensors record samples at a best effort of 60Hz, i.e. often there are fewer samples.
+The sensors record samples at a best effort of 60 Hz, i.e. often there are fewer samples.
 Each sample is 24 bytes long.
 The first 8 bytes contain the timestamp, the next 12 the data and last 4 bytes are padding.
 
