@@ -117,7 +117,7 @@ def erase_sdcard_all_devices(df):
         try:
             cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
-            print(str(error) + ', sensors are not stopped.')
+            print(str(error) + ', sdcard is not erased.')
             continue
         try:
             cur_connection.handle_sdc_erase()
@@ -135,7 +135,7 @@ def _get_fw_version_all(df):
         try:
             cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
-            print(str(error) + ', sensors are not stopped.')
+            print(str(error) + ', fw version not retrieved.')
             continue
         try:
             fw_versions.append(cur_connection.handle_fw_version())
