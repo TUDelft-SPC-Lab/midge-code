@@ -14,11 +14,13 @@ from hub_utilities import (
     clear_input_line,
 )
 
-def print_hub_commands():
+def print_hub_commands(sync_frequency):
     print(" start_all: starts recording on all midges with all sensors")
     print(" stop_all: stops the recording on all midges")
     print(" erase_all: erase the recorded data on all midges")
     print(" fw_all: show the firmware version of all of the midges")
+    print(" start_sync: trigger sync every %d seconds" % sync_frequency)
+    print(" stop_sync: show the firmware version of all of the midges")
     print(" midge: connect to a single midge for individual management")
     print(" toggle_show_status: toggle whether to show the status of the midges after synchronisation")
     print(" exit: stop and exit the hub script")
@@ -63,7 +65,7 @@ if __name__ == "__main__":
         elif command == "fw_all":
             print_fw_version_all_devices(df)
         elif command == "help":
-            print_hub_commands()
+            print_hub_commands(sync_frequency)
         elif command == "midge":
             print('Type the id of the Midge you want to connect or exit.')
             sys.stdout.flush()
@@ -119,6 +121,20 @@ if __name__ == "__main__":
             show_status_on_sync = not show_status_on_sync
             print("Show status on synchronisation: " + str(show_status_on_sync))
             sys.stdout.flush()
+        elif command == "start_sync":            
+            if do_synchronization is True:
+                print("Synchronisation already enabled.")
+                sys.stdout.flush()
+            else:
+                print("Synchronisation enabled every %d seconds." % sync_frequency)
+                do_synchronization = True
+        elif command == "stop_sync":
+            if do_synchronization is False:
+                print("Synchronisation already disabled.")
+                sys.stdout.flush()
+            else:
+                print("Stopping synchronisation.")
+                do_synchronization = False
         elif command == "exit":
             print("Exit hub script.")
             sys.stdout.flush()
