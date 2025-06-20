@@ -9,7 +9,7 @@ def choose_function(connection,input):
     chooser = {
         "help": connection.print_help,
         "status": connection.handle_status_request,
-        "start_all_sensors": connection.start_recording_all_sensors,
+        "start_all_sensors": connection.status_and_start_recording_all_sensors,
         "stop_all_sensors": connection.stop_recording_all_sensors,
         "start_microphone": connection.handle_start_microphone_request,
         "stop_microphone": connection.handle_stop_microphone_request,
@@ -55,9 +55,20 @@ def start_recording_all_devices(df):
             print(str(error) + ', sensors are not started.')
             continue
         try:
-            cur_connection.set_id_at_start()
-            cur_connection.start_recording_all_sensors()
+            status = cur_connection.handle_status_request()
+            if status.imu_status == 0 and status.microphone_status == 0 and status.scan_status == 0:
+                cur_connection.set_id_at_start()
+                cur_connection.start_recording_all_sensors()
+            else:
+                if status.scan_status == 0:
+                    cur_connection.handle_start_scan_request()
+                if status.microphone_status == 0:
+                    cur_connection.handle_start_microphone_request()
+                if status.imu_status == 0:
+                    cur_connection.handle_start_imu_request()
+                
             cur_connection.disconnect()
+
         except Exception as error:
             print(error)
             cur_connection.disconnect()
@@ -73,7 +84,17 @@ def stop_recording_all_devices(df):
             print(str(error) + ', sensors are not stopped.')
             continue
         try:
-            cur_connection.stop_recording_all_sensors()
+            status = cur_connection.handle_status_request()
+            if status.imu_status == 1 and status.microphone_status == 1 and status.scan_status == 1:
+                cur_connection.stop_recording_all_sensors()
+            else:
+                if status.scan_status == 1:
+                    cur_connection.handle_stop_scan_request()
+                if status.microphone_status == 1:
+                    cur_connection.handle_stop_microphone_request()
+                if status.imu_status == 1:
+                    cur_connection.handle_stop_imu_request()
+            
             cur_connection.disconnect()
         except Exception as error:
             print(str(error))
@@ -138,7 +159,11 @@ def erase_sdcard_all_devices(df):
             print(str(error) + ', sdcard is not erased.')
             continue
         try:
-            cur_connection.handle_sdc_erase()
+            status = cur_connection.handle_status_request()
+            if status.imu_status == 1 or status.microphone_status == 1 or status.scan_status == 1:
+                print('Cannot erase sdcard for participant ' + str(current_participant) + ', sensors are still recording.')
+            else:
+                cur_connection.handle_sdc_erase()
             cur_connection.disconnect()
         except Exception as error:
             print(str(error))

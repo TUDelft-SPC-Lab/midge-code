@@ -23,7 +23,7 @@ def print_hub_commands(sync_frequency):
     print(" stop_sync: show the firmware version of all of the midges")
     print(" midge: connect to a single midge for individual management")
     print(" toggle_show_status: toggle whether to show the status of the midges after synchronisation")
-    print(" exit: stop and exit the hub script")
+    print(" exit: stop recording and exit the hub script")
     print(" help: prints this help message")
     sys.stdout.flush()
 
@@ -44,24 +44,12 @@ if __name__ == "__main__":
         command = ti_input(prompt='> ')
 
         if command == "start_all":
-            if do_synchronization is True:
-                print("Devices are already recording.")
-                sys.stdout.flush()
-            else:
-                start_recording_all_devices(df)
-                do_synchronization = True
+            start_recording_all_devices(df)
         elif command == "stop_all":
-            if do_synchronization is False:
-                print("Devices are not recording.")
-                sys.stdout.flush()
-            else:
-                do_synchronization = False
-                stop_recording_all_devices(df)
+            do_synchronization = False
+            stop_recording_all_devices(df)
         elif command == "erase_all":
-            if do_synchronization is True:
-                print("Devices are recording, will not erase.")
-            else:
-                erase_sdcard_all_devices(df)
+            erase_sdcard_all_devices(df)
         elif command == "fw_all":
             print_fw_version_all_devices(df)
         elif command == "help":
@@ -141,7 +129,7 @@ if __name__ == "__main__":
             if do_synchronization:
                 do_synchronization = False
                 stop_recording_all_devices(df)
-            quit(0)
+            exit()
         elif command == "":
             if do_synchronization is True:
                 synchronise_and_check_all_devices(df, show_status=show_status_on_sync)

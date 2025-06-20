@@ -119,8 +119,12 @@ class Connection():
         except:
             raise Exception("Could not get the fw version for participant " + str(self.badge_id))
 
-    def start_recording_all_sensors(self):
+    def status_and_start_recording_all_sensors(self):
         self.handle_status_request()
+        self.set_id_at_start()
+        self.start_recording_all_sensors()
+
+    def start_recording_all_sensors(self):
         self.handle_start_scan_request()
         self.handle_start_microphone_request()
         self.handle_start_imu_request()
