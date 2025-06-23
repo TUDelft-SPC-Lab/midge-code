@@ -1783,41 +1783,38 @@ class ListFilesResponse:
 		self.decode_files(istream)
 
 	def decode_header(self, istream):
-		# Header at offset 3 (after response type + 3 bytes padding) 
-		self.header.file_count = struct.unpack('<B', istream.buf[3:4])[0]
-		self.header.total_files = struct.unpack('<B', istream.buf[4:5])[0]
-		self.header.start_index = struct.unpack('<B', istream.buf[5:6])[0]
-		print("DEBUG: Header - file_count={}, total_files={}, start_index={}".format(self.header.file_count, self.header.total_files, self.header.start_index))
-	
+		# Skip the padding bytes
+		istream.read(3) 
+		self.header.file_count = struct.unpack('<B', istream.read(1))[0]
+		self.header.total_files = struct.unpack('<B', istream.read(1))[0]
+		self.header.start_index = struct.unpack('<B', istream.read(1))[0]
+		print("DEBUG: Header - file_count={}, total_files={}, start_index={}".format(self.header.file_count, self.header.total_files, self.header.start_index))	
+
 	def decode_files(self, istream):
-		offset = getattr(self, '_header_offset', 0) + 3
-		
 		for i in range(self.header.file_count):
-			print("DEBUG: Decoding file {} at offset {}".format(i, offset))
+			# Check if there's enough data for a full FileInfo struct
+			if len(istream.buf) < 40:
+				print("WARNING: Not enough data in the stream to decode file at index {}. Stopping.".format(i))
+				break
+
 			file_info = FileInfo()
 			
 			# Extract filename (32 bytes)
-			filename_start = offset
-			filename_end = offset + MAX_FILENAME_LENGTH
-			filename_bytes = istream.buf[filename_start:filename_end]
+			filename_bytes = istream.read(MAX_FILENAME_LENGTH)
 			file_info.filename = filename_bytes.rstrip(b'\x00').decode('utf-8')
-			offset += MAX_FILENAME_LENGTH
 			
 			# Extract file size (4 bytes)
-			size_bytes = istream.buf[offset:offset+4]
+			size_bytes = istream.read(4)
 			file_info.file_size = struct.unpack('<I', size_bytes)[0]
-			offset += 4
 			
 			# Extract timestamp (4 bytes)
-			timestamp_bytes = istream.buf[offset:offset+4]
+			timestamp_bytes = istream.read(4)
 			file_info.timestamp = struct.unpack('<I', timestamp_bytes)[0]
-			offset += 4
 			
 			print("DEBUG: Decoded file {}: '{}', size={}, timestamp={}".format(
 				i, file_info.filename, file_info.file_size, file_info.timestamp))
 			
 			self.files.append(file_info)
-
 class StartDownloadResponse:
 	def __init__(self):
 		self.reset()

@@ -64,6 +64,7 @@ ret_code_t start_download_handler(StartDownloadRequest *request, StartDownloadRe
         download_active = false;
     }
 
+    NRF_LOG_INFO("Starting download for file: %s", request->filename);
     ff_result = f_open(&download_file, request->filename, FA_READ);
     if (ff_result != FR_OK) {
         NRF_LOG_ERROR("Failed to open file for download: %s, error: %d", request->filename, ff_result);

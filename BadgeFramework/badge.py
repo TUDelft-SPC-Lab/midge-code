@@ -408,7 +408,7 @@ class OpenBadge(object):
 
             response = self.list_files_response_queue.get()
 
-            for i in range(response.header.file_count):
+            for i in range(len(response.files)):
                 files.append({
                     'filename': response.files[i].filename,
                     'size': response.files[i].file_size,
