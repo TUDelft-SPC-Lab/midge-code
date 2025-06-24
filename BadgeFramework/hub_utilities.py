@@ -33,7 +33,7 @@ def choose_function(connection,input):
         return
 
 def threaded(fn):
-    num_threads = 3
+    num_threads = 4
     def wrapper(df, *args, **kwargs):
         thread_list = []
         for i in range(num_threads):
