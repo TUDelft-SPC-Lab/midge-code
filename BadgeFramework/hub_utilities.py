@@ -33,11 +33,11 @@ def choose_function(connection,input):
         return
 
 def threaded(fn):
-    num_threads = 2
+    num_threads = 3
     def wrapper(df, *args, **kwargs):
         thread_list = []
         for i in range(num_threads):
-            t = threading.Thread(target=fn, args=((df[i::num_threads],) + args), kwargs=kwargs)
+            t = threading.Thread(target=fn, args=((df[i::num_threads],) + args), name=str(i), kwargs=kwargs)
             t.start()
             thread_list.append(t)
 
@@ -55,65 +55,70 @@ def threaded(fn):
 def start_recording_all_devices(df):
     all_recording = np.array(df["Recording"])
     while not np.all(all_recording == True):
-        for i, (_, row) in tqdm(enumerate(df.iterrows()), total=df.shape[0], desc="Starting sensors"):
-            current_participant = row['Participant Id']
-            current_mac = row['Mac Address']
-            if all_recording[i] in (None, False):
-                try:
-                    cur_connection=Connection(current_participant,current_mac)
-                except Exception as error:
-                    print(str(error) + ', sensors are not started.')
-                    continue
-                try:
-                    status = cur_connection.handle_status_request()
-                    if status.imu_status == 0 and status.microphone_status == 0 and status.scan_status == 0:
-                        cur_connection.set_id_at_start()
-                        cur_connection.start_recording_all_sensors()
-                    else:
-                        if status.scan_status == 0:
-                            cur_connection.handle_start_scan_request()
-                        if status.microphone_status == 0:
-                            cur_connection.handle_start_microphone_request()
-                        if status.imu_status == 0:
-                            cur_connection.handle_start_imu_request()
-                    
-                    all_recording[i] = True
-                    cur_connection.disconnect()
-                except Exception as error:
-                    print(error)
-                    cur_connection.disconnect()
+        with tqdm(total=np.sum(all_recording != True), desc="Starting sensors, thread: %s" % threading.currentThread().name) as pbar:
+            for i, (_, row) in enumerate(df.iterrows()):
+                current_participant = row['Participant Id']
+                current_mac = row['Mac Address']
+                if all_recording[i] in (None, False):
+                    try:
+                        cur_connection=Connection(current_participant,current_mac, num_tries=25)
+                    except Exception as error:
+                        print(str(error) + ', sensors are not started.')
+                        continue
+                    try:
+                        status = cur_connection.handle_status_request()
+                        if status.imu_status == 0 and status.microphone_status == 0 and status.scan_status == 0:
+                            cur_connection.set_id_at_start()
+                            cur_connection.start_recording_all_sensors()
+                        else:
+                            if status.scan_status == 0:
+                                cur_connection.handle_start_scan_request()
+                            if status.microphone_status == 0:
+                                cur_connection.handle_start_microphone_request()
+                            if status.imu_status == 0:
+                                cur_connection.handle_start_imu_request()
+                        
+                        all_recording[i] = True
+                        pbar.update(1)
+
+                        cur_connection.disconnect()
+                    except Exception as error:
+                        print(error)
+                        cur_connection.disconnect()
 
 @threaded
 def stop_recording_all_devices(df):
     all_recording = np.array(df["Recording"])
     while not np.all(all_recording == False):
-        for i, (_, row) in tqdm(enumerate(df.iterrows()), total=df.shape[0], desc="Stopping sensors"):
-            current_participant = row['Participant Id']
-            current_mac = row['Mac Address']
-            if all_recording[i] in (None, True):
-                try:
-                    cur_connection=Connection(current_participant,current_mac)
-                except Exception as error:
-                    print(str(error) + ', sensors are not stopped.')
-                    continue
-                try:
-                    status = cur_connection.handle_status_request()
-                    if status.imu_status == 1 and status.microphone_status == 1 and status.scan_status == 1:
-                        cur_connection.stop_recording_all_sensors()
-                    else:
-                        if status.scan_status == 1:
-                            cur_connection.handle_stop_scan_request()
-                        if status.microphone_status == 1:
-                            cur_connection.handle_stop_microphone_request()
-                        if status.imu_status == 1:
-                            cur_connection.handle_stop_imu_request()
-                    
-                    all_recording[i] = False
+        with tqdm(total=np.sum(all_recording != False), desc="Stopping sensors, thread: %s" % threading.currentThread().name) as pbar:
+            for i, (_, row) in enumerate(df.iterrows()):
+                current_participant = row['Participant Id']
+                current_mac = row['Mac Address']
+                if all_recording[i] in (None, True):
+                    try:
+                        cur_connection=Connection(current_participant,current_mac, num_tries=25)
+                    except Exception as error:
+                        print(str(error) + ', sensors are not stopped.')
+                        continue
+                    try:
+                        status = cur_connection.handle_status_request()
+                        if status.imu_status == 1 and status.microphone_status == 1 and status.scan_status == 1:
+                            cur_connection.stop_recording_all_sensors()
+                        else:
+                            if status.scan_status == 1:
+                                cur_connection.handle_stop_scan_request()
+                            if status.microphone_status == 1:
+                                cur_connection.handle_stop_microphone_request()
+                            if status.imu_status == 1:
+                                cur_connection.handle_stop_imu_request()
+                        
+                        all_recording[i] = False
+                        pbar.update(1)
 
-                    cur_connection.disconnect()
-                except Exception as error:
-                    print(str(error))
-                    cur_connection.disconnect()
+                        cur_connection.disconnect()
+                    except Exception as error:
+                        print(str(error))
+                        cur_connection.disconnect()
 
 
 @threaded
