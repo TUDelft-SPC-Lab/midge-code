@@ -199,12 +199,14 @@ def _get_fw_version_all(df):
         try:
             cur_connection=Connection(current_participant,current_mac)
         except Exception as error:
+            fw_versions.append("Not retrieved")
             print(str(error) + ', fw version not retrieved.')
             continue
         try:
             fw_versions.append(cur_connection.handle_fw_version())
             cur_connection.disconnect()
         except Exception as error:
+            fw_versions.append("Not retrieved")
             print(str(error))
             cur_connection.disconnect()
 
