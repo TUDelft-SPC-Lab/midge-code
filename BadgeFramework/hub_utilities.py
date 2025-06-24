@@ -85,6 +85,7 @@ def start_recording_all_devices(df):
                     except Exception as error:
                         print(error)
                         cur_connection.disconnect()
+    sys.stdout.flush()
 
 @threaded
 def stop_recording_all_devices(df):
@@ -119,7 +120,7 @@ def stop_recording_all_devices(df):
                     except Exception as error:
                         print(str(error))
                         cur_connection.disconnect()
-
+    sys.stdout.flush()
 
 @threaded
 def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, show_status = True):
