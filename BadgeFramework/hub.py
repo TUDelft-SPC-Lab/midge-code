@@ -39,7 +39,6 @@ def start_recording_all_devices_with_sync(df, sync_frequency):
         sys.stdout.flush()
         return False
     
-    
 
 if __name__ == "__main__":
     sync_frequency = 5*60 # How frequent the synchronisation is triggered, defaults to every 5 minutes
