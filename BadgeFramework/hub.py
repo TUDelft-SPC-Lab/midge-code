@@ -27,6 +27,20 @@ def print_hub_commands(sync_frequency):
     print(" help: prints this help message")
     sys.stdout.flush()
 
+def start_recording_all_devices_with_sync(df, sync_frequency):
+    start_recording_all_devices(df)
+    answer = raw_input("Do you want to start synchronisation? [Y/n]: ").strip().lower()
+    if answer in ("", "y", "yes", "Y", "Yes"):
+        print("Synchronisation enabled every %d seconds." % sync_frequency)
+        sys.stdout.flush()
+        return True
+    else:
+        print("Synchronisation not started.")
+        sys.stdout.flush()
+        return False
+    
+    
+
 if __name__ == "__main__":
     sync_frequency = 5*60 # How frequent the synchronisation is triggered, defaults to every 5 minutes
     show_status_on_sync = False # Show the status of the midge after synchronisation
@@ -44,7 +58,7 @@ if __name__ == "__main__":
         command = ti_input(prompt='> ')
 
         if command == "start_all":
-            start_recording_all_devices(df)
+            do_synchronization = start_recording_all_devices_with_sync(df, sync_frequency)
         elif command == "stop_all":
             do_synchronization = False
             stop_recording_all_devices(df)
