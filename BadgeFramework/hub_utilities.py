@@ -172,50 +172,66 @@ def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, s
 
 @threaded
 def erase_sdcard_all_devices(df):
-    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Erasing sdcard'):
-        current_participant = row['Participant Id']
-        current_mac = row['Mac Address']
-        try:
-            cur_connection=Connection(current_participant,current_mac)
-        except Exception as error:
-            print(str(error) + ', sdcard is not erased.')
-            continue
-        try:
-            status = cur_connection.handle_status_request()
-            if status.imu_status == 1 or status.microphone_status == 1 or status.scan_status == 1:
-                print('Cannot erase sdcard for participant ' + str(current_participant) + ', sensors are still recording.')
-            else:
-                cur_connection.handle_sdc_erase()
-            cur_connection.disconnect()
-        except Exception as error:
-            print(str(error))
-            cur_connection.disconnect()
+    all_erased = np.full(len(df), False, dtype=np.bool)
+    while not np.all(all_erased == True):
+        with tqdm(total=np.sum(all_erased != True), desc="Erasing sdcard', thread: %s" % threading.currentThread().name) as pbar:
+            for i, (_, row) in enumerate(df.iterrows()):
+                if all_erased[i] == True:
+                    continue
+                
+                current_participant = row['Participant Id']
+                current_mac = row['Mac Address']
+                try:
+                    cur_connection=Connection(current_participant,current_mac)
+                except Exception as error:
+                    print(str(error) + ', sdcard is not erased.')
+                    continue
+                try:
+                    status = cur_connection.handle_status_request()
+                    if status.imu_status == 1 or status.microphone_status == 1 or status.scan_status == 1:
+                        print('Cannot erase sdcard for participant ' + str(current_participant) + ', sensors are still recording.')
+                    else:
+                        cur_connection.handle_sdc_erase()
+                    all_erased[i] = True
+                    pbar.update(1)
+                    cur_connection.disconnect()
+                except Exception as error:
+                    print(str(error))
+                    cur_connection.disconnect()
+    sys.stdout.flush()
 
 def _get_fw_version_all(df):
-    fw_versions = []
+    fw_versions = {}
 
-    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Querying versions'):
-        current_participant = row['Participant Id']
-        current_mac = row['Mac Address']
-        try:
-            cur_connection=Connection(current_participant,current_mac)
-        except Exception as error:
-            fw_versions.append("Not retrieved")
-            print(str(error) + ', fw version not retrieved.')
-            continue
-        try:
-            fw_versions.append(cur_connection.handle_fw_version())
-            cur_connection.disconnect()
-        except Exception as error:
-            fw_versions.append("Not retrieved")
-            print(str(error))
-            cur_connection.disconnect()
+    all_versions_retrieved = np.full(len(df), False, dtype=np.bool)
+    while not np.all(all_versions_retrieved == True):
+        with tqdm(total=np.sum(all_versions_retrieved != True), desc="Querying versions', thread: %s" % threading.currentThread().name) as pbar:
+
+            for i, (_, row) in enumerate(df.iterrows()):
+                if all_versions_retrieved[i] == True:
+                    continue
+        
+                current_participant = row['Participant Id']
+                current_mac = row['Mac Address']
+                try:
+                    cur_connection=Connection(current_participant,current_mac)
+                except Exception as error:
+                    print(str(error) + ', fw version not retrieved.')
+                    continue
+                try:
+                    fw_versions[i] = cur_connection.handle_fw_version()
+                    all_versions_retrieved[i] = True
+                    pbar.update(1)
+                    cur_connection.disconnect()
+                except Exception as error:
+                    print(str(error))
+                    cur_connection.disconnect()
 
     return fw_versions
 
 @threaded
 def print_fw_version_all_devices(df):
-    for (_, row), fw_version in zip(df.iterrows(), _get_fw_version_all(df)):
+    for (_, row), fw_version in zip(df.iterrows(), _get_fw_version_all(df).values()):
         print('\tParticipant: ' + str(row['Participant Id']) + ', fw: ' + fw_version)
 
 def timeout_input(timeout, prompt = ''):
