@@ -4,6 +4,7 @@ from tqdm import tqdm
 import select
 from termios import TCIFLUSH, tcflush
 import threading
+import numpy as np
 
 def choose_function(connection,input):
     chooser = {
@@ -42,63 +43,78 @@ def threaded(fn):
 
         for t in thread_list:
             t.join()
+
+        # Variable assignment with threads is complex, do it here instead in the main thread
+        if fn.func_name == "start_recording_all_devices":
+            df["Recording"] = True
+        if fn.func_name == "stop_recording_all_devices":
+            df["Recording"] = False
     return wrapper
 
 @threaded
 def start_recording_all_devices(df):
-    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc="Starting sensors"):
-        current_participant = row['Participant Id']
-        current_mac = row['Mac Address']
-        try:
-            cur_connection=Connection(current_participant,current_mac)
-        except Exception as error:
-            print(str(error) + ', sensors are not started.')
-            continue
-        try:
-            status = cur_connection.handle_status_request()
-            if status.imu_status == 0 and status.microphone_status == 0 and status.scan_status == 0:
-                cur_connection.set_id_at_start()
-                cur_connection.start_recording_all_sensors()
-            else:
-                if status.scan_status == 0:
-                    cur_connection.handle_start_scan_request()
-                if status.microphone_status == 0:
-                    cur_connection.handle_start_microphone_request()
-                if status.imu_status == 0:
-                    cur_connection.handle_start_imu_request()
-                
-            cur_connection.disconnect()
-
-        except Exception as error:
-            print(error)
-            cur_connection.disconnect()
+    all_recording = np.array(df["Recording"])
+    while not np.all(all_recording == True):
+        for i, (_, row) in tqdm(enumerate(df.iterrows()), total=df.shape[0], desc="Starting sensors"):
+            current_participant = row['Participant Id']
+            current_mac = row['Mac Address']
+            if all_recording[i] in (None, False):
+                try:
+                    cur_connection=Connection(current_participant,current_mac)
+                except Exception as error:
+                    print(str(error) + ', sensors are not started.')
+                    continue
+                try:
+                    status = cur_connection.handle_status_request()
+                    if status.imu_status == 0 and status.microphone_status == 0 and status.scan_status == 0:
+                        cur_connection.set_id_at_start()
+                        cur_connection.start_recording_all_sensors()
+                    else:
+                        if status.scan_status == 0:
+                            cur_connection.handle_start_scan_request()
+                        if status.microphone_status == 0:
+                            cur_connection.handle_start_microphone_request()
+                        if status.imu_status == 0:
+                            cur_connection.handle_start_imu_request()
+                    
+                    all_recording[i] = True
+                    cur_connection.disconnect()
+                except Exception as error:
+                    print(error)
+                    cur_connection.disconnect()
 
 @threaded
 def stop_recording_all_devices(df):
-    for _, row in tqdm(df.iterrows(), total=df.shape[0], desc='Stopping sensors'):
-        current_participant = row['Participant Id']
-        current_mac = row['Mac Address']
-        try:
-            cur_connection=Connection(current_participant,current_mac)
-        except Exception as error:
-            print(str(error) + ', sensors are not stopped.')
-            continue
-        try:
-            status = cur_connection.handle_status_request()
-            if status.imu_status == 1 and status.microphone_status == 1 and status.scan_status == 1:
-                cur_connection.stop_recording_all_sensors()
-            else:
-                if status.scan_status == 1:
-                    cur_connection.handle_stop_scan_request()
-                if status.microphone_status == 1:
-                    cur_connection.handle_stop_microphone_request()
-                if status.imu_status == 1:
-                    cur_connection.handle_stop_imu_request()
-            
-            cur_connection.disconnect()
-        except Exception as error:
-            print(str(error))
-            cur_connection.disconnect()
+    all_recording = np.array(df["Recording"])
+    while not np.all(all_recording == False):
+        for i, (_, row) in tqdm(enumerate(df.iterrows()), total=df.shape[0], desc="Stopping sensors"):
+            current_participant = row['Participant Id']
+            current_mac = row['Mac Address']
+            if all_recording[i] in (None, True):
+                try:
+                    cur_connection=Connection(current_participant,current_mac)
+                except Exception as error:
+                    print(str(error) + ', sensors are not stopped.')
+                    continue
+                try:
+                    status = cur_connection.handle_status_request()
+                    if status.imu_status == 1 and status.microphone_status == 1 and status.scan_status == 1:
+                        cur_connection.stop_recording_all_sensors()
+                    else:
+                        if status.scan_status == 1:
+                            cur_connection.handle_stop_scan_request()
+                        if status.microphone_status == 1:
+                            cur_connection.handle_stop_microphone_request()
+                        if status.imu_status == 1:
+                            cur_connection.handle_stop_imu_request()
+                    
+                    all_recording[i] = False
+
+                    cur_connection.disconnect()
+                except Exception as error:
+                    print(str(error))
+                    cur_connection.disconnect()
+
 
 @threaded
 def synchronise_and_check_all_devices(df, skip_id = None, conn_skip_id = None, show_status = True):
