@@ -141,8 +141,9 @@ if __name__ == "__main__":
         elif command == "exit":
             print("Exit hub script.")
             sys.stdout.flush()
-            if do_synchronization:
-                do_synchronization = False
+            do_synchronization = False
+            answer = raw_input("Do you want to stop recording? [Y/n]: ").strip().lower()
+            if answer in ("", "y", "yes", "Y", "Yes"):
                 stop_recording_all_devices(df)
             exit()
         elif command == "":
