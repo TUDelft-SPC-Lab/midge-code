@@ -14,22 +14,39 @@ from hub_utilities import (
     clear_input_line,
 )
 
-def print_hub_commands():
+def print_hub_commands(sync_frequency):
     print(" start_all: starts recording on all midges with all sensors")
     print(" stop_all: stops the recording on all midges")
     print(" erase_all: erase the recorded data on all midges")
     print(" fw_all: show the firmware version of all of the midges")
+    print(" start_sync: trigger sync every %d seconds" % sync_frequency)
+    print(" stop_sync: show the firmware version of all of the midges")
     print(" midge: connect to a single midge for individual management")
     print(" toggle_show_status: toggle whether to show the status of the midges after synchronisation")
-    print(" exit: stop and exit the hub script")
+    print(" exit: stop recording and exit the hub script")
     print(" help: prints this help message")
     sys.stdout.flush()
+
+def start_recording_all_devices_with_sync(df, sync_frequency):
+    start_recording_all_devices(df)
+    answer = raw_input("Do you want to start synchronisation? [Y/n]: ").strip().lower()
+    if answer in ("", "y", "yes", "Y", "Yes"):
+        print("Synchronisation enabled every %d seconds." % sync_frequency)
+        sys.stdout.flush()
+        return True
+    else:
+        print("Synchronisation not started.")
+        sys.stdout.flush()
+        return False
+    
 
 if __name__ == "__main__":
     sync_frequency = 5*60 # How frequent the synchronisation is triggered, defaults to every 5 minutes
     show_status_on_sync = False # Show the status of the midge after synchronisation
 
     df = pd.read_csv('sample_mapping_file.csv')
+    df['Recording'] = None  # We do not know if the midges are recording or not before connecting to them
+
     do_synchronization = False
     print("Type help for a list commands")
     sys.stdout.flush()
@@ -42,28 +59,16 @@ if __name__ == "__main__":
         command = ti_input(prompt='> ')
 
         if command == "start_all":
-            if do_synchronization is True:
-                print("Devices are already recording.")
-                sys.stdout.flush()
-            else:
-                start_recording_all_devices(df)
-                do_synchronization = True
+            do_synchronization = start_recording_all_devices_with_sync(df, sync_frequency)
         elif command == "stop_all":
-            if do_synchronization is False:
-                print("Devices are not recording.")
-                sys.stdout.flush()
-            else:
-                do_synchronization = False
-                stop_recording_all_devices(df)
+            do_synchronization = False
+            stop_recording_all_devices(df)
         elif command == "erase_all":
-            if do_synchronization is True:
-                print("Devices are recording, will not erase.")
-            else:
-                erase_sdcard_all_devices(df)
+            erase_sdcard_all_devices(df)
         elif command == "fw_all":
             print_fw_version_all_devices(df)
         elif command == "help":
-            print_hub_commands()
+            print_hub_commands(sync_frequency)
         elif command == "midge":
             print('Type the id of the Midge you want to connect or exit.')
             sys.stdout.flush()
@@ -119,13 +124,28 @@ if __name__ == "__main__":
             show_status_on_sync = not show_status_on_sync
             print("Show status on synchronisation: " + str(show_status_on_sync))
             sys.stdout.flush()
+        elif command == "start_sync":            
+            if do_synchronization is True:
+                print("Synchronisation already enabled.")
+                sys.stdout.flush()
+            else:
+                print("Synchronisation enabled every %d seconds." % sync_frequency)
+                do_synchronization = True
+        elif command == "stop_sync":
+            if do_synchronization is False:
+                print("Synchronisation already disabled.")
+                sys.stdout.flush()
+            else:
+                print("Stopping synchronisation.")
+                do_synchronization = False
         elif command == "exit":
             print("Exit hub script.")
             sys.stdout.flush()
-            if do_synchronization:
-                do_synchronization = False
+            do_synchronization = False
+            answer = raw_input("Do you want to stop recording? [Y/n]: ").strip().lower()
+            if answer in ("", "y", "yes", "Y", "Yes"):
                 stop_recording_all_devices(df)
-            quit(0)
+            exit()
         elif command == "":
             if do_synchronization is True:
                 synchronise_and_check_all_devices(df, show_status=show_status_on_sync)
