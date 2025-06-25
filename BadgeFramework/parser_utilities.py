@@ -22,7 +22,7 @@ def parse_timestamps(timestamps, sensor_name):
             timestamps_dt.append(dt.fromtimestamp(float(x)/1000))
         except Exception as e:
             if error_reported is False:
-                print('Error in timestamp conversion for sensor ' + sensor_name + ': ' + str(e))
+                print('Error in timestamp conversion for sensor {}: {}'.format(sensor_name, str(e)))
                 error_reported = True
             timestamps_dt.append("Date error")
     return timestamps_dt 

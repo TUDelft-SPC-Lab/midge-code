@@ -90,11 +90,10 @@ def decode_timestamp_file(path_input):
         # Save the datetime data as a text file with one datetime per line
         with path_output.open("w") as f:
             for datetime_val in datetime_data:
-                f.write(f"{datetime_val}\n")
-        print(f"Successfully decoded {len(datetime_data)} timestamps to {path_output}")
+                f.write("{}\n".format(datetime_val))
+        print("Successfully decoded {} timestamps to {}".format(len(datetime_data), path_output))
     except Exception as e:
-        print(f"Error processing {path_input}: {e}")
-
+        print("Error processing {}: {}".format(path_input, e))
 
 def process_input_file(input_path):
     # Process audio files
