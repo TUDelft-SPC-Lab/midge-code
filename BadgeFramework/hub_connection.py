@@ -4,19 +4,24 @@ import sys
 constant_group_number = 1
 
 class Connection():
-    def __init__(self,pid,address):
-        try:
-            self.connection = BLEBadgeConnection.get_connection_to_badge(address)
-            self.connection.connect()
-            self.badge = OpenBadge(self.connection)
-            self.badge_id = int(pid)
-            self.mac_address = address
-            self.group_number = int(constant_group_number)
-        except Exception as err:
-            #if (err):
-            #    print (str(err))
-            raise Exception("Could not connect to participant" + str(pid))
+    def __init__(self,pid,address, num_tries=3):
+        for i in range(num_tries):
+            try:
+                self.connection = BLEBadgeConnection.get_connection_to_badge(address)
+                self.connection.connect()
+                self.badge = OpenBadge(self.connection)
+                self.badge_id = int(pid)
+                self.mac_address = address
+                self.group_number = int(constant_group_number)
+                break
+            except Exception as err:
+                if i >= num_tries - 1:
+                    raise Exception(
+                        "Could not connect to participant " + str(pid) + ", error: "
+                        + str(err)
+                    )
 
+        
     def set_id_at_start(self):
         try:
             self.badge.get_status(new_id=self.badge_id, new_group_number=self.group_number)
@@ -114,8 +119,12 @@ class Connection():
         except:
             raise Exception("Could not get the fw version for participant " + str(self.badge_id))
 
-    def start_recording_all_sensors(self):
+    def status_and_start_recording_all_sensors(self):
         self.handle_status_request()
+        self.set_id_at_start()
+        self.start_recording_all_sensors()
+
+    def start_recording_all_sensors(self):
         self.handle_start_scan_request()
         self.handle_start_microphone_request()
         self.handle_start_imu_request()
