@@ -41,7 +41,16 @@ def start_recording_all_devices_with_sync(df, sync_frequency):
     
 
 if __name__ == "__main__":
-    sync_frequency = 5*60 # How frequent the synchronisation is triggered, defaults to every 5 minutes
+    
+    # How frequent the synchronisation is triggered, defaults to every 5 minutes
+    # Any value between 0 seconds and 10 minutes is good according to
+    # A Modular Approach for Synchronized Wireless Multimodal Multisensor Data Acquisition in Highly Dynamic Social Settings
+    # https://dl.acm.org/doi/10.1145/3394171.3413697
+    # on page page 3590, where it refers to 
+    # An open-source sensor platform for analysis of group dynamics
+    # https://arxiv.org/abs/1901.04977
+    sync_frequency = 5*60
+    
     show_status_on_sync = False # Show the status of the midge after synchronisation
 
     df = pd.read_csv('sample_mapping_file.csv')
