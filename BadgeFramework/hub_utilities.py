@@ -45,7 +45,7 @@ def threaded(fn):
         for t in thread_list:
             t.join()
 
-        # Variable assignment with threads is complex, do it here instead in the main thread
+        # Variable assignment with threads is complex, do it here in the main thread instead
         if fn.func_name == "start_recording_all_devices":
             df["Recording"] = True
         if fn.func_name == "stop_recording_all_devices":
