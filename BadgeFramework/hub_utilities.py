@@ -33,12 +33,12 @@ def choose_function(connection,input):
         return
 
 def threaded(fn):
-    num_threads = 4
+    default_num_threads = 4
     def wrapper(df, *args, **kwargs):
         thread_list = []
-        _num_threads = min(num_threads, len(df))
-        for i in range(_num_threads):
-            t = threading.Thread(target=fn, args=((df[i::_num_threads],) + args), name=str(i), kwargs=kwargs)
+        num_threads = min(default_num_threads, len(df))
+        for i in range(num_threads):
+            t = threading.Thread(target=fn, args=((df[i::num_threads],) + args), name=str(i), kwargs=kwargs)
             t.start()
             thread_list.append(t)
 
