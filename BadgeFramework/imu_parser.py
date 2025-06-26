@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from pathlib import Path
+from parser_utilities import parse_timestamps
 
 class IMUParser(object):
 
@@ -17,20 +18,6 @@ class IMUParser(object):
         self.path_mag = filename+'MAG_0'
         self.path_rotation = filename+'ROT_0'
         self.path_scan = filename+'SCAN_0'
-
-    def _parse_timestamps(self, timestamps, sensor_name):
-        sensor_name = Path(sensor_name).stem
-        error_reported = False
-        timestamps_dt = []
-        for x in timestamps:
-            try:
-                timestamps_dt.append(dt.fromtimestamp(float(x)/1000))
-            except Exception as e:
-                if error_reported is False:
-                    print('Error in timestamp conversion for sensor ' + sensor_name + ': ' + str(e))
-                    error_reported = True
-                timestamps_dt.append("Date error")
-        return timestamps_dt
 
     def parse_generic(self,sensorname):
         data = []
@@ -51,7 +38,7 @@ class IMUParser(object):
                     break
         data_xyz = np.asarray(data)
         timestamps = np.asarray(timestamps)
-        timestamps_dt = self._parse_timestamps(timestamps, sensorname)
+        timestamps_dt = parse_timestamps(timestamps, sensorname)
         df = pd.DataFrame(timestamps_dt, columns=['time'])
         df['X'] = data_xyz[:,0]
         df['Y'] = data_xyz[:,1]
@@ -88,7 +75,7 @@ class IMUParser(object):
                    break
         data_xyz = np.asarray(data)
         timestamps = np.asarray(timestamps)
-        timestamps_dt = self._parse_timestamps(timestamps, self.path_scan)
+        timestamps_dt = parse_timestamps(timestamps, self.path_scan)
         df = pd.DataFrame(timestamps_dt, columns=['time'])
         if data_xyz.size > 0:
             df['SensorID'] = data_xyz[:, 0]
@@ -124,7 +111,7 @@ class IMUParser(object):
                     break
         rotation_xyz = np.asarray(rotation)
         timestamps = np.asarray(timestamps)
-        timestamps_dt = self._parse_timestamps(timestamps, self.path_rotation)
+        timestamps_dt = parse_timestamps(timestamps, self.path_rotation)
         df = pd.DataFrame(timestamps_dt, columns=['time'])
         df['a'] = rotation_xyz[:,0]
         df['b'] = rotation_xyz[:,1]
