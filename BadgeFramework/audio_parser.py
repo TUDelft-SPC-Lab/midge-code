@@ -76,22 +76,25 @@ def read_int64_little_endian(file_path):
 
 def decode_timestamp_file(path_input):
     """
-    Decode a single timestamp file (.D file) and save results as -ts files with datetime format.
+    Decode a single timestamp file (.D file) and save results as -ts.csv files with datetime format.
     """
     if not (path_input.is_file() and path_input.suffix == ".D"):
         return
         
     print("Timestamp input file " + str(path_input))
-    path_output = path_input.parent / (path_input.stem + "-ts.txt")
+    path_output_csv = path_input.parent / (path_input.stem + "-ts.csv")
     try:
         timestamp_data = read_int64_little_endian(path_input)
         # Convert timestamps to datetime format
         datetime_data = parse_timestamps(timestamp_data, str(path_input))
-        # Save the datetime data as a text file with one datetime per line
-        with path_output.open("w") as f:
-            for datetime_val in datetime_data:
-                f.write("{}\n".format(datetime_val))
-        print("Successfully decoded {} timestamps to {}".format(len(datetime_data), path_output))
+        
+        # Save the datetime data as a CSV file with index and time columns
+        with path_output_csv.open("w") as f:
+            f.write(",time\n")
+            for i, datetime_val in enumerate(datetime_data):
+                f.write("{},{}\n".format(i, datetime_val))
+        
+        print("Successfully decoded {} timestamps to {}".format(len(datetime_data), path_output_csv))
     except Exception as e:
         print("Error processing {}: {}".format(path_input, e))
 
