@@ -31,7 +31,7 @@ Response_start_download_response_tag = 42
 Response_download_chunk_response_tag = 43
 Response_get_file_checksum_response_tag = 44
 
-MAX_FILENAME_LENGTH = 32
+MAX_FILENAME_LENGTH = 12
 DOWNLOAD_CHUNK_SIZE = 16
 
 class _Ostream:
@@ -1788,7 +1788,6 @@ class ListFilesResponse:
 		self.header.file_count = struct.unpack('<B', istream.read(1))[0]
 		self.header.total_files = struct.unpack('<B', istream.read(1))[0]
 		self.header.start_index = struct.unpack('<B', istream.read(1))[0]
-		print("DEBUG: Header - file_count={}, total_files={}, start_index={}".format(self.header.file_count, self.header.total_files, self.header.start_index))	
 
 	def decode_files(self, istream):
 		for i in range(self.header.file_count):
@@ -1809,11 +1808,7 @@ class ListFilesResponse:
 			
 			# Extract timestamp (4 bytes)
 			timestamp_bytes = istream.read(4)
-			file_info.timestamp = struct.unpack('<I', timestamp_bytes)[0]
-			
-			print("DEBUG: Decoded file {}: '{}', size={}, timestamp={}".format(
-				i, file_info.filename, file_info.file_size, file_info.timestamp))
-			
+			file_info.timestamp = struct.unpack('<I', timestamp_bytes)[0]			
 			self.files.append(file_info)
 class StartDownloadResponse:
 	def __init__(self):
@@ -1835,9 +1830,9 @@ class StartDownloadResponse:
 	
 	def decode_internal(self, istream):
 		self.reset()
-		self.file_size = struct.unpack('<I', istream.read(4))[0]
-		self.total_chunks = struct.unpack('<I', istream.read(4))[0]
-		self.success = struct.unpack('<B', istream.read(1))[0]
+		self.file_size = struct.unpack('<I', istream.buf[3:7])[0]
+		self.total_chunks = struct.unpack('<I', istream.buf[7:11])[0]  
+		self.success = struct.unpack('<B', istream.buf[11:12])[0]
 
 class DownloadChunkResponse:
 	def __init__(self):
@@ -1857,19 +1852,18 @@ class DownloadChunkResponse:
 		obj = cls()
 		obj.decode_internal(_Istream(buf))
 		return obj
-	
+
 	def decode_internal(self, istream):
 		self.reset()
-		self.chunk_index = struct.unpack('<I', istream.read(4))[0]
-		self.chunk_size = struct.unpack('<H', istream.read(2))[0]
 
+		self.chunk_index = struct.unpack('<I', istream.buf[3:7])[0]
+		self.chunk_size = struct.unpack('<H', istream.buf[7:9])[0]
+		# Extract data bytes
 		for i in range(DOWNLOAD_CHUNK_SIZE):
-			if i < self.chunk_size:
-				self.data[i] = struct.unpack('<B', istream.read(1))[0]
-			else:
-				istream.read(1)  # Skip unused bytes
+			if i < 16:
+				self.data[i] = struct.unpack('<B', istream.buf[9+i:10+i])[0]
 		
-		self.is_last_chunk = struct.unpack('<B', istream.read(1))[0]
+		self.is_last_chunk = struct.unpack('<B', istream.buf[25:26])[0]
 
 class GetFileChecksumResponse:
 	def __init__(self):
@@ -1890,8 +1884,8 @@ class GetFileChecksumResponse:
 	
 	def decode_internal(self, istream):
 		self.reset()
-		self.checksum = struct.unpack('<I', istream.read(4))[0]
-		self.success = struct.unpack('<B', istream.read(1))[0]
+		self.checksum = struct.unpack('<I', istream.buf[3:7])[0]
+		self.success = struct.unpack('<B', istream.buf[7:8])[0]
 
 class Response:
 

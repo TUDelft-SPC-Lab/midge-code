@@ -34,7 +34,7 @@
 #define Response_download_chunk_response_tag 43
 #define Response_get_file_checksum_response_tag 44
 
-#define MAX_FILENAME_LENGTH 32
+#define MAX_FILENAME_LENGTH 12
 #define DOWNLOAD_CHUNK_SIZE 16
 
 typedef struct __attribute__((__packed__)) {
@@ -109,7 +109,7 @@ typedef struct {
 } StartDownloadRequest;
 
 typedef struct {
-	uint8_t chunk_index;
+	uint32_t chunk_index;
 } DownloadChunkRequest;
 
 typedef struct {

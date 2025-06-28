@@ -84,6 +84,11 @@ class OpenBadge(object):
             return True
 
     def send_request(self, request_message):
+        # Clear the queue of any stale data before sending a new command
+        if not self.connection.rx_queue.empty():
+            with self.connection.rx_queue.mutex:
+                self.connection.rx_queue.queue.clear()
+
         serialized_request = request_message.encode()
 
         # Adding length header:
@@ -426,32 +431,30 @@ class OpenBadge(object):
     def download_file(self, filename, local_path=None, verify_checksum=True, show_progress=True):
         if local_path is None:
             local_path = filename
-
+        
         request = Request()
         request.type.which = Request_start_download_request_tag
         request.type.start_download_request = StartDownloadRequest()
         request.type.start_download_request.filename = filename
-
         self.send_request(request)
-
+        
         with self.start_download_response_queue.mutex:
             self.start_download_response_queue.queue.clear()
-
+        
         while self.start_download_response_queue.empty():
             self.receive_response()
-
         start_response = self.start_download_response_queue.get()
+        
         if not start_response.success:
-            raise Exception("Failed to start download: {}".format(start_response.error_message))
+            raise Exception("Failed to start download: {}".format(start_response.success))
         
         file_size = start_response.file_size
         total_chunks = start_response.total_chunks
-
         if show_progress:
             print("Downloading {} ({} chunks) to {}".format(filename, total_chunks, local_path))
-
         downloaded_data = bytearray()
-
+        running_total = 0
+        
         progress_bar = None
         if show_progress:
             try:
@@ -459,45 +462,57 @@ class OpenBadge(object):
                 progress_bar = tqdm(total=total_chunks, desc="Downloading {}".format(filename), unit="chunk")
             except ImportError:
                 print("tqdm not available, showing basic progress.")
-
+        
         try:
             for chunk_index in range(total_chunks):
                 chunk_request = Request()
                 chunk_request.type.which = Request_download_chunk_request_tag
                 chunk_request.type.download_chunk_request = DownloadChunkRequest()
                 chunk_request.type.download_chunk_request.chunk_index = chunk_index
-
                 self.send_request(chunk_request)
-
+                
+                # Clear queue and wait for response
                 with self.download_chunk_response_queue.mutex:
                     self.download_chunk_response_queue.queue.clear()
+                
                 while self.download_chunk_response_queue.empty():
                     self.receive_response()
-
+                
                 chunk_response = self.download_chunk_response_queue.get()
-
+                
                 if chunk_response.chunk_size == 0:
                     raise Exception("Received empty chunk for index {}".format(chunk_index))
                 
-                chunk_data = bytes(chunk_response.data[:chunk_response.chunk_size])
+                # Convert list of integers to bytearray (Python 2 compatible)
+                data_slice = chunk_response.data[:chunk_response.chunk_size]
+                chunk_data = bytearray(data_slice)
+                
+                # Debug output
+                running_total += len(chunk_data)
+                print("DEBUG: Chunk {}: adding {} bytes, total: {}".format(
+                    chunk_index, len(chunk_data), running_total))
+                
                 downloaded_data.extend(chunk_data)
 
                 if progress_bar:
                     progress_bar.update(1)
                 
                 if chunk_response.is_last_chunk:
+                    print("DEBUG: Last chunk received at index {}".format(chunk_index))
                     break
-
+                    
         finally:
             if progress_bar:
                 progress_bar.close()
-
+        
+        print("DEBUG: Final downloaded size: {}, expected: {}".format(len(downloaded_data), file_size))
+        
         if len(downloaded_data) != file_size:
             raise Exception("Downloaded data size {} does not match expected size {}".format(len(downloaded_data), file_size))
         
         with open(local_path, 'wb') as f:
             f.write(downloaded_data)
-
+        
         if verify_checksum:
             if show_progress:
                 print("Verifying checksum...")
@@ -508,7 +523,7 @@ class OpenBadge(object):
                 if show_progress:
                     print("Checksum verification failed")
                 return False
-
+        
         if show_progress:
             print("Successfully downloaded {} to {}".format(filename, local_path))
         return True
