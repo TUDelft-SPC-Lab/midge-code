@@ -392,7 +392,6 @@ class OpenBadge(object):
         return self.get_fw_version_response_queue.get()
     
     def list_files(self, start_index=0):
-
         files = []
         current_start = start_index
 
@@ -414,17 +413,18 @@ class OpenBadge(object):
             response = self.list_files_response_queue.get()
 
             for i in range(len(response.files)):
-                files.append({
-                    'filename': response.files[i].filename,
-                    'size': response.files[i].file_size,
-                    'timestamp': response.files[i].timestamp
-                })
+                clean_filename = response.files[i].filename.replace('\x00', '').strip()
+                if clean_filename:
+                    files.append({
+                        'filename': clean_filename,
+                        'size': response.files[i].file_size,
+                        'timestamp': response.files[i].timestamp
+                    })
             
             if (current_start + response.header.file_count) >= response.header.total_files:
                 break
 
             current_start += response.header.file_count
-
 
         return files
     
@@ -587,24 +587,59 @@ class OpenBadge(object):
 
         if not files:
             print("No files to download.")
-            return
+            return {
+                'success': 0,
+                'failed': 0,
+                'total': 0
+            }
 
         import os
-        os.makedirs(output_dir)
+        # Python 2.7 compatible directory creation
+        if not os.path.exists(output_dir):
+            try:
+                os.makedirs(output_dir)
+            except OSError as e:
+                # Directory might have been created by another process
+                if not os.path.exists(output_dir):
+                    print("Failed to create output directory: {}".format(e))
+                    return {
+                        'success': 0,
+                        'failed': len(files),
+                        'total': len(files)
+                    }
         
         total_size = sum(f['size'] for f in files)
         print("Found {} files, total size: {:.1f} KB".format(len(files), total_size / 1024.0))
 
         success_count = 0
+        failed_count = 0
+        
         for file_info in files:
             filename = file_info['filename']
-            local_path = os.path.join(output_dir, filename)
+            
+            # Clean filename for filesystem safety
+            safe_filename = filename.replace('\x00', '').strip()
+            if not safe_filename:
+                print("Skipping file with invalid name")
+                failed_count += 1
+                continue
+                
+            local_path = os.path.join(output_dir, safe_filename)
 
             try:
-                if self.download_file(filename, local_path, show_progress=True):
+                if self.download_file(safe_filename, local_path, show_progress=True):
                     success_count += 1
+                else:
+                    failed_count += 1
             except Exception as e:
-                print("Failed to download {}: {}".format(filename, e))
+                print("Failed to download {}: {}".format(safe_filename, e))
+                failed_count += 1
 
+        result = {
+            'success': success_count,
+            'failed': failed_count,
+            'total': len(files)
+        }
+        
         print("Downloaded {}/{} files successfully.".format(success_count, len(files)))
-        return success_count == len(files)
+        return result

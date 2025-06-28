@@ -35,7 +35,7 @@
 #define Response_get_file_checksum_response_tag 44
 
 #define MAX_FILENAME_LENGTH 12
-#define DOWNLOAD_CHUNK_SIZE 16
+#define DOWNLOAD_CHUNK_SIZE 48
 
 typedef struct __attribute__((__packed__)) {
 	uint32_t seconds;
