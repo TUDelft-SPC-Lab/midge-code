@@ -16,6 +16,10 @@
 #define Request_sdc_errase_all_request_tag 31
 #define Request_get_imu_data_request_tag 33
 #define Request_get_fw_version_request_tag 35
+#define Request_list_files_request_tag 37
+#define Request_start_download_request_tag 39
+#define Request_download_chunk_request_tag 40
+#define Request_get_file_checksum_request_tag 41
 
 #define Response_status_response_tag 1
 #define Response_start_microphone_response_tag 2
@@ -25,6 +29,13 @@
 #define Response_sdc_errase_all_response_tag 32
 #define Response_get_imu_data_response_tag 34
 #define Response_get_fw_version_response_tag 36
+#define Response_list_files_response_tag 38
+#define Response_start_download_response_tag 42
+#define Response_download_chunk_response_tag 43
+#define Response_get_file_checksum_response_tag 44
+
+#define MAX_FILENAME_LENGTH 12
+#define DOWNLOAD_CHUNK_SIZE 48
 
 typedef struct __attribute__((__packed__)) {
 	uint32_t seconds;
@@ -88,6 +99,23 @@ typedef struct {
 typedef struct{
 } GetFWVersionRequest; 
 
+typedef struct {
+	uint8_t start_index; // pagination
+	uint8_t max_files; 
+} ListFilesRequest;
+
+typedef struct {
+	char filename[MAX_FILENAME_LENGTH];
+} StartDownloadRequest;
+
+typedef struct {
+	uint32_t chunk_index;
+} DownloadChunkRequest;
+
+typedef struct {
+	char filename[MAX_FILENAME_LENGTH];
+} GetFileChecksumRequest;
+
 
 typedef struct __attribute__((__packed__)) {
 	uint8_t which_type;
@@ -105,6 +133,10 @@ typedef struct __attribute__((__packed__)) {
 		ErraseAllRequest sdc_errase_all_request;
 		GetIMUDataRequest get_imu_data_request;
 		GetFWVersionRequest get_fw_version_request;
+		ListFilesRequest list_files_request;
+		StartDownloadRequest start_download_request;
+		DownloadChunkRequest download_chunk_request;
+		GetFileChecksumRequest get_file_checksum_request;
 	} type;
 } Request;
 
@@ -175,6 +207,41 @@ typedef struct{
 	char version[VERSION_STR_SZ];
 } GetFWVersionResponse; 
 
+typedef struct {
+	uint8_t file_count;
+	uint8_t total_files;
+	uint8_t start_index;
+} ListFilesResponseHeader;
+
+typedef struct {
+	char filename[MAX_FILENAME_LENGTH];
+	uint32_t file_size;
+	uint32_t timestamp;
+} FileInfo;
+
+typedef struct {
+	ListFilesResponseHeader header;
+	FileInfo files[3]; // TODO: Adjust based on packet size contraints
+} ListFilesResponse;
+
+typedef struct {
+	uint32_t file_size;
+	uint32_t total_chunks;
+	uint8_t success;
+} StartDownloadResponse;
+
+typedef struct {
+	uint32_t chunk_index;
+	uint16_t chunk_size;
+	uint8_t data[DOWNLOAD_CHUNK_SIZE];
+	uint8_t is_last_chunk;
+} DownloadChunkResponse;
+
+typedef struct {
+	uint32_t checksum; // crc32
+	uint8_t success;
+} GetFileChecksumResponse;
+
 //typedef struct __attribute__((__packed__)) {
 typedef struct {
 	uint8_t which_type;
@@ -187,6 +254,10 @@ typedef struct {
 		ErraseAllResponse sdc_errase_all_response;
 		GetIMUDataResponse get_imu_data_response;
 		GetFWVersionResponse get_fw_version_response;
+		ListFilesResponse list_files_response;
+		StartDownloadResponse start_download_response;
+		DownloadChunkResponse download_chunk_response;
+		GetFileChecksumResponse get_file_checksum_response;
 	} type;
 } Response;
 

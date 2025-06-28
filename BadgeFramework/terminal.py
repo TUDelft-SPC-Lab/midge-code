@@ -50,6 +50,9 @@ def main():
 		print("  get_free_space")
 		print("  sdc_errase_all")
 		print("  get_imu_data")
+		print("  list_files")
+		print("  download_file [filename] [output_path]")
+		print("  download_all [output_directory]")
 		print("  help")
 		print("All commands use current system time as transmitted time.")
 		print("Default arguments used where not specified.")
@@ -111,6 +114,70 @@ def main():
 	def handle_get_imu_data(args):
 		print(badge.get_imu_data())		
 
+	def handle_list_files(args):
+		try:
+			print("Listing files on badge...")
+			files = badge.list_files()
+			
+			if not files:
+				print("No files found on badge")
+				return
+			
+			total_size = sum(f['size'] for f in files)
+			print("\nFound {} files, total size: {:.1f} KB".format(len(files), total_size / 1024.0))
+			print("-" * 60)
+			print("{:<25} {:<15} {:<15}".format('Filename', 'Size (KB)', 'Timestamp'))
+			print("-" * 60)
+			
+			for file_info in files:
+				size_kb = file_info['size'] / 1024.0
+				timestamp = file_info.get('timestamp', 'N/A')
+				print("{:<25} {:<15.1f} {:<15}".format(file_info['filename'], size_kb, timestamp))
+			
+			print("-" * 60)
+			print("Total: {} files, {:.1f} KB".format(len(files), total_size / 1024.0))
+			
+		except Exception as e:
+			print("Error listing files: {}".format(e))
+
+	def handle_download_file(args):
+		if len(args) < 2:
+			print("Usage: download_file [filename] [output_path]")
+			return
+		
+		filename = args[1]
+		output_path = args[2] if len(args) > 2 else filename
+
+		try:
+			success = badge.download_file(filename, output_path, verify_checksum=True)
+			if success:
+				print("File '{}' downloaded successfully to '{}'.".format(filename, output_path))
+			else:
+				print("Failed to download file '{}'.".format(filename))
+		except Exception as e:
+			print("Error downloading file '{}': {}".format(filename, e))
+
+	def handle_download_all(args):
+		output_dir = args[1] if len(args) > 1 else "downloaded_files"
+
+		try:
+			result = badge.download_all_files(output_dir)
+			if result['success'] > 0:
+				print("\nDownload Summary:")
+				print(" - Successfully downloaded: {}/{} files".format(result['success'], result['total']))
+				if result['failed'] > 0:
+					print(" - Failed files: {}".format(result['failed']))
+
+				erase_response = input("\nErase SD card after successful download? (y/n): ")
+				if erase_response.lower() == 'y':
+					print ("Erasing SD card...")
+					badge.sdc_errase_all()
+					print("SD card erased successfully.")
+			else:
+				print("No files to download or all downloads failed.")
+		except Exception as e:
+			print("Error downloading files: {}".format(e))
+
 
 	command_handlers = {
 		"help": print_help,
@@ -126,6 +193,9 @@ def main():
 		"get_free_space": handle_get_free_space,
 		"sdc_errase_all": handle_sdc_errase_all,
 		"get_imu_data": handle_get_imu_data,
+		"list_files": handle_list_files,
+		"download_file": handle_download_file,
+		"download_all": handle_download_all,
 	}
 
 	while True:
