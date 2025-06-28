@@ -429,9 +429,22 @@ class OpenBadge(object):
         return files
     
     def download_file(self, filename, local_path=None, verify_checksum=True, show_progress=True):
+        import os
         if local_path is None:
             local_path = filename
-        
+
+        # If file exists, verify checksum before downloading
+        if os.path.exists(local_path) and verify_checksum:
+            if show_progress:
+                print("File {} already exists. Verifying checksum...".format(local_path))
+            if self._verify_file_checksum(filename, local_path):
+                if show_progress:
+                    print("File already downloaded and checksum verified.")
+                return True
+            else:
+                if show_progress:
+                    print("Checksum mismatch. Re-downloading file.")
+
         request = Request()
         request.type.which = Request_start_download_request_tag
         request.type.start_download_request = StartDownloadRequest()
@@ -550,11 +563,24 @@ class OpenBadge(object):
 
         expected_checksum = response.checksum
 
+        def calculate_crc32(data):
+            crc = 0xFFFFFFFF
+    
+            for byte in bytearray(data):
+                crc ^= byte
+                for _ in range(8):
+                    if crc & 1:
+                        crc = (crc >> 1) ^ 0xEDB88320
+                    else:
+                        crc >>= 1
+    
+            return (~crc) & 0xFFFFFFFF  # Ensure unsigned 32-bit result
+        
         with open(local_path, 'rb') as f:
             file_data = f.read()
-            actual_checksum = sum(file_data) % (1 << 32)
 
-        return actual_checksum == expected_checksum
+        print("DEBUG: Expected checksum: {}, Actual checksum: {}".format(expected_checksum, calculate_crc32(file_data)))
+        return calculate_crc32(file_data) == expected_checksum
     
     def download_all_files(self, output_dir="downloaded_data"):
         files = self.list_files()

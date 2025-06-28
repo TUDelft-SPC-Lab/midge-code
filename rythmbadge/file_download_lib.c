@@ -10,7 +10,7 @@ static uint32_t current_position = 0;
 static char current_filename[MAX_FILENAME_LENGTH];
 static bool download_active = false;
 
-static uint32_t calculate_crc32(const uint8_t *data, size_t length);
+static uint32_t calculate_crc32(uint32_t initial_crc, const uint8_t *data, size_t length);
 
 ret_code_t list_files_handler(ListFilesRequest *request, ListFilesResponse *response)
 {
@@ -137,7 +137,7 @@ ret_code_t get_file_checksum_handler(GetFileChecksumRequest *request, GetFileChe
     FRESULT ff_result;
     uint8_t buffer[256];
     UINT bytes_read;
-    uint32_t crc = 0;
+    uint32_t crc = 0xFFFFFFFF; // Initial CRC value
 
     ff_result = f_open(&file, request->filename, FA_READ);
     if (ff_result != FR_OK) {
@@ -149,22 +149,25 @@ ret_code_t get_file_checksum_handler(GetFileChecksumRequest *request, GetFileChe
     do {
         ff_result = f_read(&file, buffer, sizeof(buffer), &bytes_read);
         if (ff_result == FR_OK && bytes_read > 0) {
-            crc = calculate_crc32(buffer, bytes_read);
+            crc = calculate_crc32(crc, buffer, bytes_read);
         }
     } while (ff_result == FR_OK && bytes_read > 0);
 
     f_close(&file);
 
-    response->checksum = crc;
+    response->checksum = ~crc;
     response->success = (ff_result == FR_OK) ? 1 : 0;
+
+    NRF_LOG_INFO("Calculated CRC32 for file %s: 0x%08X, success: %d", 
+                 request->filename, response->checksum, response->success);
 
     return NRF_SUCCESS;
 }
 
 
-static uint32_t calculate_crc32(const uint8_t *data, size_t length)
+static uint32_t calculate_crc32(uint32_t initial_crc, const uint8_t *data, size_t length)
 {
-    uint32_t crc = 0xFFFFFFFF;
+    uint32_t crc = initial_crc;
     for (size_t i = 0; i < length; i++) {
         crc ^= data[i];
         for (int j = 0; j < 8; j++) {
@@ -175,5 +178,5 @@ static uint32_t calculate_crc32(const uint8_t *data, size_t length)
             }
         }
     }
-    return ~crc;
+    return crc;
 }
