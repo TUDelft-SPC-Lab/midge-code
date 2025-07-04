@@ -2,6 +2,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: imu_parser",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/BadgeFramework/imu_parser.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--fn",
+                "C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\dataset_collection\\tech_pilot_2\\data\\12\\",
+                "--acc",
+                "False",
+                "--mag",
+                "False",
+                "--gyr",
+                "False",
+                "--rot",
+                "False",
+                "--scan",
+                "True",
+                "--plot",
+                "False"
+            ]
+        },
+        {
             "name": "Debug",
             "cwd": "${workspaceFolder}",
             "executable": "_build/nrf52832_xxaa_debug.out",
