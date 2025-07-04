@@ -113,27 +113,7 @@ class IMUParser(object):
                         i = i + 16
                     else:
                         break
-                    # ts_bytes = byte[0 + i:8 + i]
-                    # data_bytes = byte[8 + i:16 + i]
-                    # if (len(data_bytes)) == 8 and (len(ts_bytes) == 8):
-                    #     ts = struct.unpack('<Q', ts_bytes)
-                        # print(struct.unpack('<B', data_bytes[0:1]))
-                        # print(struct.unpack('<B', data_bytes[1:2]))
-                        # print(struct.unpack('<B', data_bytes[2:3]))
-                        # print(struct.unpack('<B', data_bytes[3:4]))
-                        # print(struct.unpack('<B', data_bytes[4:5]))
-                        # print(struct.unpack('<B', data_bytes[5:6]))
-                        # print(struct.unpack('<B', data_bytes[6:7]))
-                        # print(struct.unpack('<B', data_bytes[7:8]))
-                        # sensor_id = (struct.unpack('<B', data_bytes[5:6])[0] << 8) + (struct.unpack('<B', data_bytes[4:5])[0])
-                        # rssi = struct.unpack('<b', data_bytes[3:4])[0] #R
-                        # group = (struct.unpack('<B', data_bytes[7:8])[0])
-                        # #sensor_id, rssi, group = struct.unpack('<HBB', data_bytes)
-                        # data.append([sensor_id, rssi, group])
-                        # timestamps.append(ts)
-                        # i = i + 16
-                    # else:
-                        # break
+
             data_xyz = np.asarray(data)
             timestamps = np.asarray(timestamps)
             timestamps_dt = parse_timestamps(timestamps, scan_file)
@@ -192,22 +172,31 @@ class IMUParser(object):
             x = extract_number_from_filename(rot_file, 'ROT_')
             self.rot_dfs.append({'df': df, 'sensor_number': x, 'source_file': rot_file})
 
-    def plot_and_save(self,a,g,m):
-        if a:
-            fname = self.filename + '_accel.png'
-            ax = self.accel_dfs[0]['df'].plot(x='time')
-            fig = ax.get_figure()
-            fig.savefig(fname)
-        if g:
-            fname = self.filename + '_gyro.png'
-            ax = self.gyro_dfs[0]['df'].plot(x='time')
-            fig = ax.get_figure()
-            fig.savefig(fname)
-        if m:
-            fname = self.filename + '_mag.png'
-            ax = self.mag_dfs[0].plot(x='time')
-            fig = ax.get_figure()
-            fig.savefig(fname)
+    def plot_and_save(self, a, g, m):
+        if a and self.accel_dfs:
+            for acc_info in self.accel_dfs:
+                sensor_number = acc_info.get('sensor_number', 'unknown')
+                fname = f"{self.filename}_accel_{sensor_number}.png"
+                ax = acc_info['df'].plot(x='time')
+                fig = ax.get_figure()
+                fig.savefig(fname)
+                plt.close(fig)
+        if g and self.gyro_dfs:
+            for gyro_info in self.gyro_dfs:
+                sensor_number = gyro_info.get('sensor_number', 'unknown')
+                fname = f"{self.filename}_gyro_{sensor_number}.png"
+                ax = gyro_info['df'].plot(x='time')
+                fig = ax.get_figure()
+                fig.savefig(fname)
+                plt.close(fig)
+        if m and self.mag_dfs:
+            for mag_info in self.mag_dfs:
+                sensor_number = mag_info.get('sensor_number', 'unknown')
+                fname = f"{self.filename}_mag_{sensor_number}.png"
+                ax = mag_info['df'].plot(x='time')
+                fig = ax.get_figure()
+                fig.savefig(fname)
+                plt.close(fig)
 
     def save_dataframes(self,a,g,m,r,s):
         if a:
@@ -269,8 +258,8 @@ def main(fn,acc,mag,gyr,rot,plot,scan):
     if scan:
         parser.parse_scanner()
     parser.save_dataframes(acc,mag,gyr,rot,scan)
-    # if plot:
-    #     parser.plot_and_save(acc,mag,gyr)
+    if plot:
+        parser.plot_and_save(acc,mag,gyr)
 
 if __name__ == '__main__':
     import argparse
@@ -288,10 +277,3 @@ if __name__ == '__main__':
 
     # Example command
     # python ./imu_parser.py --fn ../midge_0_files/ --scan TRUE --acc TRUE --mag TRUE --rot TRUE --gyr TRUE --rot TRUE --plot True
-
-
-
-
-
-
-

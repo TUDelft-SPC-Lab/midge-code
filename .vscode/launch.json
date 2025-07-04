@@ -9,7 +9,7 @@
             "console": "integratedTerminal",
             "args": [
                 "--fn",
-                "C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\dataset_collection\\tech_pilot_2\\data\\12\\",
+                "C:\\Users\\zongh\\OneDrive - Delft University of Technology\\tudelft\\projects\\dataset_collection\\tech_pilot_2\\check\\",
                 "--acc",
                 "False",
                 "--mag",
