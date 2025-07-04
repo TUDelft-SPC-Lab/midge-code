@@ -277,3 +277,4 @@ if __name__ == '__main__':
 
     # Example command
     # python ./imu_parser.py --fn ../midge_0_files/ --scan TRUE --acc TRUE --mag TRUE --rot TRUE --gyr TRUE --rot TRUE --plot True
+    # on windows, use python imu_parser.py --fn 'C:\\user\\midge_0_files\\' --scan ..., use single quotes and double backslashes
