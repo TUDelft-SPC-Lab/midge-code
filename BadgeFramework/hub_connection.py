@@ -34,7 +34,7 @@ class Connection():
 
     def handle_status_request(self):
         try:
-            out = self.badge.get_status()
+            out = self.badge.get_status(new_id=self.badge_id, new_group_number=self.group_number)
             return out
         except Exception as err:
             print (str(err))
