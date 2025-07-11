@@ -53,7 +53,7 @@ if __name__ == "__main__":
     
     show_status_on_sync = False # Show the status of the midge after synchronisation
 
-    df = pd.read_csv('sample_mapping_file.csv')
+    df = pd.read_csv('ingroup_exp.csv')
     df['Recording'] = None  # We do not know if the midges are recording or not before connecting to them
 
     do_synchronization = False
