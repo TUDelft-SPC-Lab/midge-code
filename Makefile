@@ -116,6 +116,7 @@ SRC_FILES += \
   $(PROJ_DIR)rythmbadge/sender_lib.c \
   $(PROJ_DIR)rythmbadge/sampling_lib.c \
   $(PROJ_DIR)rythmbadge/scanner_lib.c \
+  $(PROJ_DIR)rythmbadge/file_download_lib.c \
   $(PROJ_DIR)audio_switch/audio_switch.c \
   $(PROJ_DIR)led/led.c \
   
