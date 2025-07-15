@@ -34,7 +34,7 @@ class Connection():
 
     def handle_status_request(self):
         try:
-            out = self.badge.get_status(new_id=self.badge_id, new_group_number=self.group_number)
+            out = self.badge.get_status()
             return out
         except Exception as err:
             print (str(err))
@@ -120,7 +120,6 @@ class Connection():
             raise Exception("Could not get the fw version for participant " + str(self.badge_id))
 
     def status_and_start_recording_all_sensors(self):
-        self.handle_status_request()
         self.set_id_at_start()
         self.start_recording_all_sensors()
 

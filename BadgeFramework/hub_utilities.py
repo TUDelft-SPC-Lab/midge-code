@@ -48,13 +48,17 @@ def threaded(fn):
         # Variable assignment with threads is complex, do it here in the main thread instead
         if fn.func_name == "start_recording_all_devices":
             df["Recording"] = True
+            df["Id_Set"] = False
         if fn.func_name == "stop_recording_all_devices":
             df["Recording"] = False
+            df["Id_Set"] = False
     return wrapper
 
 @threaded
 def start_recording_all_devices(df):
     all_recording = np.array(df["Recording"])
+    all_id_set = np.array(df["Id_Set"])
+    
     while not np.all(all_recording == True):
         with tqdm(total=np.sum(all_recording != True), desc="Starting sensors, thread: %s" % threading.currentThread().name) as pbar:
             for i, (_, row) in enumerate(df.iterrows()):
@@ -67,17 +71,22 @@ def start_recording_all_devices(df):
                         print(str(error) + ', sensors are not started.')
                         continue
                     try:
-                        status = cur_connection.handle_status_request()
-                        if status.imu_status == 0 and status.microphone_status == 0 and status.scan_status == 0:
-                            cur_connection.set_id_at_start()
-                            cur_connection.start_recording_all_sensors()
+                        if all_id_set[i]:
+                            status = cur_connection.handle_status_request()
+
+                            if status.imu_status == 0 and status.microphone_status == 0 and status.scan_status == 0:
+                                cur_connection.start_recording_all_sensors()
+                            else:
+                                if status.scan_status == 0:
+                                    cur_connection.handle_start_scan_request()
+                                if status.microphone_status == 0:
+                                    cur_connection.handle_start_microphone_request()
+                                if status.imu_status == 0:
+                                    cur_connection.handle_start_imu_request()
                         else:
-                            if status.scan_status == 0:
-                                cur_connection.handle_start_scan_request()
-                            if status.microphone_status == 0:
-                                cur_connection.handle_start_microphone_request()
-                            if status.imu_status == 0:
-                                cur_connection.handle_start_imu_request()
+                            cur_connection.set_id_at_start()
+                            all_id_set[i] = True
+                            cur_connection.start_recording_all_sensors()
                         
                         all_recording[i] = True
                         pbar.update(1)
