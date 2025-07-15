@@ -55,6 +55,7 @@ if __name__ == "__main__":
 
     df = pd.read_csv('ingroup_exp.csv')
     df['Recording'] = None  # We do not know if the midges are recording or not before connecting to them
+    df['Id_Set'] = None  # We do not know if the midges are recording or not before connecting to them
 
     do_synchronization = False
     print("Type help for a list commands")
