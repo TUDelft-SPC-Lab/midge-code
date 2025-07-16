@@ -63,8 +63,9 @@ conda install -c conda-forge tk
     * Use the `hub.py` if you have 6 or more midges.
     This provides a command line script that can control multiple midges sequentially.
 5. Stop recording
-6. Copy the data from the SDCards into a computer (for this step, take the card manually out of the midge and
-   plug it in the computer) 
+6. Copy the data from the SDCards into a computer, there are two options:
+    * Take the card manually out of the midge, plug it in the computer and copy the files.
+    * Use the `download_all` command in the `terminal.py` script to download the data over Bluetooth.
 7. Run processing data scripts to transform the raw data into common file formats: `imu_parser.py` and `audio_parser.py`
     * The audio files can also be decoded with Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser.py`. 
 
