@@ -160,7 +160,7 @@ The data part represents a quaternion containing 4 floats.
 ### Scanner
 
 The scanner data is also stored in a binary file.
-The sensor records samples at 1 Hz.
+The sensor records samples at 1 Hz, where each scan window lasts 0.25 seconds.
 Each sample is 16 bytes long.
 The first 8 bytes are the timestamp, the next 2 bytes are the ID, the next byte is the RSSI, and the next byte is the group and the last 4 are for padding.
 
