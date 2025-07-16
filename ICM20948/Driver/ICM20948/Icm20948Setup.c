@@ -485,6 +485,7 @@ static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in
 	unsigned short sample_cnt_array[GENERAL_SENSORS_MAX] = {0};
 	uint8_t i;
 
+
 	memset(sample_cnt_array, 0, sizeof(sample_cnt_array));
 	if (inv_icm20948_fifo_swmirror(s, data_left_in_fifo, total_sample_cnt, sample_cnt_array)) {
 		for(i = 0; i< GENERAL_SENSORS_MAX; i++) {
@@ -496,6 +497,10 @@ static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in
 	}
 	// we parse all senosr according to android type
 	for (i = 0; i < GENERAL_SENSORS_MAX; i++) {
+		// the timestamp of the last sample from the previous batch is the start
+		// timestamp of the current batch 
+		uint64_t* lastSampleEndTimeMs = &(s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)]);
+		
 		if (inv_icm20948_is_streamed_sensor(i)) {
 			if (sample_cnt_array[i]) {
 				/** Number of samples present in MEMS FIFO last time we mirrored it */
@@ -504,7 +509,7 @@ static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in
 				/** In case of first batch we have less than the expected number of samples in the batch */
 				/** To avoid a bad timestamping we recompute the startup time based on the theorical ODR and the number of samples */
 				if (s->sFirstBatch[inv_icm20948_sensor_android_2_sensor_type(i)]) {
-					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] += *lastIrqTimeMs-s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)]
+					*lastSampleEndTimeMs += *lastIrqTimeMs-*lastSampleEndTimeMs
 					- fifo_sample_cnt*s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms;
 					s->sFirstBatch[inv_icm20948_sensor_android_2_sensor_type(i)] = 0;
 				}
@@ -516,13 +521,20 @@ static uint8_t inv_icm20948_updateTs(struct inv_icm20948 * s, int * data_left_in
 				- t2 is when IRQ was fired so that we pop the FIFO
 				- N is number of samples */
 
-				if(s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] == 0) {
-					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] = *lastIrqTimeMs;
-					s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)] -= s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms*(fifo_sample_cnt);
+				if(*lastSampleEndTimeMs == 0) {
+					*lastSampleEndTimeMs = *lastIrqTimeMs;
+					*lastSampleEndTimeMs -= s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms*(fifo_sample_cnt);
 					s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_ms = s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms;
 				}
 				else {
-					s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_ms = (*lastIrqTimeMs-s->timestamp[inv_icm20948_sensor_android_2_sensor_type(i)])/fifo_sample_cnt;
+					if((*lastSampleEndTimeMs) > (*lastIrqTimeMs)){
+						// corner case where the midge goes "back in time" in 
+						// the middle of sampling, we assume the delta between 
+						// samples to be the configure odr_ms
+						s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_ms = s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_ms;
+					}else{
+						s->sensorlist[inv_icm20948_sensor_android_2_sensor_type(i)].odr_applied_ms = ((*lastIrqTimeMs)-(*lastSampleEndTimeMs))/fifo_sample_cnt;
+					}
 				}
 			}
 		} else {
