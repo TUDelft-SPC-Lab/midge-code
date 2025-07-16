@@ -5,9 +5,9 @@ import sys
 import struct
 import Queue
 
-# Scan every 5 seconds, where each scan lasts for 0.25 seconds
+# Scan every 1 seconds, where each scan lasts for 0.25 seconds
 DEFAULT_SCAN_WINDOW = 250
-DEFAULT_SCAN_INTERVAL = 5000
+DEFAULT_SCAN_INTERVAL = 1000
 
 DEFAULT_IMU_ACC_FSR = 4  # Valid ranges: 2, 4, 8, 16
 DEFAULT_IMU_GYR_FSR = 1000  # Valid ranges: 250, 500, 1000, 2000
