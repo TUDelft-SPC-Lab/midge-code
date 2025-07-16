@@ -48,10 +48,10 @@ def threaded(fn):
         # Variable assignment with threads is complex, do it here in the main thread instead
         if fn.func_name == "start_recording_all_devices":
             df["Recording"] = True
-            df["Id_Set"] = False
+            df["Id_Set"] = True
         if fn.func_name == "stop_recording_all_devices":
             df["Recording"] = False
-            df["Id_Set"] = False
+            df["Id_Set"] = True
     return wrapper
 
 @threaded
