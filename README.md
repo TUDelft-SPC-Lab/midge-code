@@ -10,7 +10,7 @@ It also contains the software that is used for monitoring and controlling the mi
 
 The **IMU** combines an accelerometer, gyroscope, and magnetometer to accurately capture and process orientation data.
 The samples are stored in a binary file, with each sample containing a timestamp and the sensor data.
-The samples are recorded at a best effort of 60 Hz, meaning that the actual sample rate varies slightly depending on the device's processing load.
+The samples are recorded at a best effort of 56 Hz, meaning that the actual sample rate varies slightly depending on the device's processing load.
 
 **Proximity** is measured using a Bluetooth scanner capable of detecting nearby devices.
 Each midge send Bluetooth broadcasts packages at 1 Hz.
@@ -106,12 +106,12 @@ The name of the file indicates the parameters used for recording with the genera
     - `1`: Mono
 
 - Text after `MIC`:
-    - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (20 KHz)
+    - `HI`: Audio recorded at base platform sample rate aka ("HIGH") frequency (20 kHz)
     - `LO`: Audio recording where data is decimated to obtain a low-frequency only recording 
 
 > The base platform sample rate is obtained via the calculation: 
 `(PDM_CLK_SOURCE/PDM_CLK_DIVIDER)/PDM_TO_PCM_DIV`. In the current HW, 
-`PDM_CLK_SOURCE` is 32MHz, the `PDM_CLK_DIVIDER` param depends on the microphone
+`PDM_CLK_SOURCE` is 32 MHz, the `PDM_CLK_DIVIDER` param depends on the microphone
 configuration in firmware, and the `PDM_TO_PCM_DIV` value is 64. The values of
 interest can be found in the nRF5 SDK documentation for the nRF52832 for the 
 PDM peripheral.
@@ -122,7 +122,7 @@ PDM peripheral.
 ### IMU
 
 The IMU data is stored in a binary file.
-The sensors record samples at a best effort of 60 Hz, i.e. often there are fewer samples.
+The sensors record samples at a best effort of 56 Hz, i.e. often there are fewer samples.
 Each sample is 24 bytes long.
 The first 8 bytes contain the timestamp, the next 12 the data and last 4 bytes are padding.
 
@@ -159,7 +159,7 @@ The data part represents a quaternion containing 4 floats.
 ### Scanner
 
 The scanner data is also stored in a binary file.
-The sensor records samples at 1Hz.
+The sensor records samples at 1 Hz.
 Each sample is 16 bytes long.
 The first 8 bytes are the timestamp, the next 2 bytes are the ID, the next byte is the RSSI, and the next byte is the group and the last 4 are for padding.
 
@@ -168,7 +168,3 @@ The first 8 bytes are the timestamp, the next 2 bytes are the ID, the next byte 
  2dd4 a69d 016d 0000 0000 3b40 0000 bc 48
 |---- Timestamp ----|-----  Data  ----|- Padding -|
 ```
-
-
-
-
