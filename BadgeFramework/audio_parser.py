@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
+import os
 import numpy as np
 from scipy.io.wavfile import write
 from pathlib import Path
 import struct
 from parser_utilities import parse_timestamps
-import os
 from tqdm import tqdm
 
 PDM_CRYSTAL_CLK = 32e6 # Frequency that feeds the PDM clock generator
@@ -23,7 +23,7 @@ HIGH_SAMPLE_RATE = int((PDM_CRYSTAL_CLK / PDM_CLK_DIV) / PDM_TO_PCM_DIV)
 DECIMATION = 16
 LOW_SAMPLE_RATE = int(HIGH_SAMPLE_RATE/DECIMATION)
 
-def decode_audio_file(path_raw_input):
+def decode_audio_file(path_raw_input, input_dir=None, output_dir=None):
     """
     Decode a single audio file and save as WAV.
     
@@ -35,7 +35,12 @@ def decode_audio_file(path_raw_input):
         return
     
     print("Audio input file " + str(path_raw_input))
-    path_wav_output = path_raw_input.parent / (path_raw_input.stem + ".wav")
+    if input_dir and output_dir:
+        rel_path = path_raw_input.relative_to(input_dir)
+        out_file = output_dir / rel_path.parent / (path_raw_input.stem + ".wav")
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        out_file = path_raw_input.parent / (path_raw_input.stem + ".wav")
 
     buffer_dtype = np.int16 # 16-bit PCM
     if path_raw_input.stem[4:6] == "LO":
@@ -61,7 +66,7 @@ def decode_audio_file(path_raw_input):
         audio_data = audio_data.reshape(-1, 2)
 
     # Save the data in a WAV file
-    write(filename=str(path_wav_output), rate=sample_rate, data=audio_data)
+    write(filename=str(out_file), rate=sample_rate, data=audio_data)
 
 def read_int64_little_endian(file_path):
     results = []
@@ -74,7 +79,7 @@ def read_int64_little_endian(file_path):
             results.append(value)
     return results
 
-def decode_timestamp_file(path_input):
+def decode_timestamp_file(path_input, input_dir=None, output_dir=None):
     """
     Decode a single timestamp file (.D file) and save results as -ts.csv files with datetime format.
     """
@@ -82,39 +87,46 @@ def decode_timestamp_file(path_input):
         return
         
     print("Timestamp input file " + str(path_input))
-    path_output_csv = path_input.parent / (path_input.stem + "-ts.csv")
+    if input_dir and output_dir:
+        rel_path = path_input.relative_to(input_dir)
+        out_file = output_dir / rel_path.parent / (path_input.stem + "-ts.csv")
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        out_file = path_input.parent / (path_input.stem + "-ts.csv")
     try:
         timestamp_data = read_int64_little_endian(path_input)
         # Convert timestamps to datetime format
         datetime_data = parse_timestamps(timestamp_data, str(path_input))
         
         # Save the datetime data as a CSV file with index and time columns
-        with path_output_csv.open("w") as f:
+        with out_file.open("w") as f:
             f.write(",time\n")
             for i, datetime_val in enumerate(datetime_data):
                 f.write("{},{}\n".format(i, datetime_val))
         
-        print("Successfully decoded {} timestamps to {}".format(len(datetime_data), path_output_csv))
+        print("Successfully decoded {} timestamps to {}".format(len(datetime_data), out_file))
     except Exception as e:
         print("Error processing {}: {}".format(path_input, e))
 
-def process_input_file(input_path):
+def process_input_file(input_path, input_dir=None, output_dir=None):
     # Process audio files
     if input_path.is_file() and input_path.suffix == "" and ("MICLO" in input_path.stem or "MICHI" in input_path.stem):
-        decode_audio_file(input_path)
+        decode_audio_file(input_path, input_dir, output_dir)
     # Process timestamp files
     elif input_path.is_file() and input_path.suffix == ".D":
-        decode_timestamp_file(input_path)
+        decode_timestamp_file(input_path, input_dir, output_dir)
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Parser for the audio data and timestamps obtained from Mingle Midges')
     parser.add_argument('--fn', required=True, help='Please enter the path to the folder')
+    parser.add_argument('--output_dir', required=False, help='Optional output directory (will mirror input structure)')
     args = parser.parse_args()
 
-    input_dir = args.fn
+    input_dir = Path(args.fn)
+    output_dir = Path(args.output_dir) if args.output_dir else None
     for root_str, _, files in tqdm(list(os.walk(input_dir)), desc="Files"):
         root = Path(root_str)
         for filename in files:
             input_path = root / filename
-            process_input_file(input_path)
+            process_input_file(input_path, input_dir=input_dir if output_dir else None, output_dir=output_dir)
