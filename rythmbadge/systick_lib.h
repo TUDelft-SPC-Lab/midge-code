@@ -110,5 +110,6 @@ uint8_t 	systick_is_synced(void);
  */
 void 		systick_delay_millis(uint64_t millis);
 
+void systick_set_done();
 
 #endif
