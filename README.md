@@ -8,7 +8,10 @@ It features a Nordic nRF52832 microcontroller, Bluetooth connectivity, dual micr
 This repository contains the firmware for the Midge.
 It also contains the software that is used for monitoring and controlling the midge, recording and processing the data.
 
-The **IMU** combines an accelerometer, gyroscope, and magnetometer to accurately capture and process orientation data.
+
+## Sensors
+
+The **IMU** combines an accelerometer, gyroscope, and magnetometer to accurately capture the midge orientation.
 The samples are stored in a binary file, with each sample containing a timestamp and the sensor data.
 The samples are recorded at a best effort of 56 Hz, meaning that the actual sample rate varies slightly depending on the device's processing load.
 
@@ -20,14 +23,6 @@ These samples are also stored in a binary file.
 **Audio** can be recorded in two modes: low-frequency (1.25 kHz) and high-frequency (20 kHz).
 The low-frequency mode is optimized for privacy-preserving applications; it does not capture intelligible speech but can detect the presence of vocal activity.
 Two files are created per session, a binary file containing the raw audio data, and another binary file containing the timestamps for each audio sample. 
-
-## Hardware
-
-Hardware design files can be found in the [hardware repo](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware).
-
-## Firmware development
-
-For firmware development check the [firmware page](FIRMWARE.md).
 
 # Data recording workflow
 
@@ -70,7 +65,12 @@ conda install -c conda-forge tk
     * The audio files can also be decoded with Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser.py`. 
 
 
-## Raw data files
+# Development
 
-The data structure for each the binary files is defined in the [raw data format page](RAW_DATA_FORMAT.md).
+Hardware design files can be found in the [hardware repo](https://github.com/TUDelft-SPC-Lab/spcl_midge_hardware).
+
+For firmware development check the [firmware page](FIRMWARE.md).
+
+The data structure for each of the binary files is defined in the [raw data format page](RAW_DATA_FORMAT.md).
+
 In the same page, the [bluetooth advertisement packet structure](RAW_DATA_FORMAT.md#bluetooth-advertisement-packet-structure) is also defined.
