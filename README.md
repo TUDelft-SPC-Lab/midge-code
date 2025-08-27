@@ -71,6 +71,6 @@ Hardware design files can be found in the [hardware repo](https://github.com/TUD
 
 For firmware development check the [firmware page](FIRMWARE.md).
 
-The data structure for each of the binary files is defined in the [raw data format page](RAW_DATA_FORMAT.md).
+The data structure for the sensor raw data in the binary files is defined in the [raw data format page](RAW_DATA_FORMAT.md).
 
 In the same page, the [bluetooth advertisement packet structure](RAW_DATA_FORMAT.md#bluetooth-advertisement-packet-structure) is also defined.
