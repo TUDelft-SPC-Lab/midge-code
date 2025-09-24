@@ -730,6 +730,13 @@ static void status_request_handler(void * p_event_data, uint16_t event_size) {
 		badge_assignement = request_event.request.type.status_request.badge_assignement;
 		
 		advertiser_set_badge_assignement(badge_assignement);
+
+		if (storage_init_folder() != 0){
+			systick_set_done();
+			NRF_LOG_INFO("Created new folder and set it as cwd");
+		} else {
+			NRF_LOG_ERROR("Storage init folder error");
+		}
 	}
 	int32_t error_millis = systick_set_timestamp(request_event.request_timepoint_ticks, timestamp.seconds, timestamp.ms);
 	advertiser_set_status_flag_is_clock_synced(1);
