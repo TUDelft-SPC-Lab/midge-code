@@ -106,10 +106,10 @@ class IMUParser(object):
         timestamps = np.asarray(timestamps)
         timestamps_dt = parse_timestamps(timestamps, rot_file)
         df = pd.DataFrame(timestamps_dt, columns=['time'])
-        df['X'] = rotation_xyz[:,0]
-        df['Y'] = rotation_xyz[:,1]
-        df['Z'] = rotation_xyz[:,2]
-        df['W'] = rotation_xyz[:,3]
+        df['W'] = rotation_xyz[:,0]  # w is the scalar part
+        df['X'] = rotation_xyz[:,1]  # x is the x-axis rotation
+        df['Y'] = rotation_xyz[:,2]  # y is the y-axis rotation
+        df['Z'] = rotation_xyz[:,3]  # z is the z-axis rotation
         df.attrs['source_file'] = rot_file
         return df
 
