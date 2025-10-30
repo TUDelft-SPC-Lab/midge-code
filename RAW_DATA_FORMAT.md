@@ -60,7 +60,7 @@ padding for data alignment, these bytes are ignored
 ```
 
 The samples for the rotation are different: 8 bytes for the timestamp and 16 bytes of data.
-The data part represents a quaternion containing 4 floats. 
+The data part represents a quaternion containing 4 floats, in scalar-last format (x, y, z, w).
 
 ### Scanner
 
