@@ -106,10 +106,10 @@ class IMUParser(object):
         timestamps = np.asarray(timestamps)
         timestamps_dt = parse_timestamps(timestamps, rot_file)
         df = pd.DataFrame(timestamps_dt, columns=['time'])
-        df['a'] = rotation_xyz[:,0]
-        df['b'] = rotation_xyz[:,1]
-        df['c'] = rotation_xyz[:,2]
-        df['d'] = rotation_xyz[:,2]  # TODO: check if this is correct
+        df['X'] = rotation_xyz[:,0]
+        df['Y'] = rotation_xyz[:,1]
+        df['Z'] = rotation_xyz[:,2]
+        df['W'] = rotation_xyz[:,3]
         df.attrs['source_file'] = rot_file
         return df
 
@@ -152,10 +152,11 @@ class IMUParser(object):
                 fig.savefig(fname)
                 plt.close(fig)
 
-    def plot_and_save(self, a, g, m):
+    def plot_and_save(self, a, g, m, r):
         self.plot_dataframes(self.accel_dfs, a)
         self.plot_dataframes(self.gyro_dfs, g)
         self.plot_dataframes(self.mag_dfs, m)
+        self.plot_dataframes(self.rot_dfs, r)
 
     def save_dataframes_generic(self, dfs, enabled):
         if enabled and dfs:
@@ -192,7 +193,7 @@ def main(fn,acc,mag,gyr,rot,plot,scan,output_dir=None):
                 parser.parse_and_store(file_path)
     parser.save_dataframes(acc,mag,gyr,rot,scan)
     if plot:
-        parser.plot_and_save(acc,mag,gyr)
+        parser.plot_and_save(acc, mag, gyr, rot)
 
 if __name__ == '__main__':
     import argparse
