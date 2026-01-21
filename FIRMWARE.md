@@ -30,6 +30,11 @@
         conda activate midge-firmware
         pip install hatch hatch-vcs        
         ```
+6. Get access to the IMU driver files.
+    The files are copyrighted, you need to accept the license agreement before getting access to the files
+    * Accept the license by creating a developer account at InvenSense https://invensense.tdk.com/developers/register/
+    * Send an email to `SPCLab@tudelft.nl` asking for access to the driver repository
+    * Add the driver repo by running `git submodule init` and `git submodule update`
 
 ### Using Nix:
 This project includes a `flake.nix` file that automatically sets up the development environment with all required dependencies.
