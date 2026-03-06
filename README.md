@@ -33,8 +33,6 @@ Two files are created per session, a binary file containing the raw audio data, 
 
 Note that the bluepy dependency only works on linux.
 
-You can use the nix file to create a development environment with all the dependencies installed.
-
 With conda you can install the dependencies with:
 ```bash
 conda create -n midge python=2.7
