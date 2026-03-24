@@ -27,18 +27,26 @@ Two files are created per session, a binary file containing the raw audio data, 
 # Data recording workflow
 
 ## Requirements
-1. Create a python2 virtual environment and activate it.
+1. Create a python2 virtual environment and activate it (for the hub.py).
 2. Install the dependencies `pip install bluepy pandas numpy matplotlib seaborn tqdm`.
 3. Install [Tkinter](https://wiki.python.org/moin/TkInter).
+1. Create a python3 virtual environment and activate it (for the parser scripts).
+2. Install the dependencies `pip install pandas numpy matplotlib seaborn tqdm`.
 
 Note that the bluepy dependency only works on linux.
 
 With conda you can install the dependencies with:
 ```bash
-conda create -n midge python=2.7
-conda activate midge
+conda create -n midge2 python=2.7
+conda activate midge2
 pip install bluepy pandas numpy matplotlib seaborn tqdm
 conda install -c conda-forge tk
+```
+
+```bash
+conda create -n midge3 python=3.12
+conda activate midge3
+pip install pandas numpy matplotlib seaborn tqdm scipy
 ```
 
 ## Recording data
@@ -50,7 +58,7 @@ conda install -c conda-forge tk
         (echo -e 'power on\nscan on\n'; sleep 5; echo 'scan off') | \
         bluetoothctl > /dev/null 2>&1 && bluetoothctl devices | grep HDBDG
         ```
-4. Start recording 
+4. Start recording (with the `midge2` env)
     * Use `badge_gui.py` if you have 5 or fewer midges.
     This provides a nice GUI interface to control them.
     * Use the `hub.py` if you have 6 or more midges.
@@ -59,7 +67,7 @@ conda install -c conda-forge tk
 6. Copy the data from the SDCards into a computer, there are two options:
     * Take the card manually out of the midge, plug it in the computer and copy the files.
     * Use the `download_all` command in the `terminal.py` script to download the data over Bluetooth.
-7. Run processing data scripts to transform the raw data into common file formats: `imu_parser.py` and `audio_parser.py`
+7. Run processing data scripts to transform the raw data into common file formats: `imu_parser.py` and `audio_parser.py` (with the `midge3` env)
     * The audio files can also be decoded with Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser.py`. 
 
 
