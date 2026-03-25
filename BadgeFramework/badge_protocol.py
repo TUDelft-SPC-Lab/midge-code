@@ -1790,25 +1790,23 @@ class ListFilesResponse:
 
 	def decode_files(self, istream):
 		for i in range(self.header.file_count):
-			# Check if there's enough data for a full FileInfo struct
-			if len(istream.buf) < 40:
-				print("WARNING: Not enough data in the stream to decode file at index {}. Stopping.".format(i))
-				break
+			try:
+				file_info = FileInfo()
+				
+				# Extract filename (32 bytes)
+				filename_bytes = istream.read(MAX_FILENAME_LENGTH)
+				file_info.filename = filename_bytes.rstrip(b'\x00').decode('utf-8').strip()
 
-			file_info = FileInfo()
-			
-			# Extract filename (32 bytes)
-			filename_bytes = istream.read(MAX_FILENAME_LENGTH)
-			file_info.filename = filename_bytes.rstrip(b'\x00').decode('utf-8').strip()
+				# Extract file size (4 bytes)
+				size_bytes = istream.read(4)
+				file_info.file_size = struct.unpack('<I', size_bytes)[0]
 
-			# Extract file size (4 bytes)
-			size_bytes = istream.read(4)
-			file_info.file_size = struct.unpack('<I', size_bytes)[0]
-
-			# Extract timestamp (4 bytes)
-			timestamp_bytes = istream.read(4)
-			file_info.timestamp = struct.unpack('<I', timestamp_bytes)[0]			
-			self.files.append(file_info)
+				# Extract timestamp (4 bytes)
+				timestamp_bytes = istream.read(4)
+				file_info.timestamp = struct.unpack('<I', timestamp_bytes)[0]			
+				self.files.append(file_info)
+			except Exception as e:
+				print("ERROR decoding file at index {}: {}".format(i, e))
 
 class StartDownloadResponse:
 	def __init__(self):
