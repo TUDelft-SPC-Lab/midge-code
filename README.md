@@ -63,11 +63,12 @@ pip install pandas numpy matplotlib seaborn tqdm scipy
     This provides a nice GUI interface to control them.
     * Use the `hub.py` if you have 6 or more midges.
     This provides a command line script that can control multiple midges sequentially.
-5. Stop recording
-6. Copy the data from the SDCards into a computer, there are two options:
+5. Rotate the midge 360 degrees on each axis once to calibrate the magnetometer.
+6. Stop recording
+7. Copy the data from the SDCards into a computer, there are two options:
     * Take the card manually out of the midge, plug it in the computer and copy the files.
     * Use the `download_all` command in the `terminal.py` script to download the data over Bluetooth.
-7. Run processing data scripts to transform the raw data into common file formats: `imu_parser.py` and `audio_parser.py` (with the `midge3` env)
+8. Run processing data scripts to transform the raw data into common file formats: `imu_parser.py` and `audio_parser.py` (with the `midge3` env)
     * The audio files can also be decoded with Audacity (File -> Import -> Raw Data) using the same parameters that are used in `audio_parser.py`. 
 
 
