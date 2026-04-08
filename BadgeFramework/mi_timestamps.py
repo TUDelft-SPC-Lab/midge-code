@@ -41,6 +41,9 @@ def make_timestamps_monotonically_increasing(timestamps, sensor_name, plotting=F
     correction_indices_large = np.nonzero(valid_diffs > (avg_diff * 2))[0]
     correction_indices_small = np.nonzero(valid_diffs < (avg_diff * 0.25))[0]
 
+    if plotting:
+        _print_debug_info(timestamps, valid_timestamps, correction_indices_large, correction_indices_small, avg_diff, valid_diffs, sensor_name)
+
     correction_indices = np.union1d(correction_indices_large, correction_indices_small)
     correction_indices = np.concatenate(
         [[0], correction_indices], axis=0
@@ -64,6 +67,19 @@ def make_timestamps_monotonically_increasing(timestamps, sensor_name, plotting=F
 
     return timestamps
 
+
+def _print_debug_info(timestamps, valid_timestamps, correction_indices_large, correction_indices_small, avg_diff, valid_diffs, sensor_name):
+    valid_dt = np.vectorize(lambda ts: datetime.fromtimestamp(float(ts) / 1000) if not np.isnan(ts) else None)(valid_timestamps)
+    for idx in correction_indices_large:
+        print(f"index, {idx}, time jump {valid_dt[idx] - valid_dt[idx - 1]}, time {valid_dt[idx]}")
+
+    print("--------> Sensor: {}, Average timestamp diff: {:.2f} ms".format(sensor_name, avg_diff))
+    print("--------> Sensor: {}, correction_indices_large: {}".format(sensor_name, correction_indices_large))
+    print("--------> Sensor: {}, correction_indices_small: {}".format(sensor_name, correction_indices_small))
+    
+    print("--------> Sensor: {}, valid_diffs large: {}".format(sensor_name, valid_diffs[correction_indices_large]))
+    print("--------> Sensor: {}, valid_diffs small: {}".format(sensor_name, valid_diffs[correction_indices_small]))
+    print("--------> Sensor: {}, size: {}".format(sensor_name, len(timestamps)))
 
 def _fix_first_few_timestamps(timestamps, first_valid_idx, avg_diff):
     return timestamps[first_valid_idx] - np.arange(first_valid_idx, 0, -1) * avg_diff
