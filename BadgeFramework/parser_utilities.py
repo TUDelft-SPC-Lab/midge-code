@@ -2,27 +2,27 @@
 
 from datetime import datetime as dt
 from pathlib import Path
+from mi_timestamps import make_timestamps_monotonically_increasing
+import numpy as np
+
+def _to_datetime(x):
+    if np.isnan(x):
+        return "Date error"
+    return dt.fromtimestamp(float(x)/1000)
+
 
 def parse_timestamps(timestamps, sensor_name):
     """
     Convert raw timestamps to datetime objects.
     
     Args:
-        timestamps: List of raw timestamp values
+        timestamps: ndarray of raw timestamp values
         sensor_name: Name of the sensor for error reporting
     
     Returns:
-        List of datetime objects or "Date error" strings for failed conversions
+        ndarray of datetime objects or "Date error" strings for failed conversions
     """
-    sensor_name = Path(sensor_name).stem
-    error_reported = False
-    timestamps_dt = []
-    for x in timestamps:
-        try:
-            timestamps_dt.append(dt.fromtimestamp(float(x[0])/1000))
-        except Exception as e:
-            if error_reported is False:
-                print('Error in timestamp conversion for sensor {}: {}'.format(sensor_name, str(e)))
-                error_reported = True
-            timestamps_dt.append("Date error")
-    return timestamps_dt 
+    if len(timestamps) == 0:
+        return timestamps
+    fixed_timestamps = make_timestamps_monotonically_increasing(timestamps, Path(sensor_name).stem)
+    return np.vectorize(_to_datetime)(fixed_timestamps)
