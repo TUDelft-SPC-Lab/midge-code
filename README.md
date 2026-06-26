@@ -2,6 +2,10 @@
 
 ![The MINGLE MIDGE](https://raw.githubusercontent.com/TUDelft-SPC-Lab/spcl_midge_hardware/refs/heads/main/Hardware_Design_v1/Media/v2.3.jpg)
 
+> [!WARNING]
+> This repository is in maintenance mode.
+> New development is happening in https://github.com/TUDelft-SPC-Lab/midge-code-neo
+
 The Midge is a small, low-power wearable device designed to record audio, orientation and proximity data.
 It features a Nordic nRF52832 microcontroller, Bluetooth connectivity, dual microphones, an IMU (Inertial Measurement Unit), and a microSD card slot for local data storage.
 
