@@ -187,16 +187,11 @@ int32_t systick_set_millis(uint64_t ticks_since_start_at_sync, uint64_t millis_s
 int32_t systick_set_timestamp(uint64_t ticks_since_start_at_sync, uint32_t seconds_sync, uint16_t milliseconds_sync)
 {
 	uint64_t millis_sync = ((uint64_t)seconds_sync) * 1000 + ((uint64_t) milliseconds_sync);
-	int32_t error_millis = systick_set_millis(ticks_since_start_at_sync, millis_sync);
+	return systick_set_millis(ticks_since_start_at_sync, millis_sync);
+}
 
-	if (!time_sync_done)
-	{
-		time_sync_done = true;
-		//if (storage_init_folder(seconds_sync))
-		//	NRF_LOG_ERROR("wat werror");
-	}
-
-	return error_millis;
+void systick_set_done(){
+	time_sync_done = true;
 }
 
 uint64_t systick_get_millis(void) {

@@ -324,15 +324,34 @@ uint32_t storage_init(void)
 }
 
 
-uint32_t storage_init_folder(uint32_t sync_time_seconds)
+int fileCount = 0;
+
+uint32_t storage_init_folder()
 {
-	NRF_LOG_INFO("open folder");
+	NRF_LOG_INFO("Creating new folder");
 	FRESULT ff_result;
 	BadgeAssignment badge_assignment;
 	advertiser_get_badge_assignement(&badge_assignment);
 	TCHAR folder[30] = {};
 
-	sprintf(folder, "/%d_%ld", badge_assignment.ID, sync_time_seconds);
+	fileCount = 0;
+        while (true)
+        {    
+			sprintf(folder, "/M%dG%dE%d", badge_assignment.ID,  badge_assignment.group, fileCount);
+            ff_result = f_stat(folder, &fno);  // Check if the folder already exists
+            if (ff_result == FR_NO_FILE)
+            {
+                break;  // Folder does not exist, break the loop
+            }
+            if (fileCount >= 99)
+            {
+                return -1;  // Maximum folder count reached
+            }
+            fileCount++;
+        }
+
+	NRF_LOG_INFO("New folder name is %s", folder);
+
 	ff_result = f_mkdir(folder);
 	if (ff_result)
 	{
@@ -350,7 +369,6 @@ uint32_t storage_init_folder(uint32_t sync_time_seconds)
 	return 0;
 }
 
-int fileCount = 0;
 
 uint32_t storage_open_file(data_source_t source)
 {
