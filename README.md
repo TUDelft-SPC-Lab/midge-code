@@ -1,7 +1,7 @@
 # "Midge", an SPCL badge
 
 > [!WARNING]
-> This repository is in deprecated, use https://github.com/TUDelft-SPC-Lab/midge-code-neo instead.
+> This repository is deprecated, use https://github.com/TUDelft-SPC-Lab/midge-code-neo instead.
 
 ![The MINGLE MIDGE](https://raw.githubusercontent.com/TUDelft-SPC-Lab/spcl_midge_hardware/refs/heads/main/Hardware_Design_v1/Media/v2.3.jpg)
 
